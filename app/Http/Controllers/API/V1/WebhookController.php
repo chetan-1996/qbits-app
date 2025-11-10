@@ -1,18 +1,23 @@
 <?php
 
-namespace App\Http\Controllers\Api\V1;
+namespace App\Http\Controllers\API\V1;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use App\Models\Client;
 use Exception;
 
 class WebhookController extends Controller
 {
-    public function receive(Request $request)
+    public function individualReceive(Request $request)
     {
         try {
+            /* ----------------------------------------------------
+             * ✅ 1. Verify HMAC Signature (secure)
+             * ---------------------------------------------------- */
             // ✅ Optional: Verify webhook signature
             $signature = $request->header('X-Signature');
             if ($signature !== config('webhook.secret')) {
@@ -22,42 +27,193 @@ class WebhookController extends Controller
             // ✅ Log raw data for debugging
             Log::info('Webhook received:', $request->all());
 
-            // ✅ Validate incoming data
-            $validated = $request->validate([
-                'lead_id' => 'required|string',
-                'name' => 'nullable|string',
-                'email' => 'nullable|email',
-                'phone' => 'nullable|string',
-                'source' => 'nullable|string',
-            ]);
+            /* ----------------------------------------------------
+             * ✅ 2. Parse JSON payload
+             * ---------------------------------------------------- */
+            $payload = $request->json()->all();
+            $data = is_array($payload) && isset($payload[0]) ? $payload[0] : $payload;
+            $username = $data['userName'] ?? null;
 
-            // ✅ Insert into DB
-            // DB::table('webhook_leads')->insert([
-            //     'lead_id' => $validated['lead_id'],
-            //     'name' => $validated['name'] ?? null,
-            //     'email' => $validated['email'] ?? null,
-            //     'phone' => $validated['phone'] ?? null,
-            //     'source' => $validated['source'] ?? 'unknown',
-            //     'created_at' => now(),
-            // ]);
+            if (empty($username)) {
+                return response()->json(['error' => 'Username missing'], 422);
+            }
 
-            // ✅ Free memory
+            /* ----------------------------------------------------
+             * ✅ 3. Prepare cleaned mapping
+             * ---------------------------------------------------- */
+            $user = Client::firstOrNew(['username' => $username]);
+
+            // Always update these fields
+            $user->password   = $data['password'] ?? $user->password;
+            $user->phone      = $data['phone'] ?? $user->phone;
+            $user->qq         = $data['QQ'] ?? $user->qq;
+            $user->email      = $data['email'] ?? $user->email;
+            $user->collector  = $data['collector'] ?? $user->collector;
+
+            // Only fill plant-related fields when creating new record
+            if (!$user->exists) {
+                $user->plant_name    = $data['plantName'] ?? null;
+                $user->inverter_type = $data['invertertype'] ?? null;
+                $user->city_name     = $data['cityname'] ?? null;
+                $user->longitude     = $data['longitude'] ?? null;
+                $user->latitude      = $data['latitude'] ?? null;
+                $user->parent        = $data['parent'] ?? null;
+                $user->gmt           = $data['gmt'] ?? null;
+                $user->plant_type    = $data['plantType'] ?? null;
+                $user->iserial       = $data['iSerial'] ?? null;
+            }
+
+            $user->save();
+
+            /* ----------------------------------------------------
+             * ✅ 4. One fast upsert (no "exists" check)
+             * ---------------------------------------------------- */
+            $affected = $user->wasRecentlyCreated ? 'inserted' : 'updated';
+
+            /* ----------------------------------------------------
+             * ✅ 5. Send WhatsApp only if new insert
+             * ---------------------------------------------------- */
+            if ($affected=='inserted' && !empty($data['phone'])) {
+                $this->sendWhatsApp($data);
+            }
+
+            /* ----------------------------------------------------
+             * ✅ 6. Free memory and close DB
+             * ---------------------------------------------------- */
+            DB::disconnect();
             gc_collect_cycles();
 
-            // ✅ Send success response (React/Flutter compatible)
+            /* ----------------------------------------------------
+             * ✅ 7. Instant lightweight response
+             * ---------------------------------------------------- */
             return response()->json([
-                'status' => true,
+                'status'  => true,
                 'message' => 'Webhook processed successfully',
             ], 200);
 
         } catch (Exception $e) {
-            Log::error('Webhook error:', ['error' => $e->getMessage()]);
+            Log::error('Webhook error', ['error' => $e->getMessage()]);
+            DB::disconnect();
+            gc_collect_cycles();
 
             return response()->json([
-                'status' => false,
+                'status'  => false,
                 'message' => 'Error processing webhook',
-                'error' => $e->getMessage(),
-            ], 400);
+                'error'   => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /* ------------------------------------------------------------
+     * 📲 Send WhatsApp notification (fast, 2 s timeout)
+     * ------------------------------------------------------------ */
+    private function sendWhatsApp(array $data): void
+    {
+        try {
+            $msg = "Welcome {$data['userName']}!\n
+
+Your inverter has been successfully connected to our application. Now you can monitor your power consumption, solar energy production, and the overall performance of your system — all in one place.
+
+With this app, you can enjoy the following features:
+
+*Real-Time Monitoring:* Instantly view your inverter’s performance.
+
+*Historical Data:* Check the records of your electricity consumption and energy production.
+
+*Notifications:* Receive instant alerts whenever there’s an issue or any change in your system.
+
+We hope you enjoy using this feature. If you have any questions, please feel free to contact our support team.
+
+Thank you,
+*Qbits Energy*";
+
+            $payload = [
+                'Name'    => $data['userName'] ?? 'User',
+                'Number'  => $data['phone'],
+                'Message' => $msg,
+            ];
+
+            // ⏱ Fast non-blocking API call (2 s timeout)
+            Http::timeout(2)->get(
+                'https://api.wabb.in/api/v1/webhooks-automation/catch/287/CSZS8YqZZrM9/',
+                $payload
+            );
+        } catch (Exception $e) {
+            Log::warning('WhatsApp send failed', ['error' => $e->getMessage()]);
+        }
+    }
+
+
+    public function companyReceive(Request $request)
+    {
+        try {
+            /* ----------------------------------------------------
+             * ✅ 1. Verify HMAC Signature (secure)
+             * ---------------------------------------------------- */
+            // ✅ Optional: Verify webhook signature
+            $signature = $request->header('X-Signature');
+            if ($signature !== config('webhook.secret')) {
+                return response()->json(['error' => 'Invalid signature'], 401);
+            }
+
+            // ✅ Log raw data for debugging
+            Log::info('Webhook received:', $request->all());
+
+            /* ----------------------------------------------------
+             * ✅ 2. Parse JSON payload
+             * ---------------------------------------------------- */
+            $payload = $request->json()->all();
+            $data = is_array($payload) && isset($payload[0]) ? $payload[0] : $payload;
+            $username = $data['userName'] ?? null;
+
+            if (empty($username)) {
+                return response()->json(['error' => 'Username missing'], 422);
+            }
+
+            /* ----------------------------------------------------
+             * ✅ 3. Prepare cleaned mapping
+             * ---------------------------------------------------- */
+            $user = Client::firstOrNew(['username' => $username]);
+
+            // Always update these fields
+            $user->password          = $data['atpd'] ?? $user->password;
+            $user->company_code      = $data['code'] ?? $user->code;
+            $user->email             = $data['email'] ?? $user->email;
+
+            // Only fill plant-related fields when creating new record
+            if (!$user->exists) {
+                $user->username      = $username;
+                $user->password      = $data['atpd'] ?? null;
+                $user->company_code  = $data['code'] ?? null;
+                $user->email         = $data['email'] ?? null;
+            }
+
+            $user->save();
+
+            /* ----------------------------------------------------
+             * ✅ 4. Free memory and close DB
+             * ---------------------------------------------------- */
+            DB::disconnect();
+            gc_collect_cycles();
+
+            /* ----------------------------------------------------
+             * ✅ 7. Instant lightweight response
+             * ---------------------------------------------------- */
+            return response()->json([
+                'status'  => true,
+                'message' => 'Qbits Company inserted or updated successfully',
+            ], 200);
+
+        } catch (Exception $e) {
+            Log::error('Webhook error', ['error' => $e->getMessage()]);
+            DB::disconnect();
+            gc_collect_cycles();
+
+            return response()->json([
+                'status'  => false,
+                'message' => 'Error processing webhook',
+                'error'   => $e->getMessage(),
+            ], 500);
         }
     }
 }

@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\V1\WebhookController;
+use App\Http\Controllers\API\V1\WebhookController;
 
 $apiVersion = config('app.api_version');
 
@@ -21,7 +21,8 @@ Route::prefix($apiVersion)->group(function () use ($apiVersion) {
 });
 
 Route::prefix('v1')->group(function () {
-    Route::post('/webhook/receive', [WebhookController::class, 'receive']);
+    Route::post('/webhook/individual', [WebhookController::class, 'individualReceive']);
+    Route::post('/webhook/company', [WebhookController::class, 'companyReceive']);
 });
 
 // Fallback for invalid URLs
