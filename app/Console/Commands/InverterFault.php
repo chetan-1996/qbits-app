@@ -74,8 +74,8 @@ class InverterFault extends Command
                             'token'          => $token,
                         ];
                         $cur_date = now()->format('Y-m-d');     // 2025-09-30
-                        $cur_time = "5:00";
-//                        $cur_time = now()->format('H:i');
+                        // $cur_time = "5:00";
+                       $cur_time = now()->format('H:i');
                         $url = "http://www.aotaisolarcloud.com/solarweb/inverterWarn/getWarnByDateTime?"
                             . "iid=0&date={$cur_date}&time={$cur_time}&page=0&pageSize=5&atun={$user->username}&atpd={$user->password}";
 
