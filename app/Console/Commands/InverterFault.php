@@ -104,7 +104,7 @@ class InverterFault extends Command
                                     'Message' => "🌱 Plant: {$plantName}\n\n⚠ Detected Faults:\n"
                                         . implode("\n", $messages)
                                         . "\nIf problem not resolved, contact installer or raise a complaint:\n"
-                                        . "Helpdesk: https://erp.heavengreenenergy.com/helpdesk/qbits-service-620\n"
+                                        . "Helpdesk: https://support.qbitsenergy.com\n"
                                         . "Email: support@qbitsenergy.com"
                                 ];
                                 Http::get('https://api.wabb.in/api/v1/webhooks-automation/catch/287/CSZS8YqZZrM9/', $whatsAppContent);
