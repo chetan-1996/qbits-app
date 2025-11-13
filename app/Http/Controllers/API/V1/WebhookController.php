@@ -141,7 +141,7 @@ Thank you,
         } catch (Exception $e) {
             Log::warning('WhatsApp send failed', ['error' => $e->getMessage()]);
         }
-    }
+    }   /// ARN 64 docker image
 
 
     public function companyReceive(Request $request)
@@ -164,7 +164,7 @@ Thank you,
              * ---------------------------------------------------- */
             $payload = $request->json()->all();
             $data = is_array($payload) && isset($payload[0]) ? $payload[0] : $payload;
-            $username = $data['userName'] ?? null;
+            $username = $data['atun'] ?? null;
 
             if (empty($username)) {
                 return response()->json(['error' => 'Username missing'], 422);
