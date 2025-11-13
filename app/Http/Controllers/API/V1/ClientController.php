@@ -111,10 +111,8 @@ class ClientController extends BaseController
             // ✅ Update record in DB
             DB::table('clients')->where('id', $id)->update($updateData);
 
-            $response = [
-                'data'    => $updateData,
-                'message' => 'Qbits WhatsApp notification flags updated successfully.',
-            ];
+            $response =$updateData;
+
 
             // ✅ Free used variables
             unset($id, $updateData, $allowedFlags, $validated, $request);
