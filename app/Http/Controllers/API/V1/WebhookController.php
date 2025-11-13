@@ -12,6 +12,78 @@ use Exception;
 
 class WebhookController extends Controller
 {
+    public function postWhatsAppNotification(Request $request){
+        $input = $request->all();
+
+        $username = $input['user_name'];
+
+        try {
+            $existing = DB::table('clients')->where('username', $username)->exists();
+
+            if ($existing) {
+                // ✅ Update record
+                DB::table('clients')
+                    ->where('username', $username)
+                    ->update([
+                        'whatsapp_notification_flag' => $input['whatsapp_notification_flag'] ?? 0,
+                        'inverter_fault_flag' => $input['inverter_fault_flag'] ?? 0,
+                        'weekly_generation_report_flag' => $input['weekly_generation_report_flag'] ?? 0,
+                        'monthly_generation_report_flag' => $input['monthly_generation_report_flag'] ?? 0,
+                        'daily_generation_report_flag' => $input['daily_generation_report_flag'] ?? 0,
+                        'updated_at'    => now(),
+                    ]);
+            }
+            unset($username, $request);
+
+            $response = [
+                'success' => true,
+                'data'    => $input,
+                'message' => "Qbits whatsapp Notification updated successfully",
+            ];
+
+        } catch (\Exception $e) {
+            \Log::error('Qbits Insert/Update Error: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => "Database operation failed"
+            ], 500);
+        } finally {
+            // ✅ Release DB connection and free memory
+            DB::disconnect();
+            gc_collect_cycles();
+        }
+
+        return response()->json($response, 200);
+    }
+
+    public function getWhatsAppNotification($userId){
+        try {
+            $user_data = DB::table('clients')->where('username', $userId)->first();
+
+            $response = [
+                'success' => true,
+                'data'    => $user_data,
+                'message' => "Qbits whatsapp Notification updated successfully",
+            ];
+            unset($user_data, $userId);
+
+        } catch (\Exception $e) {
+            \Log::error('Qbits Insert/Update Error: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => "Database operation failed"
+            ], 500);
+        } finally {
+            // ✅ Release DB connection and free memory
+            DB::disconnect();
+            gc_collect_cycles();
+        }
+
+        return response()->json($response, 200);
+    }
+
     public function individualReceive(Request $request)
     {
         try {
