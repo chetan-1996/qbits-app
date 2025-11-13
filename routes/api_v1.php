@@ -20,5 +20,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::controller(ClientController::class)->group(function () {
         Route::get('client/index', 'index');
+        Route::post('client/whatsapp-notification-update', 'postWhatsAppNotificationUpdate');
     });
 });

@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers\API\V1;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Client;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Exception;
 
-class ClientController extends Controller
+class ClientController extends BaseController
 {
     public function index(Request $request)
     {
@@ -81,4 +81,53 @@ class ClientController extends Controller
     //         'data' => $clients,
     //     ], 200);
     // }
+
+    public function postWhatsAppNotificationUpdate(Request $request)
+    {
+        $validated = $request->validate([
+            'id' => 'required|integer|exists:clients,id',
+        ]);
+
+        $id = $validated['id'];
+
+        // Allowed fields that can be updated
+        $allowedFlags = [
+            'whatsapp_notification_flag',
+            'inverter_fault_flag',
+            'daily_generation_report_flag',
+            'weekly_generation_report_flag',
+            'monthly_generation_report_flag',
+        ];
+
+        try {
+            // Filter and sanitize only allowed keys
+            $updateData = collect($request->only($allowedFlags))
+                ->map(fn($value) => (int)($value ?? 0))
+                ->toArray();
+
+            // Always update timestamp
+            $updateData['updated_at'] = now();
+
+            // ✅ Update record in DB
+            DB::table('clients')->where('id', $id)->update($updateData);
+
+            $response = [
+                'data'    => $updateData,
+                'message' => 'Qbits WhatsApp notification flags updated successfully.',
+            ];
+
+            // ✅ Free used variables
+            unset($id, $updateData, $allowedFlags, $validated, $request);
+
+            return $this->sendResponse($response, 'Saved successfully.');
+        } catch (\Exception $e) {
+            \Log::error('Qbits Notification Update Error: ' . $e->getMessage());
+            return $this->sendError('Database operation failed', [], 400);
+        } finally {
+            // ✅ Release DB connection and collect garbage memory
+            DB::disconnect();
+            gc_collect_cycles();
+        }
+    }
+
 }
