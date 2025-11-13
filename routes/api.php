@@ -23,7 +23,8 @@ Route::prefix($apiVersion)->group(function () use ($apiVersion) {
 Route::prefix('v1')->group(function () {
     Route::post('/webhook/individual', [WebhookController::class, 'individualReceive']);
     Route::post('/webhook/company', [WebhookController::class, 'companyReceive']);
-   // Route::post('/webhook/company', [WebhookController::class, 'companyReceive']);
+    Route::post('/webhook/whatsapp-notification/update', [WebhookController::class, 'postWhatsAppNotification']);
+    Route::get('/webhook/whatsapp-notification/{userId}', [WebhookController::class, 'getWhatsAppNotification']);
    // Route::post('/webhook/company', [WebhookController::class, 'companyReceive']);
 });
 
