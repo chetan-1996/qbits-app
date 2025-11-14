@@ -14,6 +14,7 @@ class MqttService
     {
         $host = env('MQTT_HOST', 'localhost');
         $port = env('MQTT_PORT', 1883);
+        
         $clientId = env('MQTT_CLIENT_ID', 'laravel-client-' . rand(1000, 9999));
 
         $connectionSettings = (new ConnectionSettings)
