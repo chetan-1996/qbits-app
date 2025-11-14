@@ -107,7 +107,8 @@ class InverterFault extends Command
                                         . "*Helpdesk*: https://support.qbitsenergy.com\n"
                                         . "*Email*: support@qbitsenergy.com"
                                 ];
-                                Http::get('https://api.wabb.in/api/v1/webhooks-automation/catch/287/CSZS8YqZZrM9/', $whatsAppContent);
+                                $wabbWebhookUrl = config('services.webhook.url');
+                                Http::get($wabbWebhookUrl, $whatsAppContent);
                             }
                         }
 

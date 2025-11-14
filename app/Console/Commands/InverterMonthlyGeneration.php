@@ -112,8 +112,9 @@ Submit a Ticket | Qbits: \nhttps://support.qbitsenergy.com";
             ];
 
             // Step 5: Send WhatsApp via Wabb webhook
+            $wabbWebhookUrl = config('services.webhook.url');
             Http::timeout(5)->get(
-                'https://api.wabb.in/api/v1/webhooks-automation/catch/287/CSZS8YqZZrM9/',
+                $wabbWebhookUrl,
                 $payload
             );
 

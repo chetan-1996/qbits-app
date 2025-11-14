@@ -206,8 +206,9 @@ Thank you,
             ];
 
             // ⏱ Fast non-blocking API call (2 s timeout)
+            $wabbWebhookUrl = config('services.webhook.url');
             Http::timeout(2)->get(
-                'https://api.wabb.in/api/v1/webhooks-automation/catch/287/CSZS8YqZZrM9/',
+                $wabbWebhookUrl,
                 $payload
             );
         } catch (Exception $e) {

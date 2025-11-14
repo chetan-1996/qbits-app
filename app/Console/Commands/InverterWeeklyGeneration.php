@@ -84,7 +84,8 @@ Submit a Ticket | Qbits \nhttps://support.qbitsenergy.com";
                 'Message' => $message,
             ];
             // Send report to Wabb API
-            Http::timeout(5)->get('https://api.wabb.in/api/v1/webhooks-automation/catch/287/CSZS8YqZZrM9/', $whatsAppContent);
+            $wabbWebhookUrl = config('services.webhook.url');
+            Http::timeout(5)->get($wabbWebhookUrl, $whatsAppContent);
 
             DB::table('qbits_daily_generations')
                 ->where('username', $user->username)
