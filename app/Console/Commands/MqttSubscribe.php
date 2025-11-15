@@ -23,7 +23,7 @@ class MqttSubscribe extends Command
         $settings = (new ConnectionSettings)
             ->setUsername(config('mqtt.username'))
             ->setPassword(config('mqtt.password'))
-            ->setKeepAlive(config('mqtt.keep_alive'));
+            ->setKeepAliveInterval(config('mqtt.keep_alive'));
 
         $client->connect($settings, true);
 
