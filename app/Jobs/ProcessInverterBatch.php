@@ -8,6 +8,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ProcessInverterBatch implements ShouldQueue
 {
@@ -17,6 +18,12 @@ class ProcessInverterBatch implements ShouldQueue
 
     public function handle()
     {
+
+        Log::info("MQTT Message Received JOB", [
+                'topic' => "test",
+                'payload' => "dsds",
+                'received_at' => now()->toISOString()
+            ]);
         $list = config('mqtt.redis_queue_list');
         $records = [];
 
