@@ -13,7 +13,7 @@ class MqttService
         $settings = (new ConnectionSettings)
             ->setUsername(config('mqtt.username'))
             ->setPassword(config('mqtt.password'))
-            ->setKeepAlive(config('mqtt.keep_alive'));
+            ->setKeepAliveInterval(config('mqtt.keep_alive'));
 
         $client = new MqttClient(
             config('mqtt.host'),
