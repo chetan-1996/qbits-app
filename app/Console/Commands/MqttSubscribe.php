@@ -10,36 +10,47 @@ use Illuminate\Support\Facades\Redis;
 class MqttSubscribe extends Command
 {
     protected $signature = 'mqtt:subscribe';
-    protected $description = 'Subscribe to all inverter data and queue in Redis';
+    protected $description = 'MQTT subscriber with auto reconnect';
 
     public function handle()
     {
-        $client = new MqttClient(
-            config('mqtt.host'),
-            config('mqtt.port'),
-            config('mqtt.client_id_prefix') . '_sub'
-        );
+        $host = config('mqtt.host');
+        $port = config('mqtt.port');
+        $clientId = config('mqtt.client_id_prefix') . '_sub';
 
         $settings = (new ConnectionSettings)
             ->setUsername(config('mqtt.username'))
             ->setPassword(config('mqtt.password'))
-            ->setKeepAliveInterval(config('mqtt.keep_alive'));
+            ->setKeepAliveInterval(20)                // keep-alive every 20 sec
+            ->setReconnectAutomatically(true)         // auto reconnect
+            ->setDelayBetweenReconnectAttempts(3)     // retry every 3 sec
+            ->setMaxReconnectAttempts(0);             // infinite retries
+
+        $client = new MqttClient($host, $port, $clientId);
 
         $client->connect($settings, true);
 
-        // Wildcard subscription
+        // Subscribe to all inverters
         $client->subscribe('inverters/+/data', function ($topic, $message) {
 
-            $item = json_encode([
+            $data = json_encode([
                 'topic' => $topic,
                 'payload' => $message,
                 'received_at' => now()->toISOString(),
             ]);
 
-            Redis::rpush(config('mqtt.redis_queue_list'), $item);
+            Redis::rpush(config('mqtt.redis_queue_list'), $data);
 
         }, config('mqtt.qos'));
 
-        $client->loop(true);
+        // Main loop (handles reconnects)
+        while (true) {
+            try {
+                $client->loop(true, 1);   // 1 second loop cycle
+            } catch (\Throwable $e) {
+                echo "Subscriber crashed: " . $e->getMessage() . "\n";
+                sleep(3); // wait before reconnect
+            }
+        }
     }
 }
