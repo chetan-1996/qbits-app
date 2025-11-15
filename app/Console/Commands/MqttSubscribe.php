@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 
 class MqttSubscribeOnce extends Command
 {
-    protected $signature = 'mqtt:subscribe-once';
+    protected $signature = 'mqtt:subscribe';
     protected $description = 'Subscribe and process inverter data once (no Redis)';
 
     public function handle()
