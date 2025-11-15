@@ -8,34 +8,61 @@ use Illuminate\Support\Facades\Log;
 
 class MqttService
 {
-    protected $mqtt;
-
-    public function __construct()
+    private function connect()
     {
-        $host = env('MQTT_HOST', 'localhost');
-        $port = env('MQTT_PORT', 1883);
-        
-        $clientId = env('MQTT_CLIENT_ID', 'laravel-client-' . rand(1000, 9999));
+        $settings = (new ConnectionSettings)
+            ->setUsername(config('mqtt.username'))
+            ->setPassword(config('mqtt.password'))
+            ->setKeepAlive(config('mqtt.keep_alive'));
 
-        $connectionSettings = (new ConnectionSettings)
-            ->setUsername(env('MQTT_USERNAME'))
-            ->setPassword(env('MQTT_PASSWORD'))
-            ->setKeepAliveInterval(60)
-            ->setUseTls(false);
+        $client = new MqttClient(
+            config('mqtt.host'),
+            config('mqtt.port'),
+            config('mqtt.client_id_prefix') . '_' . uniqid()
+        );
 
-        $this->mqtt = new MqttClient($host, $port, $clientId);
-        $this->mqtt->connect($connectionSettings, true);
+        $client->connect($settings, true);
+
+        return $client;
     }
 
-    public function publish($topic, $message)
+    public function publish($topic, $data, $qos = null)
     {
-        $this->mqtt->publish($topic, $message, 0);
-        $this->mqtt->disconnect();
-    }
+        $client = $this->connect();
 
-    public function subscribe($topic, callable $callback)
-    {
-        $this->mqtt->subscribe($topic, $callback, 0);
-        $this->mqtt->loop(true);
+        $payload = is_string($data) ? $data : json_encode($data);
+        $client->publish($topic, $payload, $qos ?? config('mqtt.qos'));
+
+        $client->disconnect();
     }
+    // protected $mqtt;
+
+    // public function __construct()
+    // {
+    //     $host = env('MQTT_HOST', 'localhost');
+    //     $port = env('MQTT_PORT', 1883);
+
+    //     $clientId = env('MQTT_CLIENT_ID', 'laravel-client-' . rand(1000, 9999));
+
+    //     $connectionSettings = (new ConnectionSettings)
+    //         ->setUsername(env('MQTT_USERNAME'))
+    //         ->setPassword(env('MQTT_PASSWORD'))
+    //         ->setKeepAliveInterval(60)
+    //         ->setUseTls(false);
+
+    //     $this->mqtt = new MqttClient($host, $port, $clientId);
+    //     $this->mqtt->connect($connectionSettings, true);
+    // }
+
+    // public function publish($topic, $message)
+    // {
+    //     $this->mqtt->publish($topic, $message, 0);
+    //     $this->mqtt->disconnect();
+    // }
+
+    // public function subscribe($topic, callable $callback)
+    // {
+    //     $this->mqtt->subscribe($topic, $callback, 0);
+    //     $this->mqtt->loop(true);
+    // }
 }
