@@ -5,7 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use PhpMqtt\Client\MqttClient;
 use PhpMqtt\Client\ConnectionSettings;
-use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Redis as RedisFacade;
 use Illuminate\Support\Facades\Log;
 
 class MqttSubscribe extends Command
@@ -43,7 +43,7 @@ class MqttSubscribe extends Command
                 'received_at' => now()->toISOString()
             ]);
 
-            Redis::rpush(config('mqtt.redis_queue_list'), $item);
+            RedisFacade::rpush(config('mqtt.redis_queue_list'), $item);
 
         }, config('mqtt.qos'));
 
