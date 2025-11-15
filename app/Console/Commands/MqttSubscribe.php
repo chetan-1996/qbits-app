@@ -6,7 +6,7 @@ use PhpMqtt\Client\MqttClient;
 use PhpMqtt\Client\ConnectionSettings;
 use Illuminate\Support\Facades\Log;
 
-class MqttSubscribeOnce extends Command
+class MqttSubscribe extends Command
 {
     protected $signature = 'mqtt:subscribe';
     protected $description = 'Subscribe and process inverter data once (no Redis)';
