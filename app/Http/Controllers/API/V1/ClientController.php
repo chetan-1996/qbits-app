@@ -39,14 +39,21 @@ class ClientController extends BaseController
             // ✅ Use cursor pagination for large data
             $clients = $query->cursorPaginate($perPage);
 
-            return response()->json([
-                'success'      => true,
-                'message'      => 'Clients fetched successfully',
+            // return response()->json([
+            //     'success'      => true,
+            //     'message'      => 'Clients fetched successfully',
+            //     'per_page'     => $clients->perPage(),
+            //     'next_cursor'  => $clients->nextCursor()?->encode(),
+            //     'prev_cursor'  => $clients->previousCursor()?->encode(),
+            //     'data'         => $clients->items(),
+            // ], 200);
+
+            return $this->sendResponse([
                 'per_page'     => $clients->perPage(),
                 'next_cursor'  => $clients->nextCursor()?->encode(),
                 'prev_cursor'  => $clients->previousCursor()?->encode(),
-                'data'         => $clients->items(),
-            ], 200);
+                'clients'      => $clients->items(),
+            ], 'Clients fetched successfully.');
 
         } catch (Exception $e) {
             Log::error('Client List Error', ['error' => $e->getMessage()]);
