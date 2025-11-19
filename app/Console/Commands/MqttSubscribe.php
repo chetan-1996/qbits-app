@@ -43,7 +43,18 @@ class MqttSubscribe extends Command
                 'received_at' => now()->toISOString()
             ]);
 
-            RedisFacade::rpush(config('mqtt.redis_queue_list'), $item);
+            //RedisFacade::rpush(config('mqtt.redis_queue_list'), $item);
+            Log::info("Before RPUSH");
+
+            try {
+                RedisFacade::rpush(config('mqtt.redis_queue_list'), $item);
+                Log::info("After RPUSH SUCCESS");
+            } catch (\Throwable $e) {
+                Log::error("RPUSH FAILED", [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ]);
+            } 
 
         }, config('mqtt.qos'));
 
