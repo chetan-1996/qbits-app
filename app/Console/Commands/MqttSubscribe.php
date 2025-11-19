@@ -54,7 +54,7 @@ class MqttSubscribe extends Command
                     'error' => $e->getMessage(),
                     'trace' => $e->getTraceAsString(),
                 ]);
-            }
+            } 
 
         }, config('mqtt.qos'));
 
