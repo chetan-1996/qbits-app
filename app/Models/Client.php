@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 class Client extends Model
 {
     protected $fillable = [
+        'dealer_id',
+        'qbits_company_code',
+        'company_name',
         'company_code',
         'username',
         'password',
