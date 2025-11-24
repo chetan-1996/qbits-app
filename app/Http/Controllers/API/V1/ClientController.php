@@ -27,7 +27,17 @@ class ClientController extends BaseController
             $search  = $validated['search'] ?? null;
 
             $query = Client::select('*')
-                ->whereNull('qbits_company_code')
+                //->whereNull('qbits_company_code')
+                ->where(function ($q) {
+                    $q->where(function ($sub) {
+                        $sub->whereNull('qbits_company_code')
+                            ->whereNull('dealer_id');
+                    })
+                    ->orWhere(function ($sub) {
+                        $sub->whereNotNull('qbits_company_code')
+                            ->whereNotNull('dealer_id');
+                    });
+                })
                 ->when($search, function ($q) use ($search) {
                     // ✅ Use full-text or LIKE search depending on index
                     $q->where(function ($sub) use ($search) {
