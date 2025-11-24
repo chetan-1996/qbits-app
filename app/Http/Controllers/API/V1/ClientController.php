@@ -84,7 +84,7 @@ class ClientController extends BaseController
             $search  = $validated['search'] ?? null;
 
             $query = Client::select('*')
-                ->whereNotNull('qbits_company_code')
+                ->whereNotNull('qbits_company_code')->whereNull('dealer_id')
                 ->when($search, function ($q) use ($search) {
                     // ✅ Use full-text or LIKE search depending on index
                     $q->where(function ($sub) use ($search) {
@@ -203,11 +203,13 @@ class ClientController extends BaseController
             'company_code' => 'required|string',
         ]);
 
+        $dealer_id = null;
         $user_cpy = Client::where('qbits_company_code', $validated['company_code'])->first();
         if (!$user_cpy)
         {
             return $this->sendError('Company code is invalid', [], 400);
         }
+         $dealer_id=$user_cpy->id;
 
         $id = $validated['id'];
 
@@ -217,6 +219,7 @@ class ClientController extends BaseController
 
             // Always update timestamp
             $updateData['qbits_company_code'] = $validated['company_code'];
+            $updateData['dealer_id'] = $dealer_id;
             $updateData['updated_at'] = now();
 
             // ✅ Update record in DB
