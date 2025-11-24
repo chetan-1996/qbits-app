@@ -115,12 +115,27 @@ class WebhookController extends Controller
              * ---------------------------------------------------- */
             $user = Client::firstOrNew(['username' => $username]);
 
+
+            if(isset($data['company_code']) && $data['company_code']){
+                $user_cpy = Client::where('qbits_company_code', $data['company_code'])->first();
+                if (!$user_cpy)
+                {
+                    return response()->json([
+                        'status'  => false,
+                        'message' => 'Company code is invalid',
+                    ], 400);
+                }
+
+            }
+
+
             // Always update these fields
-            $user->password   = $data['password'] ?? $user->password;
-            $user->phone      = $data['phone'] ?? $user->phone;
-            $user->qq         = $data['QQ'] ?? $user->qq;
-            $user->email      = $data['email'] ?? $user->email;
-            $user->collector  = $data['collector'] ?? $user->collector;
+            $user->password            = $data['password'] ?? $user->password;
+            $user->phone               = $data['phone'] ?? $user->phone;
+            $user->qq                  = $data['QQ'] ?? $user->qq;
+            $user->email               = $data['email'] ?? $user->email;
+            $user->collector           = $data['collector'] ?? $user->collector;
+            $user->qbits_company_code  = $data['company_code'] ?? $user->qbits_company_code;
 
             // Only fill plant-related fields when creating new record
             if (!$user->exists) {
@@ -249,9 +264,11 @@ Thank you,
             $user = Client::firstOrNew(['username' => $username]);
 
             // Always update these fields
-            $user->password          = $data['atpd'] ?? $user->password;
-            $user->company_code      = $data['code'] ?? $user->code;
-            $user->email             = $data['email'] ?? $user->email;
+            $user->password           = $data['atpd'] ?? $user->password;
+            $user->company_code       = $data['code'] ?? $user->code;
+            $user->email              = $data['email'] ?? $user->email;
+            $user->qbits_company_code = $data['code'] ?? $user->code;
+            $user->company_name       = $data['company_name'] ?? $user->company_name;
 
             // Only fill plant-related fields when creating new record
             if (!$user->exists) {
