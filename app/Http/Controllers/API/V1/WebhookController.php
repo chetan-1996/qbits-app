@@ -118,7 +118,6 @@ class WebhookController extends Controller
             $dealer_id = null;
             if(isset($data['company_code']) && $data['company_code']){
                 $user_cpy = Client::where('qbits_company_code', $data['company_code'])->whereNull('dealer_id')->first();
-                $dealer_id=$user_cpy->id;
                 if (!$user_cpy)
                 {
                     return response()->json([
@@ -126,7 +125,7 @@ class WebhookController extends Controller
                         'message' => 'Company code is invalid',
                     ], 400);
                 }
-
+                $dealer_id=$user_cpy->id;
             }
 
 
