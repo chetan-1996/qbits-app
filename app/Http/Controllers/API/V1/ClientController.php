@@ -27,10 +27,70 @@ class ClientController extends BaseController
             $search  = $validated['search'] ?? null;
 
             $query = Client::select('*')
+                ->whereNull('qbits_company_code')
                 ->when($search, function ($q) use ($search) {
                     // ✅ Use full-text or LIKE search depending on index
                     $q->where(function ($sub) use ($search) {
                         $sub->where('username', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                    });
+                })
+                ->orderBy($sort, $dir);
+
+            // ✅ Use cursor pagination for large data
+            $clients = $query->cursorPaginate($perPage);
+
+            // return response()->json([
+            //     'success'      => true,
+            //     'message'      => 'Clients fetched successfully',
+            //     'per_page'     => $clients->perPage(),
+            //     'next_cursor'  => $clients->nextCursor()?->encode(),
+            //     'prev_cursor'  => $clients->previousCursor()?->encode(),
+            //     'data'         => $clients->items(),
+            // ], 200);
+
+            return $this->sendResponse([
+                'per_page'     => $clients->perPage(),
+                'next_cursor'  => $clients->nextCursor()?->encode(),
+                'prev_cursor'  => $clients->previousCursor()?->encode(),
+                'clients'      => $clients->items(),
+            ], 'Clients fetched successfully.');
+
+        } catch (Exception $e) {
+            Log::error('Client List Error', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Internal server error.',
+            ], 500);
+        } finally {
+            gc_collect_cycles(); // memory cleanup
+        }
+    }
+
+     public function companyUser(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'page'     => 'integer|min:1',
+                'per_page' => 'integer|min:10|max:500',
+                'search'   => 'nullable|string|max:100',
+                'sort'     => 'nullable|in:id,name,email,created_at',
+                'dir'      => 'nullable|in:asc,desc',
+            ]);
+
+            $perPage = $validated['per_page'] ?? 1;
+            $sort    = $validated['sort'] ?? 'id';
+            $dir     = $validated['dir'] ?? 'desc';
+            $search  = $validated['search'] ?? null;
+
+            $query = Client::select('*')
+                ->whereNotNull('qbits_company_code')
+                ->when($search, function ($q) use ($search) {
+                    // ✅ Use full-text or LIKE search depending on index
+                    $q->where(function ($sub) use ($search) {
+                        $sub->where('username', 'like', "%{$search}%")
+                            ->where('company_name', 'like', "%{$search}%")
+                            ->where('qbits_company_code', 'like', "%{$search}%")
                             ->orWhere('email', 'like', "%{$search}%");
                     });
                 })
@@ -135,4 +195,47 @@ class ClientController extends BaseController
         }
     }
 
+
+    public function setCompanyCodeToIndivisualUser(Request $request)
+    {
+        $validated = $request->validate([
+            'id' => 'required|integer',
+            'company_code' => 'required|string',
+        ]);
+
+        $user_cpy = Client::where('qbits_company_code', $validated['company_code'])->first();
+        if (!$user_cpy)
+        {
+            return $this->sendError('Company code is invalid', [], 400);
+        }
+
+        $id = $validated['id'];
+
+
+
+        try {
+
+            // Always update timestamp
+            $updateData['qbits_company_code'] = $validated['company_code'];
+            $updateData['updated_at'] = now();
+
+            // ✅ Update record in DB
+            DB::table('clients')->where('id', $id)->update($updateData);
+
+            $response =$updateData;
+
+
+            // ✅ Free used variables
+            unset($id, $updateData, $validated, $request);
+
+            return $this->sendResponse($response, 'Saved successfully.');
+        } catch (\Exception $e) {
+            \Log::error('Qbits Notification Update Error: ' . $e->getMessage());
+            return $this->sendError('Database operation failed', [], 400);
+        } finally {
+            // ✅ Release DB connection and collect garbage memory
+            DB::disconnect();
+            gc_collect_cycles();
+        }
+    }
 }

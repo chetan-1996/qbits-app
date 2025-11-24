@@ -10,6 +10,8 @@ use App\Http\Controllers\API\V1\InverterController;
 Route::controller(AuthController::class)->group(function () {
     Route::post('register', 'register');
     Route::post('login', 'login');
+    Route::post('company/register', 'companyRegister');
+    Route::post('company/generate/code', 'generateCode');
 });
 
 Route::controller(InverterController::class)->group(function () {
@@ -25,6 +27,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::controller(ClientController::class)->group(function () {
         Route::get('client/index', 'index');
+        Route::get('dealer/index', 'companyUser');
         Route::post('client/whatsapp-notification-update', 'postWhatsAppNotificationUpdate');
+        Route::post('client/set-company-code', 'setCompanyCodeToIndivisualUser');
     });
 });
