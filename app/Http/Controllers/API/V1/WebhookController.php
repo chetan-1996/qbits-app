@@ -115,9 +115,10 @@ class WebhookController extends Controller
              * ---------------------------------------------------- */
             $user = Client::firstOrNew(['username' => $username]);
 
-
+            $dealer_id = null;
             if(isset($data['company_code']) && $data['company_code']){
-                $user_cpy = Client::where('qbits_company_code', $data['company_code'])->first();
+                $user_cpy = Client::where('qbits_company_code', $data['company_code'])->whereNull('dealer_id')->first();
+                $dealer_id=$user_cpy->id;
                 if (!$user_cpy)
                 {
                     return response()->json([
@@ -136,6 +137,7 @@ class WebhookController extends Controller
             $user->email               = $data['email'] ?? $user->email;
             $user->collector           = $data['collector'] ?? $user->collector;
             $user->qbits_company_code  = $data['company_code'] ?? $user->qbits_company_code;
+            $user->dealer_id           = $dealer_id;
 
             // Only fill plant-related fields when creating new record
             if (!$user->exists) {
