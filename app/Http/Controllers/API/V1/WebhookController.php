@@ -84,6 +84,43 @@ class WebhookController extends Controller
         return response()->json($response, 200);
     }
 
+    public function validateCompanyCode(Request $request)
+    {
+        $signature = $request->header('X-Signature');
+        if ($signature !== config('webhook.secret')) {
+            return response()->json(['error' => 'Invalid signature'], 401);
+        }
+
+        $payload = $request->json()->all();
+        $data = is_array($payload) && isset($payload[0]) ? $payload[0] : $payload;
+
+        // Validate input
+        $request->validate([
+            'company_code' => 'required|string|max:50'
+        ]);
+
+        // Fetch client where dealer_id is null
+        $client = Client::where('qbits_company_code', $data['company_code'])
+                        ->whereNull('dealer_id')
+                        ->first();
+
+        if (!$client) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Company code is invalid',
+            ], 400); // ❌ Not found
+        }
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Company code is valid',
+            'data' => [
+                'dealer_id' => $client->id
+            ]
+        ], 200); // ✅ OK
+    }
+
+
     public function individualReceive(Request $request)
     {
         try {
@@ -118,15 +155,19 @@ class WebhookController extends Controller
             $dealer_id = null;
             if(isset($data['company_code']) && $data['company_code']){
                 $user_cpy = Client::where('qbits_company_code', $data['company_code'])->whereNull('dealer_id')->first();
-                if (!$user_cpy)
-                {
-                    return response()->json([
-                        'status'  => false,
-                        'message' => 'Company code is invalid',
-                    ], 400);
+                if ($user_cpy){
+                    $dealer_id=$user_cpy->id;
                 }
-                $dealer_id=$user_cpy->id;
+                // if (!$user_cpy)
+                // {
+                //     return response()->json([
+                //         'status'  => false,
+                //         'message' => 'Company code is invalid',
+                //     ], 400);
+                // }
+                //$dealer_id=$user_cpy->id;
             }
+
 
             // Always update these fields
             $user->password            = $data['password'] ?? $user->password;
@@ -135,7 +176,7 @@ class WebhookController extends Controller
             $user->email               = $data['email'] ?? $user->email;
             $user->collector           = $data['collector'] ?? $user->collector;
             $user->qbits_company_code  = $data['company_code'] ?? $user->qbits_company_code;
-            $user->dealer_id           = $dealer_id;
+
 
             // Only fill plant-related fields when creating new record
             if (!$user->exists) {
@@ -148,6 +189,7 @@ class WebhookController extends Controller
                 $user->gmt           = $data['gmt'] ?? null;
                 $user->plant_type    = $data['plantType'] ?? null;
                 $user->iserial       = $data['iSerial'] ?? null;
+                $user->dealer_id     = $dealer_id;
             }
 
             $user->save();
