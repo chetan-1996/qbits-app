@@ -128,7 +128,6 @@ class WebhookController extends Controller
                 $dealer_id=$user_cpy->id;
             }
 
-
             // Always update these fields
             $user->password            = $data['password'] ?? $user->password;
             $user->phone               = $data['phone'] ?? $user->phone;
