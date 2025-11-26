@@ -276,12 +276,7 @@ class ClientController extends BaseController
         $query = DB::table('clients as c')
             ->leftJoin('inverter_status as s', 's.user_id', '=', 'c.id')
             ->select(
-                'c.id',
-                'c.company_name',
-                'c.qbits_company_code',
-                'c.username',
-                'c.email',
-                'c.phone',
+                'c.*',
                 DB::raw('COALESCE(s.all_plant,0) as all_plant'),
                 DB::raw('COALESCE(s.normal_plant,0) as normal_plant'),
                 DB::raw('COALESCE(s.alarm_plant,0) as alarm_plant'),
