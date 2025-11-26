@@ -30,5 +30,14 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('dealer/index', 'companyUser');
         Route::post('client/whatsapp-notification-update', 'postWhatsAppNotificationUpdate');
         Route::post('client/set-company-code', 'setCompanyCodeToIndivisualUser');
+        Route::get('client/inverter/totals', 'totals');
+    });
+
+    Route::get('/run-inverter-command', function () {
+        \Artisan::call('getInverterStatus:cron');
+        return response()->json([
+                'status' => true,
+                'message' => 'Inverter Status Command Executed Successfully'
+            ]);
     });
 });

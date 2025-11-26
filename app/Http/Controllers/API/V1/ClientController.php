@@ -251,4 +251,18 @@ class ClientController extends BaseController
             gc_collect_cycles();
         }
     }
+
+    public function totals()
+    {
+        // FAST: Single SQL query – no loops, no memory usage
+        $result = DB::table('inverter_status')->selectRaw('
+            SUM(all_plant) as total_all_plant,
+            SUM(normal_plant) as total_normal_plant,
+            SUM(alarm_plant) as total_alarm_plant,
+            SUM(offline_plant) as total_offline_plant
+        ')->first();
+
+
+        return $this->sendResponse($result, 'fetched successfully.');
+    }
 }
