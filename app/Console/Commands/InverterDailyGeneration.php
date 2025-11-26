@@ -32,7 +32,7 @@ class InverterDailyGeneration extends Command
 
         // Lazy load users one by one to reduce memory and CPU
         DB::table('clients')
-            ->whereNull('company_code')
+            // ->whereNull('company_code')
             ->where('daily_generation_report_flag', 1)
             ->select('id', 'username', 'password', 'phone','weekly_generation_report_flag')
             ->orderBy('id')
@@ -112,7 +112,8 @@ Submit a Ticket | Qbits: \nhttps://support.qbitsenergy.com";
             }
             // Cleanup
             unset($whatsAppContent, $response);
-            usleep(random_int(1000000, 3000000)); // microseconds (1s – 3s);
+            sleep(random_int(5, 15));
+            // usleep(random_int(1000000, 3000000)); // microseconds (1s – 3s);
         } catch (\Throwable $e) {
             \Log::error("DailyGenerationReport error for user {$user->id}: {$e->getMessage()}");
         }
