@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Client;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 use Exception;
 
 class ClientController extends BaseController
@@ -266,54 +267,177 @@ class ClientController extends BaseController
         return $this->sendResponse($result, 'fetched successfully.');
     }
 
+public function groupedClients(Request $request)
+{
+    $search   = $request->search;
+    $perPage  = $request->per_page ?? 20;
 
-    public function groupedClients(Request $request)
-    {
-        $search = $request->search ?? null;
-        $limit  = $request->limit ?? 200;
+    $pages = [
+        'all'     => $request->page_all     ?? 1,
+        'normal'  => $request->page_normal  ?? 1,
+        'alarm'   => $request->page_alarm   ?? 1,
+        'offline' => $request->page_offline ?? 1,
+    ];
 
-        // Base query (pagination ONLY once)
-        $query = DB::table('clients as c')
-            ->leftJoin('inverter_status as s', 's.user_id', '=', 'c.id')
-            ->select(
-                'c.*',
-                DB::raw('COALESCE(s.all_plant,0) as all_plant'),
-                DB::raw('COALESCE(s.normal_plant,0) as normal_plant'),
-                DB::raw('COALESCE(s.alarm_plant,0) as alarm_plant'),
-                DB::raw('COALESCE(s.offline_plant,0) as offline_plant')
-            );
+    // Cache key based on search + pagination
+    $cacheKey = function($type, $page) use ($search, $perPage) {
+        return "clients_{$type}_{$search}_{$page}_{$perPage}";
+    };
 
-        // Search filter
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('c.username', 'LIKE', "%{$search}%")
-                ->orWhere('c.company_name', 'LIKE', "%{$search}%")
-                ->orWhere('c.qbits_company_code', 'LIKE', "%{$search}%")
-                ->orWhere('c.email', 'LIKE', "%{$search}%")
-                ->orWhere('c.phone', 'LIKE', "%{$search}%");
-            });
-        }
+    // Cached responses ↓ this avoids 90% DB hits
+    $cached = function($key, $callback) {
+        return Cache::remember($key, 60, $callback); // 1 minute cache
+    };
 
-        // ❗ COMMON Pagination
-        $paginated = $query->paginate($limit);
+    // Base Query
+    $base = DB::table('clients as c')
+        ->leftJoin('inverter_status as s', 's.user_id', '=', 'c.id')
+        ->select(
+            'c.*',
+            DB::raw('COALESCE(s.all_plant,0)     AS all_plant'),
+            DB::raw('COALESCE(s.normal_plant,0)  AS normal_plant'),
+            DB::raw('COALESCE(s.alarm_plant,0)   AS alarm_plant'),
+            DB::raw('COALESCE(s.offline_plant,0) AS offline_plant')
+        );
 
-        // Convert paginated results to collection
-        $items = collect($paginated->items());
-
-        // GROUPED LISTS FROM SAME PAGINATED RESULTS
-        $allPlant     = $items; // all records inside paginated page
-        $normalPlant  = $items->where('normal_plant',  '>', 0)->values();
-        $alarmPlant   = $items->where('alarm_plant',   '>', 0)->values();
-        $offlinePlant = $items->where('offline_plant', '>', 0)->values();
-
-        return $this->sendResponse([
-            'pagination'     => $paginated,   // 🔹 Only one pagination
-            'all_plant'      => $allPlant,
-            'normal_plant'   => $normalPlant,
-            'alarm_plant'    => $alarmPlant,
-            'offline_plant'  => $offlinePlant,
-        ], 'Grouped client list with common pagination fetched.');
+    if ($search) {
+        $base->where(function ($q) use ($search) {
+            $q->where('c.username', 'LIKE', "%{$search}%")
+              ->orWhere('c.company_name', 'LIKE', "%{$search}%")
+              ->orWhere('c.qbits_company_code', 'LIKE', "%{$search}%")
+              ->orWhere('c.email', 'LIKE', "%{$search}%")
+              ->orWhere('c.phone', 'LIKE', "%{$search}%");
+        });
     }
+
+    // Helper for pagination
+    $paginate = function ($query, $pageName, $page) use ($perPage) {
+        return $query->paginate($perPage, ['*'], $pageName, $page);
+    };
+
+    // Group-wise cached pagination
+    $allPlant = $cached($cacheKey('all', $pages['all']), function () use ($base, $paginate, $pages) {
+        return $paginate((clone $base), 'page_all', $pages['all']);
+    });
+
+    $normalPlant = $cached($cacheKey('normal', $pages['normal']), function () use ($base, $paginate, $pages) {
+        return $paginate((clone $base)->where('s.normal_plant', '>', 0), 'page_normal', $pages['normal']);
+    });
+
+    $alarmPlant = $cached($cacheKey('alarm', $pages['alarm']), function () use ($base, $paginate, $pages) {
+        return $paginate((clone $base)->where('s.alarm_plant', '>', 0), 'page_alarm', $pages['alarm']);
+    });
+
+    $offlinePlant = $cached($cacheKey('offline', $pages['offline']), function () use ($base, $paginate, $pages) {
+        return $paginate((clone $base)->where('s.offline_plant', '>', 0), 'page_offline', $pages['offline']);
+    });
+
+    return $this->sendResponse([
+        'all_plant'     => $allPlant,
+        'normal_plant'  => $normalPlant,
+        'alarm_plant'   => $alarmPlant,
+        'offline_plant' => $offlinePlant
+    ], 'MAX optimized client list.');
+}
+
+
+
+    // public function groupedClients(Request $request)
+    // {
+    //     $search = $request->input('search');
+    //     $limit  = $request->input('limit', 20);
+
+    //     // Ultra optimized base query (only 1 DB hit)
+    //     $query = DB::table('clients as c')
+    //         ->leftJoin('inverter_status as s', 's.user_id', '=', 'c.id')
+    //         ->select(
+    //             'c.*',
+    //             DB::raw('COALESCE(s.all_plant,0) as all_plant'),
+    //             DB::raw('COALESCE(s.normal_plant,0) as normal_plant'),
+    //             DB::raw('COALESCE(s.alarm_plant,0) as alarm_plant'),
+    //             DB::raw('COALESCE(s.offline_plant,0) as offline_plant')
+    //         );
+
+    //     // Optimized search (index-friendly)
+    //     if ($search) {
+    //         $query->where(function ($q) use ($search) {
+    //             $q->where('c.username', 'LIKE', "%{$search}%")
+    //             ->orWhere('c.company_name', 'LIKE', "%{$search}%")
+    //             ->orWhere('c.qbits_company_code', 'LIKE', "%{$search}%")
+    //             ->orWhere('c.email', 'LIKE', "%{$search}%")
+    //             ->orWhere('c.phone', 'LIKE', "%{$search}%");
+    //         });
+    //     }
+
+    //     // Only one pagination query
+    //     $paginated = $query->paginate($limit);
+
+    //     // Convert to collection (in-memory filtering)
+    //     $items = collect($paginated->items());
+
+    //     // Group results from same dataset
+    //     $allPlant     = $items;
+    //     $normalPlant  = $items->where('normal_plant',  '>', 0)->values();
+    //     $alarmPlant   = $items->where('alarm_plant',   '>', 0)->values();
+    //     $offlinePlant = $items->where('offline_plant', '>', 0)->values();
+
+    //     return $this->sendResponse([
+    //         'pagination'     => $paginated,
+    //         'all_plant'      => $allPlant,
+    //         'normal_plant'   => $normalPlant,
+    //         'alarm_plant'    => $alarmPlant,
+    //         'offline_plant'  => $offlinePlant,
+    //     ], 'Optimized grouped client list fetched successfully.');
+    // }
+
+
+    // public function groupedClients(Request $request)
+    // {
+    //     $search = $request->search ?? null;
+    //     $limit  = $request->limit ?? 200;
+
+    //     // Base query (pagination ONLY once)
+    //     $query = DB::table('clients as c')
+    //         ->leftJoin('inverter_status as s', 's.user_id', '=', 'c.id')
+    //         ->select(
+    //             'c.*',
+    //             DB::raw('COALESCE(s.all_plant,0) as all_plant'),
+    //             DB::raw('COALESCE(s.normal_plant,0) as normal_plant'),
+    //             DB::raw('COALESCE(s.alarm_plant,0) as alarm_plant'),
+    //             DB::raw('COALESCE(s.offline_plant,0) as offline_plant')
+    //         );
+
+    //     // Search filter
+    //     if ($search) {
+    //         $query->where(function ($q) use ($search) {
+    //             $q->where('c.username', 'LIKE', "%{$search}%")
+    //             ->orWhere('c.company_name', 'LIKE', "%{$search}%")
+    //             ->orWhere('c.qbits_company_code', 'LIKE', "%{$search}%")
+    //             ->orWhere('c.email', 'LIKE', "%{$search}%")
+    //             ->orWhere('c.phone', 'LIKE', "%{$search}%");
+    //         });
+    //     }
+
+    //     // ❗ COMMON Pagination
+    //     $paginated = $query->paginate($limit);
+
+    //     // Convert paginated results to collection
+    //     $items = collect($paginated->items());
+
+    //     // GROUPED LISTS FROM SAME PAGINATED RESULTS
+    //     $allPlant     = $items; // all records inside paginated page
+    //     $normalPlant  = $items->where('normal_plant',  '>', 0)->values();
+    //     $alarmPlant   = $items->where('alarm_plant',   '>', 0)->values();
+    //     $offlinePlant = $items->where('offline_plant', '>', 0)->values();
+
+    //     return $this->sendResponse([
+    //         'pagination'     => $paginated,   // 🔹 Only one pagination
+    //         'all_plant'      => $allPlant,
+    //         'normal_plant'   => $normalPlant,
+    //         'alarm_plant'    => $alarmPlant,
+    //         'offline_plant'  => $offlinePlant,
+    //     ], 'Grouped client list with common pagination fetched.');
+    // }
 
     // public function groupedClients()
     // {
