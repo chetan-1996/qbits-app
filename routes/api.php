@@ -25,6 +25,7 @@ Route::prefix('v1')->group(function () {
     Route::post('/webhook/company', [WebhookController::class, 'companyReceive']);
     Route::post('/webhook/whatsapp-notification/update', [WebhookController::class, 'postWhatsAppNotification']);
     Route::get('/webhook/whatsapp-notification/{userId}', [WebhookController::class, 'getWhatsAppNotification']);
+    Route::post('/webhook/validate-company-code', [WebhookController::class, 'validateCompanyCode']);
    // Route::post('/webhook/company', [WebhookController::class, 'companyReceive']);
 });
 
