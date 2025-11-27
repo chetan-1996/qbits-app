@@ -152,7 +152,9 @@ class AuthController extends BaseController
                 // Webhook → lightweight POST (no headers needed)
                 $webhookUrl = env('APP_URL') . "api/" . config('app.api_version') . "/webhook/company";
 
-                $http->post($webhookUrl, [
+                $http->withHeaders([
+                    'X-Signature' => 'eyJhbGciOi3nMiGM6H9FNFUROf3wh7SmQ30',
+                ])->post($webhookUrl, [
                     'atun'                => $validated['user_id'],
                     'atpd'                => $validated['password'],
                     'code'                => $validated['company_code'],
