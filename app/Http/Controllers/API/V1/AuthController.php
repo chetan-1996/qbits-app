@@ -49,7 +49,7 @@ class AuthController extends BaseController
             $validated = $request->validate([
                 'user_id'      => 'required|string|max:255',
                 'company_name' => 'required|string|max:255',
-                'email'        => 'required|email|max:255|unique:clients,email',
+                'email'        => 'required|email|max:255',
                 'password'     => 'required|string',
                 'c_password'   => 'required|same:password',
                 'company_code' => 'required|string',
