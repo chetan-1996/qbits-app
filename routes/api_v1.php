@@ -31,7 +31,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('client/whatsapp-notification-update', 'postWhatsAppNotificationUpdate');
         Route::post('client/set-company-code', 'setCompanyCodeToIndivisualUser');
         Route::get('client/inverter/totals', 'totals');
-        Route::get('client/groupedClients', 'groupedClients');
+        Route::get('client/grouped-clients', 'groupedClients');
     });
 
     Route::get('/run-inverter-command', function () {
