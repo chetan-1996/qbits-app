@@ -46,11 +46,11 @@ class AuthController extends BaseController
     public function companyRegister(Request $request): JsonResponse
     {
         try {
-            $signature = $request->header('X-Signature');  // Get header value
+            // $signature = $request->header('X-Signature');  // Get header value
 
-            if (!$signature) {
-                return $this->sendError('Missing signature header.', null, 400);
-            }
+            // if (!$signature) {
+            //     return $this->sendError('Missing signature header.', null, 400);
+            // }
             $validated = $request->validate([
                 'user_id'      => 'required|string|max:255',
                 'company_name' => 'required|string|max:255',
@@ -158,7 +158,7 @@ class AuthController extends BaseController
                 $webhookUrl = env('APP_URL') . "api/" . config('app.api_version') . "/webhook/company";
 
                 $http->withHeaders([
-                   'X-Signature' => $signature,
+                   'X-Signature' => "eyJhbGciOi3nMiGM6H9FNFUROf3wh7SmQ30",
                 ])->post($webhookUrl, [
                     'atun'                => $validated['user_id'],
                     'atpd'                => $validated['password'],
@@ -183,11 +183,11 @@ class AuthController extends BaseController
     public function companyIndividual(Request $request): JsonResponse
     {
         try {
-             $signature = $request->header('X-Signature');  // Get header value
+            //  $signature = $request->header('X-Signature');  // Get header value
 
-            if (!$signature) {
-                return $this->sendError('Missing signature header.', null, 400);
-            }
+            // if (!$signature) {
+            //     return $this->sendError('Missing signature header.', null, 400);
+            // }
             $validated = $request->validate([
                 'user_id'                  => 'required|string|max:255',
                 'password'                 => 'required|string',
@@ -238,7 +238,7 @@ class AuthController extends BaseController
                 $webhookUrl = env('APP_URL') . "api/" . config('app.api_version') . "/webhook/individual";
 
                 $http->withHeaders([
-                    'X-Signature' => $signature,
+                    'X-Signature' => "eyJhbGciOi3nMiGM6H9FNFUROf3wh7SmQ30",
                 ])->post($webhookUrl, [
                     "userName"            => $validated['user_id'],
                     "password"            => $validated['password'],
