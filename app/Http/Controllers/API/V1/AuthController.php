@@ -46,6 +46,11 @@ class AuthController extends BaseController
     public function companyRegister(Request $request): JsonResponse
     {
         try {
+            $signature = $request->header('X-Signature');  // Get header value
+
+            if (!$signature) {
+                return $this->sendError('Missing signature header.', null, 400);
+            }
             $validated = $request->validate([
                 'user_id'      => 'required|string|max:255',
                 'company_name' => 'required|string|max:255',
@@ -153,7 +158,7 @@ class AuthController extends BaseController
                 $webhookUrl = env('APP_URL') . "api/" . config('app.api_version') . "/webhook/company";
 
                 $http->withHeaders([
-                    'X-Signature' => 'eyJhbGciOi3nMiGM6H9FNFUROf3wh7SmQ30',
+                   'X-Signature' => $signature,
                 ])->post($webhookUrl, [
                     'atun'                => $validated['user_id'],
                     'atpd'                => $validated['password'],
@@ -178,6 +183,11 @@ class AuthController extends BaseController
     public function companyIndividual(Request $request): JsonResponse
     {
         try {
+             $signature = $request->header('X-Signature');  // Get header value
+
+            if (!$signature) {
+                return $this->sendError('Missing signature header.', null, 400);
+            }
             $validated = $request->validate([
                 'user_id'                  => 'required|string|max:255',
                 'password'                 => 'required|string',
@@ -220,14 +230,16 @@ class AuthController extends BaseController
             ])->json();
 
             if($response['message']=='Users already exist'){
-                return $this->sendError('Users Or collector already exist.', null, 500);
+                return $this->sendError('Users Or collector already exist.', null, 400);
             }
 
             if($response['message']=='success'){
 
                 $webhookUrl = env('APP_URL') . "api/" . config('app.api_version') . "/webhook/individual";
 
-                $http->post($webhookUrl, [
+                $http->withHeaders([
+                    'X-Signature' => $signature,
+                ])->post($webhookUrl, [
                     "userName"            => $validated['user_id'],
                     "password"            => $validated['password'],
                     "phone"               => $validated['whatsapp_no'],
