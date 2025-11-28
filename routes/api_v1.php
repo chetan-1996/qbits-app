@@ -11,6 +11,7 @@ Route::controller(AuthController::class)->group(function () {
     Route::post('register', 'register');
     Route::post('login', 'login');
     Route::post('company/register', 'companyRegister');
+    Route::post('individual', 'companyIndividual');
     Route::post('company/generate/code', 'generateCode');
 });
 
