@@ -12,4 +12,5 @@ Schedule::command('inverterMonthlyGeneration:cron')->monthlyOn(1, '4:45')->runIn
 Schedule::command('inverterDailyGeneration:cron')->dailyAt('19:30')->runInBackground()->withoutOverlapping();
 // Schedule::command('inverterFault:cron')->twiceDaily(10, 16)->runInBackground()->withoutOverlapping();
 Schedule::command('inverterFault:cron')->hourly()->between('08:00', '18:00')->runInBackground()->withoutOverlapping();
+Schedule::command('getInverterStatus:cron')->everyThirtyMinutes()->between('08:00', '19:00')->runInBackground()->withoutOverlapping();
 //Schedule::command('test:cron')->everyMinute();
