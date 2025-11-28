@@ -237,7 +237,7 @@ class AuthController extends BaseController
 
                 $webhookUrl = env('APP_URL') . "api/" . config('app.api_version') . "/webhook/individual";
 
-                $http->withHeaders([
+                $asd = $http->withHeaders([
                     'X-Signature' => "eyJhbGciOi3nMiGM6H9FNFUROf3wh7SmQ30",
                 ])->post($webhookUrl, [
                     "userName"            => $validated['user_id'],
@@ -258,7 +258,8 @@ class AuthController extends BaseController
                     "email"               => "",
                     "parent"              => "",
                 ]);
-                return $this->sendResponse([], 'Individual registered successfully.');
+
+                return $this->sendResponse([$asd->json()], 'Individual registered successfully.');
             }
             return $this->sendError('Registration failed.', null, 400);
 
