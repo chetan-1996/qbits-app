@@ -175,6 +175,88 @@ class AuthController extends BaseController
         }
     }
 
+    public function companyIndividual(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'user_id'                  => 'required|string|max:255',
+                'password'                 => 'required|string',
+                'c_password'               => 'required|same:password',
+                'whatsapp_no'              => 'required',
+                'home_name'                => 'required|string|max:255',
+                'company_code'             => 'nullable|string',
+                'wifi_serial_number'       => 'required|string|max:255',
+                'inverter_serial_number'   => 'required|string|max:255',
+                'city_name'                => 'required|string|max:255',
+                'longitude'                => 'nullable|string',
+                'latitude'                 => 'nullable|string',
+                'time_zone'                => 'required|string|max:255',
+                'station_type'             => 'required|string|max:255',
+                'iserial'                  => 'nullable',
+                'qq'                       => 'nullable',
+                'email'                    => 'nullable|email',
+                '           '                   => 'nullable',
+            ]);
+
+            // Single HTTP instance → Less CPU & Memory
+            $http = Http::withOptions(['verify' => false]);
+
+            $response = $http->asForm()->post('https://www.aotaisolarcloud.com/ATSolarInfo/userRegister.action', [
+                'userName'     => $validated['user_id'],
+                'password'     => $validated['password'],
+                'phone'        => $validated['whatsapp_no'],
+                'collector'    => $validated['wifi_serial_number'],
+                'plantName'    => $validated['home_name'],
+                'invertertype' => $validated['inverter_serial_number'],
+                'cityname'     => $validated['city_name'],
+                'longitude'    => $validated['longitude'],
+                'latitude'     => $validated['latitude'],
+                'gmt'          => $validated['time_zone'],
+                'plantType'    => $validated['station_type'],
+                'iSerial'      => '',
+                'QQ'           => '',
+                'email'        => '',
+                'parent'       => '',
+            ])->json();
+
+            if($response['message']=='Users already exist'){
+                return $this->sendError('Users Or collector already exist.', null, 500);
+            }
+
+            if($response['message']=='success'){
+
+                $webhookUrl = env('APP_URL') . "api/" . config('app.api_version') . "/webhook/individual";
+
+                $http->post($webhookUrl, [
+                    "userName"            => $validated['user_id'],
+                    "password"            => $validated['password'],
+                    "phone"               => $validated['whatsapp_no'],
+                    "collector"           => $validated['wifi_serial_number'],
+                    "plantName"           => $validated['home_name'],
+                    "invertertype"        => $validated['inverter_serial_number'],
+                    "cityname"            => $validated['city_name'],
+                    "longitude"           => $validated['longitude'],
+                    "latitude"            => $validated['latitude'],
+                    "gmt"                 => $validated['time_zone'],
+                    "plantType"           => $validated['station_type'],
+                    "mobile_device_token" => "",
+                    "company_code"        => $validated['company_code'],
+                    "iSerial"             => "",
+                    "QQ"                  => "",
+                    "email"               => "",
+                    "parent"              => "",
+                ]);
+                return $this->sendResponse([], 'Individual registered successfully.');
+            }
+            return $this->sendError('Registration failed.', null, 400);
+
+        } catch (ValidationException $e) {
+            return $this->sendError('Validation failed.', $e->errors(), 400);
+        } catch (\Throwable $e) {
+            return $this->handleException($e, 'Failed to register user.');
+        }
+    }
+
     // public function companyRegister(Request $request): JsonResponse
     // {
     //     try {
