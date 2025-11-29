@@ -32,7 +32,8 @@ class InverterDailyGeneration extends Command
 
         // Lazy load users one by one to reduce memory and CPU
         DB::table('clients')
-            ->whereNull('company_code')
+            ->where('phone', '!=', '')
+            // ->whereNull('company_code')
             ->where('daily_generation_report_flag', 1)
             ->select('id', 'username', 'password', 'phone','weekly_generation_report_flag')
             ->orderBy('id')
