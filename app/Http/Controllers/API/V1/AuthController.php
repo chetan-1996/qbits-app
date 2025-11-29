@@ -259,7 +259,7 @@ class AuthController extends BaseController
                     "parent"              => "",
                 ]);
 
-                return $this->sendResponse([$asd->json()], 'Individual registered successfully.');
+                return $this->sendResponse(["abc"=> $asd->json(),"test"=>$validated['user_id']], 'Individual registered successfully.');
             }
             return $this->sendError('Registration failed.', null, 400);
 
