@@ -33,7 +33,8 @@ class InverterWeeklyGeneration extends Command
         // Lazy load users one by one to reduce memory and CPU
         DB::table('clients as u')
             ->join('qbits_daily_generations as g', 'u.username', '=', 'g.username')
-            ->whereNull('u.company_code')
+            ->where('u.phone', '!=', '')
+            // ->whereNull('u.company_code')
             ->where('u.weekly_generation_report_flag', 1)
             ->select('g.id', 'g.username', 'g.total_daily_generation','u.phone')
             ->orderBy('u.id')
@@ -93,7 +94,8 @@ Submit a Ticket | Qbits \nhttps://support.qbitsenergy.com";
 
             // Cleanup
             unset($whatsAppContent);
-            usleep(random_int(1000000, 3000000)); // microseconds (1s – 3s)
+            sleep(random_int(5, 30));
+            // usleep(random_int(1000000, 3000000)); // microseconds (1s – 3s)
         } catch (\Throwable $e) {
             \Log::error("DailyGenerationReport error for user {$user->id}: {$e->getMessage()}");
         }
