@@ -240,7 +240,7 @@ class AuthController extends BaseController
                 $asd = $http->withHeaders([
                     'X-Signature' => "eyJhbGciOi3nMiGM6H9FNFUROf3wh7SmQ30",
                     'Content-Type' => 'application/json',
-                ])->asForm()->post($webhookUrl, [
+                ])->post($webhookUrl, [
                     "userName"            => $validated['user_id'],
                     "password"            => $validated['password'],
                     "phone"               => $validated['whatsapp_no'],
