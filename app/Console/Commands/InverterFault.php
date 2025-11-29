@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class InverterFault extends Command
 {
@@ -44,8 +45,9 @@ class InverterFault extends Command
 
         // Process users in batches to reduce memory footprint
         DB::table('clients')
+            ->where('phone', '!=', '')
             ->where('inverter_fault_flag', 1)
-            ->whereNull('company_code')
+            // ->whereNull('company_code')
             ->orderBy('id')
             ->chunk(50, function ($users) use ($faultSolutions) {
                 foreach ($users as $user) {
@@ -57,7 +59,7 @@ class InverterFault extends Command
                         'Content-Type'  => 'application/x-www-form-urlencoded',
                     ];
                     $loginData = ['atun' => $user->username, 'atpd' => $user->password];
-                    $response_login = Http::withHeaders($headers)
+                    $response_login = Http::withOptions(['verify' => false])->withHeaders($headers)
                         ->asForm()
                         ->post('https://www.aotaisolarcloud.com/solarweb/api/login', $loginData);
 
@@ -74,12 +76,12 @@ class InverterFault extends Command
                             'token'          => $token,
                         ];
                         $cur_date = now()->format('Y-m-d');     // 2025-09-30
-                        // $cur_time = "5:00";
-                        $cur_time = now()->format('H:i');
+                        $cur_time = "00:00";
+                        // $cur_time = now()->format('H:i');
                         $url = "http://www.aotaisolarcloud.com/solarweb/inverterWarn/getWarnByDateTime?"
-                            . "iid=0&date={$cur_date}&time={$cur_time}&page=0&pageSize=5&atun={$user->username}&atpd={$user->password}";
+                            . "iid=0&date={$cur_date}&time={$cur_time}&page=0&pageSize=500&atun={$user->username}&atpd={$user->password}";
 
-                        $response = Http::withHeaders($headers)->get($url);
+                        $response = Http::withOptions(['verify' => false])->withHeaders($headers)->get($url);
 
                         // For demonstration, assume $response is parsed into array $data.
                         $data = $response['list'] ?? [];
@@ -108,7 +110,8 @@ class InverterFault extends Command
                                         . "*Email*: support@qbitsenergy.com"
                                 ];
                                 $wabbWebhookUrl = config('services.webhook.url');
-                                Http::get($wabbWebhookUrl, $whatsAppContent);
+                                Http::withOptions(['verify' => false])->get($wabbWebhookUrl, $whatsAppContent);
+                                sleep(random_int(5, 30));
                             }
                         }
 
@@ -151,7 +154,7 @@ class InverterFault extends Command
         return [
             "Grid voltage is too high" => [
                 "code" => "F3:15",
-                "solution" => "1.Check whether the grid is being lost.2.Check whether the AC terminal is burned out.3.Check whether the air switch of the distribution box works properly"
+                "solution" => "1.Check whether the grid is being lost.\n2.Check whether the AC terminal is burned out.\n3.Check whether the air switch of the distribution box works properly"
             ],
             "High leakage current" => [
                 "code" => "F3:13",
@@ -319,27 +322,27 @@ class InverterFault extends Command
             ],
             "Phase A voltage is too high" => [
                 "code" => "F2:14",
-                "solution" => "1.Check the AC phase voltage is not greater than Safety Voltage.2.Check whether the AC terminal is burned out"
+                "solution" => "1.Check the AC phase voltage is not greater than Safety Voltage.\n2.Check whether the AC terminal is burned out"
             ],
             "Phase B voltage is too high" => [
                 "code" => "F2:13",
-                "solution" => "1.Check the AC phase voltage is not greater than Safety Voltage.2.Check whether the AC terminal is burned out"
+                "solution" => "1.Check the AC phase voltage is not greater than Safety Voltage.\n2.Check whether the AC terminal is burned out"
             ],
             "Phase C voltage is too high" => [
                 "code" => "F2:12",
-                "solution" => "1.Check the AC phase voltage is not greater than Safety Voltage.2.Check whether the AC terminal is burned out"
+                "solution" => "1.Check the AC phase voltage is not greater than Safety Voltage.\n2.Check whether the AC terminal is burned out"
             ],
             "Phase A voltage is too low" => [
                 "code" => "F2:11",
-                "solution" => "1.Check whether the grid is being lost.2.Check whether the AC terminal is burned out.3.Check whether the air switch of the distribution box works properly"
+                "solution" => "1.Check whether the grid is being lost.\n2.Check whether the AC terminal is burned out.\n3.Check whether the air switch of the distribution box works properly"
             ],
             "Phase B voltage is too low" => [
                 "code" => "F2:10",
-                "solution" => "1.Check whether the grid is being lost.2.Check whether the AC terminal is burned out.3.Check whether the air switch of the distribution box works properly"
+                "solution" => "1.Check whether the grid is being lost.\n2.Check whether the AC terminal is burned out.\n3.Check whether the air switch of the distribution box works properly"
             ],
             "Phase C voltage is too low" => [
                 "code" => "F2:09",
-                "solution" => "1.Check whether the grid is being lost.2.Check whether the AC terminal is burned out.3.Check whether the air switch of the distribution box works properly"
+                "solution" => "1.Check whether the grid is being lost.\n2.Check whether the AC terminal is burned out.\n3.Check whether the air switch of the distribution box works properly"
             ],
             "Phase A current is too high" => [
                 "code" => "F2:08",
@@ -355,7 +358,7 @@ class InverterFault extends Command
             ],
             "Low frequency" => [
                 "code" => "F2:05",
-                "solution" => "1.Check whether the power grid is lost.2.Check whether the AC terminal is burned out.3.Check whether the air switch of the distribution box works properly"
+                "solution" => "1.Check whether the power grid is lost.\n2.Check whether the AC terminal is burned out.\n3.Check whether the air switch of the distribution box works properly"
             ],
             "High frequency" => [
                 "code" => "F2:04",
