@@ -238,9 +238,8 @@ class AuthController extends BaseController
                 $webhookUrl = env('APP_URL') . "api/" . config('app.api_version') . "/webhook/individual";
 
                 $asd = $http->withHeaders([
-                    'X-Signature'      => "eyJhbGciOi3nMiGM6H9FNFUROf3wh7SmQ30",
-                    'Accept'           => 'application/json'
-                ])->post($webhookUrl, [
+                    'X-Signature'      => "eyJhbGciOi3nMiGM6H9FNFUROf3wh7SmQ30"
+                ])->withBody(json_encode([
                     "userName"            => $validated['user_id'],
                     "password"            => $validated['password'],
                     "phone"               => $validated['whatsapp_no'],
@@ -258,7 +257,7 @@ class AuthController extends BaseController
                     "QQ"                  => "",
                     "email"               => "",
                     "parent"              => "",
-                ]);
+                ]), 'application/json')->post($webhookUrl);
 
                 return $this->sendResponse(["abc"=> $asd->json(),"test"=>$validated['user_id']], 'Individual registered successfully.');
             }
