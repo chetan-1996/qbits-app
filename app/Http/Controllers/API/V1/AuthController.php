@@ -259,7 +259,7 @@ class AuthController extends BaseController
                     "parent"              => "",
                 ]), 'application/json')->post($webhookUrl);
 
-                return $this->sendResponse(["abc"=> $asd->json(),"test"=>$validated['user_id']], 'Individual registered successfully.');
+                return $this->sendResponse([], 'Individual registered successfully.');
             }
             return $this->sendError('Registration failed.', null, 400);
 
