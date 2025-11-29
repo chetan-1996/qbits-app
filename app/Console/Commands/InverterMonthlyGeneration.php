@@ -21,7 +21,8 @@ class InverterMonthlyGeneration extends Command
 
         // Lazy load users one by one
         DB::table('clients')
-            ->whereNull('company_code')
+            ->where('phone', '!=', '')
+            // ->whereNull('company_code')
             ->where('monthly_generation_report_flag', 1)
             ->select('id', 'username', 'password', 'phone')
             ->orderBy('id')
@@ -117,7 +118,7 @@ Submit a Ticket | Qbits: \nhttps://support.qbitsenergy.com";
                 $wabbWebhookUrl,
                 $payload
             );
-
+            sleep(random_int(5, 30));
         } catch (\Throwable $e) {
             \Log::error("MonthlyReport error for user {$user->id}: {$e->getMessage()}");
         }
