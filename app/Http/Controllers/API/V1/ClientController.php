@@ -290,7 +290,7 @@ public function groupedClients(Request $request)
 
     // Cached responses ↓ this avoids 90% DB hits
     $cached = function($key, $callback) {
-        return Cache::remember($key, 60, $callback); // 1 minute cache
+        return Cache::remember($key, 1, $callback); // 1 minute cache
     };
 
     // Base Query
