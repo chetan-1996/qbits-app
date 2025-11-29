@@ -134,8 +134,7 @@ class WebhookController extends Controller
             }
 
             // ✅ Log raw data for debugging
-            Log::info('Webhook received:', $request->all());
-
+            Log::info('Individual Webhook received:', $request->json()->all());
             /* ----------------------------------------------------
              * ✅ 2. Parse JSON payload
              * ---------------------------------------------------- */
