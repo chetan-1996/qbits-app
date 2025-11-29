@@ -51,7 +51,7 @@ class InverterMonthlyGeneration extends Command
             // Step 1: Login
             [$contentMd5, $timestamp] = $this->generateCustomString(new \DateTime());
 
-            $loginResponse = Http::withHeaders([
+            $loginResponse = Http::withOptions(['verify' => false])->withHeaders([
                 'Content-MD5'  => $contentMd5,
                 'timestamp'    => $timestamp,
                 'Content-Type' => 'application/x-www-form-urlencoded',
@@ -83,7 +83,7 @@ class InverterMonthlyGeneration extends Command
 
             // Step 3: Fetch monthly data
             $url      = "https://www.aotaisolarcloud.com/solarweb/api/user/getMonthBar?date={$dateParam}";
-            $response = Http::withHeaders($headers)->timeout(10)->get($url);
+            $response = Http::withOptions(['verify' => false])->withHeaders($headers)->timeout(10)->get($url);
 
             if (!$response->successful() || empty($response['data'])) {
                 \Log::warning("MonthlyReport: Data fetch failed for user {$user->id}");
@@ -114,7 +114,7 @@ Submit a Ticket | Qbits: \nhttps://support.qbitsenergy.com";
 
             // Step 5: Send WhatsApp via Wabb webhook
             $wabbWebhookUrl = config('services.webhook.url');
-            Http::timeout(5)->get(
+            Http::withOptions(['verify' => false])->timeout(5)->get(
                 $wabbWebhookUrl,
                 $payload
             );
