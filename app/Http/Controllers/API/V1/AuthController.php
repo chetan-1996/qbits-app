@@ -238,8 +238,9 @@ class AuthController extends BaseController
                 $webhookUrl = env('APP_URL') . "api/" . config('app.api_version') . "/webhook/individual";
 
                 $asd = $http->withHeaders([
-                    'X-Signature' => "eyJhbGciOi3nMiGM6H9FNFUROf3wh7SmQ30",
-                    'Content-Type' => 'application/json',
+                    'X-Signature'      => "eyJhbGciOi3nMiGM6H9FNFUROf3wh7SmQ30",
+                    'Accept'           => 'application/json',
+                    'Content-Type'     => 'application/json; charset=utf-8',
                 ])->post($webhookUrl, [
                     "userName"            => $validated['user_id'],
                     "password"            => $validated['password'],
