@@ -100,13 +100,17 @@ class ClientController extends BaseController
                     // ✅ Use full-text or LIKE search depending on index
                     $q->where(function ($sub) use ($search) {
                         $sub->where('username', 'like', "%{$search}%")
-                            ->where('company_name', 'like', "%{$search}%")
-                            ->where('qbits_company_code', 'like', "%{$search}%")
+                            ->orwhere('company_name', 'like', "%{$search}%")
+                            ->orwhere('qbits_company_code', 'like', "%{$search}%")
                             ->orWhere('email', 'like', "%{$search}%");
                     });
                 })
                 ->orderBy($sort, $dir);
-
+//                 dd([
+//     'sql' => $query->toSql(),
+//     'bindings' => $query->getBindings()
+// ]);
+// dd($query);
             // ✅ Use cursor pagination for large data
             $clients = $query->cursorPaginate($perPage);
 
