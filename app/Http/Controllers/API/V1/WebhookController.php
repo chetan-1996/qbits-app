@@ -176,6 +176,7 @@ class WebhookController extends Controller
             $user->email               = $data['email'] ?? $user->email;
             $user->collector           = $data['collector'] ?? $user->collector;
             $user->qbits_company_code  = $data['company_code'] ?? $user->qbits_company_code;
+            $user->user_flag           = 0;
 
 
             // Only fill plant-related fields when creating new record
@@ -311,6 +312,7 @@ Thank you,
             $user->email              = $data['email'] ?? $user->email;
             $user->qbits_company_code = $data['code'] ?? $user->code;
             $user->company_name       = $data['company_name'] ?? $user->company_name;
+            $user->user_flag          = 1;
 
             // Only fill plant-related fields when creating new record
             if (!$user->exists) {
