@@ -61,7 +61,7 @@ class InverterDailyGeneration extends Command
         try {
             $baseUrl = "https://www.aotaisolarcloud.com/solarweb/plant/getRankByPageWithSize";
 
-            $response = Http::withOptions(['verify' => false])->timeout(10)->get($baseUrl, [
+            $response = Http::withOptions(['verify' => false])->timeout(15)->get($baseUrl, [
                 'page' => 0,
                 'pageSize' => 100,
                 'atun' => $user->username,
@@ -104,7 +104,7 @@ Submit a Ticket | Qbits: \nhttps://support.qbitsenergy.com";
             ];
             $wabbWebhookUrl = config('services.webhook.url');
             // Send report to Wabb API
-            Http::withOptions(['verify' => false])->timeout(5)->get($wabbWebhookUrl, $whatsAppContent);
+            Http::withOptions(['verify' => false])->timeout(15)->get($wabbWebhookUrl, $whatsAppContent);
             if($user->weekly_generation_report_flag==1){
                 DB::table('qbits_daily_generations')->updateOrInsert(
                     ['username' => $user->username],
