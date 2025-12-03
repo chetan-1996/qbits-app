@@ -302,7 +302,13 @@ public function groupedClients(Request $request)
             DB::raw('COALESCE(s.all_plant,0)     AS all_plant'),
             DB::raw('COALESCE(s.normal_plant,0)  AS normal_plant'),
             DB::raw('COALESCE(s.alarm_plant,0)   AS alarm_plant'),
-            DB::raw('COALESCE(s.offline_plant,0) AS offline_plant')
+            DB::raw('COALESCE(s.offline_plant,0) AS offline_plant'),
+            DB::raw('COALESCE(s.power,0) AS power'),
+            DB::raw('COALESCE(s.capacity,0) AS capacity'),
+            DB::raw('COALESCE(s.day_power,0) AS day_power'),
+            DB::raw('COALESCE(s.month_power,0) AS month_power'),
+            DB::raw('COALESCE(s.total_power,0) AS total_power'),
+            's.updated_at'
         );
 
     if ($search) {
