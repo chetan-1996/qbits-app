@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\V1\AuthController;
 use App\Http\Controllers\API\V1\ClientController;
 use App\Http\Controllers\API\V1\InverterController;
+use App\Http\Controllers\API\V1\PlantInfoController;
 
 // Public routes
 Route::controller(AuthController::class)->group(function () {
@@ -33,6 +34,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('client/set-company-code', 'setCompanyCodeToIndivisualUser');
         Route::get('client/inverter/totals', 'totals');
         Route::get('client/grouped-clients', 'groupedClients');
+    });
+
+    Route::controller(PlantInfoController::class)->group(function () {
+        Route::get('plants/{id}', 'index');
+        // Route::get('plants/{id}', 'show');
     });
 
     Route::get('/run-inverter-command', function () {
