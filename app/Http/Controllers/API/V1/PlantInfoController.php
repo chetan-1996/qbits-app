@@ -30,7 +30,7 @@ class PlantInfoController extends BaseController
             ->select([
                 'id','plant_no','plant_name','capacity','acpower',
                 'eday','etot','kpi','month_power','year_power',
-                'remark1','date','watch','time'
+                'remark1','date','watch','time','plantstate'
             ])
             ->where('user_id', $id)
             ->when($cursor > 0, fn($q) => $q->where('id', '>', $cursor))
