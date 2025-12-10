@@ -38,7 +38,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::controller(PlantInfoController::class)->group(function () {
         Route::get('plants/{id}', 'index');
-        // Route::get('plants/{id}', 'show');
+        Route::get('plants/show/{id}', 'show');
     });
 
     Route::get('/run-inverter-command', function () {
