@@ -75,16 +75,11 @@ class PlantInfoController extends BaseController
         $plant = PlantInfo::find($id);
 
         if (!$plant) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Plant not found'
-            ], 404);
+            return $this->sendError('Plant not found', [], 400);
         }
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Plant fetched successfully',
-            'data' => $plant
-        ]);
+        return $this->sendResponse([
+            'plants' => $plant,
+        ], 'Plant fetched successfully');
     }
 }
