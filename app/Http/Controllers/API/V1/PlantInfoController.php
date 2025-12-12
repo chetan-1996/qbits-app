@@ -73,7 +73,8 @@ class PlantInfoController extends BaseController
     public function show($id)
     {
         // $plant = PlantInfo::find($id);
-        $plant = PlantInfo::where('plant_no',$id);
+
+        $plant = PlantInfo::where('plant_no',$id)->first();
 
         if (!$plant) {
             return $this->sendError('Plant not found', [], 400);
