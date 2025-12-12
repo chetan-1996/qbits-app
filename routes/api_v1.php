@@ -6,6 +6,7 @@ use App\Http\Controllers\API\V1\AuthController;
 use App\Http\Controllers\API\V1\ClientController;
 use App\Http\Controllers\API\V1\InverterController;
 use App\Http\Controllers\API\V1\PlantInfoController;
+use App\Http\Controllers\API\V1\InverterFaultController;
 
 // Public routes
 Route::controller(AuthController::class)->group(function () {
@@ -39,6 +40,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::controller(PlantInfoController::class)->group(function () {
         Route::get('plants/{id}', 'index');
         Route::get('plants/show/{id}', 'show');
+    });
+
+    Route::controller(InverterFaultController::class)->group(function () {
+        Route::get('faults/', 'index');
     });
 
     Route::get('/run-inverter-command', function () {
