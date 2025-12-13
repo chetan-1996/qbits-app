@@ -23,7 +23,7 @@ class InverterFaultController extends BaseController
             $query->where('plant_id', $request->plant_id);
         }
 
-        if ($request->filled('status') != -1) {
+        if ($request->status != -1) {
             $query->where('status', $request->status);
         }
         // Limit (default 20)
