@@ -5,9 +5,11 @@ namespace App\Http\Controllers\API\V1;
 use App\Http\Controllers\Controller;
 use App\Models\PlantInfo;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 
 class PlantInfoController extends BaseController
 {
@@ -83,5 +85,158 @@ class PlantInfoController extends BaseController
         return $this->sendResponse([
             'plants' => $plant,
         ], 'Plant fetched successfully');
+    }
+
+    public function byDay(Request $request)
+    {
+        $request->validate([
+            'startTime' => 'required|date',
+            'plantId'   => 'required|integer',
+            'atun'      => 'required|string',
+            'atpd'      => 'required|string',
+        ]);
+
+        try {
+            $response = Http::withOptions([
+                'verify' => false,
+            ])
+            ->timeout(20)
+            ->get(
+                'https://www.aotaisolarcloud.com/ATSolarInfo/appcanPlantStatisticsByDay.action',
+                [
+                    'startTime' => $request->startTime,
+                    'plantId'   => $request->plantId,
+                    'atun'      => $request->atun,
+                    'atpd'      => $request->atpd,
+                ]
+            );
+
+            if (!$response->successful()) {
+                return $this->sendError('Aotai API failed', [], 400);
+            }
+
+            return $this->sendResponse([
+                'byday' => $response->json(),
+            ], 'Plant fetched successfully');
+
+
+        } catch (\Throwable $e) {
+            return $this->sendError('Plant not found', [$e->getMessage()], 400);
+        }
+    }
+
+    public function byMonth(Request $request)
+    {
+        $request->validate([
+            'startTime' => 'required|date',
+            'plantId'   => 'required|integer',
+            'atun'      => 'required|string',
+            'atpd'      => 'required|string',
+        ]);
+
+        try {
+            $response = Http::withOptions([
+                'verify' => false,
+            ])
+            ->timeout(20)
+            ->get(
+                'https://www.aotaisolarcloud.com/ATSolarInfo/appcanPlantStatisticsByMonth.action',
+                [
+                    'startTime' => $request->startTime,
+                    'plantId'   => $request->plantId,
+                    'atun'      => $request->atun,
+                    'atpd'      => $request->atpd,
+                ]
+            );
+
+            if (!$response->successful()) {
+                return $this->sendError('Aotai API failed', [], 400);
+            }
+
+            return $this->sendResponse([
+                'bymonth' => $response->json(),
+            ], 'Plant fetched successfully');
+
+
+        } catch (\Throwable $e) {
+            return $this->sendError('Plant not found', [$e->getMessage()], 400);
+        }
+    }
+
+    public function byYear(Request $request)
+    {
+
+        $request->validate([
+            'startTime' => 'required',
+            'plantId'   => 'required|integer',
+            'atun'      => 'required|string',
+            'atpd'      => 'required|string',
+        ]);
+
+        try {
+            $response = Http::withOptions([
+                'verify' => false,
+            ])
+            ->timeout(20)
+            ->get(
+                'https://www.aotaisolarcloud.com/ATSolarInfo/appcanPlantStatisticsByYear.action',
+                [
+                    'startTime' => $request->startTime,
+                    'plantId'   => $request->plantId,
+                    'atun'      => $request->atun,
+                    'atpd'      => $request->atpd,
+                ]
+            );
+
+            if (!$response->successful()) {
+                return $this->sendError('Aotai API failed', [], 400);
+            }
+
+            return $this->sendResponse([
+                'byyear' => $response->json(),
+            ], 'Plant fetched successfully');
+
+
+        } catch (\Throwable $e) {
+            return $this->sendError('Plant not found', [$e->getMessage()], 400);
+        }
+    }
+
+    public function byTotal(Request $request)
+    {
+
+        $request->validate([
+            'startTime' => 'required',
+            'plantId'   => 'required|integer',
+            'atun'      => 'required|string',
+            'atpd'      => 'required|string',
+        ]);
+
+        try {
+            $response = Http::withOptions([
+                'verify' => false,
+            ])
+            ->timeout(20)
+            ->get(
+                'https://www.aotaisolarcloud.com/ATSolarInfo/requestPlantEnergyList.action',
+                [
+                    'plantId'   => $request->plantId,
+                    'atun'      => $request->atun,
+                    'atpd'      => $request->atpd,
+                ]
+            );
+
+            if (!$response->successful()) {
+                return $this->sendError('Aotai API failed', [], 400);
+            }
+
+            return $this->sendResponse([
+                'bytotal' => $response->json(),
+            ], 'Plant fetched successfully');
+
+
+        } catch (\Throwable $e) {
+            return $this->sendError('Plant not found', [$e->getMessage()], 400);
+        }
     }
 }

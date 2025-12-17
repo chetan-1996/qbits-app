@@ -38,6 +38,10 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::controller(PlantInfoController::class)->group(function () {
+        Route::get('plants/statistics-by-day', 'byDay');
+        Route::get('plants/statistics-by-month', 'byMonth');
+        Route::get('plants/statistics-by-year', 'byYear');
+        Route::get('plants/statistics-by-total', 'byTotal');
         Route::get('plants/{id}', 'index');
         Route::get('plants/show/{id}', 'show');
     });
