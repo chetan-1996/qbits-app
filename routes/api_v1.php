@@ -19,6 +19,9 @@ Route::controller(AuthController::class)->group(function () {
 
 Route::controller(InverterController::class)->group(function () {
     Route::post('/inverters/{id}/command', 'sendCommand');
+    Route::get('/inverter', 'index');
+    Route::get('/inverter/data', 'inverter_data');
+    Route::get('/inverter/latest_data', 'inverter_data_details');
 });
 
 // Protected routes (require authentication)
