@@ -111,7 +111,7 @@ class InverterFault extends Command
                                 ];
                                 $wabbWebhookUrl = config('services.webhook.url');
                                 Http::withOptions(['verify' => false])->get($wabbWebhookUrl, $whatsAppContent);
-                                sleep(random_int(5, 30));
+                                sleep(random_int(5, 60));
                             }
                         }
 
