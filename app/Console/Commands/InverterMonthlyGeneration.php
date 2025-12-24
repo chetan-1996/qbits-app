@@ -118,7 +118,7 @@ Submit a Ticket | Qbits: \nhttps://support.qbitsenergy.com";
                 $wabbWebhookUrl,
                 $payload
             );
-            sleep(random_int(5, 30));
+            sleep(random_int(5, 60));
         } catch (\Throwable $e) {
             \Log::error("MonthlyReport error for user {$user->id}: {$e->getMessage()}");
         }

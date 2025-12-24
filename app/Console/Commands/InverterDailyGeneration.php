@@ -113,7 +113,7 @@ Submit a Ticket | Qbits: \nhttps://support.qbitsenergy.com";
             }
             // Cleanup
             unset($whatsAppContent, $response);
-            sleep(random_int(5, 30));
+            sleep(random_int(5, 60));
             // usleep(random_int(1000000, 3000000)); // microseconds (1s – 3s);
         } catch (\Throwable $e) {
             \Log::error("DailyGenerationReport error for user {$user->id}: {$e->getMessage()}");
