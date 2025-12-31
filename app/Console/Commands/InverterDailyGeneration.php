@@ -60,7 +60,7 @@ class InverterDailyGeneration extends Command
                 ]);
         //}
  //unset($user);
-                gc_collect_cycles();
+                //gc_collect_cycles();
         // WhatsApp safe gap
         usleep(200000); // 0.2 sec
     }
