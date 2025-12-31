@@ -28,39 +28,79 @@ class InverterDailyGeneration extends Command
      * @return int
      */
     public function handle()
-    {
-
-        // Lazy load users one by one to reduce memory and CPU
-        DB::table('clients')
-            ->where('phone', '!=', '')
-            // ->whereNull('company_code')
-            ->where('daily_generation_report_flag', 1)
-            ->where(function ($q) {
+{
+    $users = DB::table('clients')
+        ->where('phone', '!=', '')
+        ->where('daily_generation_report_flag', 1)
+        ->where(function ($q) {
             $q->whereNull('daily_report_sent_at')
               ->orWhere('daily_report_sent_at', '!=', now()->toDateString());
         })
-            ->select('id', 'username', 'password', 'phone','weekly_generation_report_flag')
-            ->orderBy('id')
-            ->cursor()
-            ->each(function ($user) {
+        ->select(
+            'id',
+            'username',
+            'password',
+            'phone',
+            'weekly_generation_report_flag'
+        )
+        ->orderBy('id')
+        ->limit(20) // ✅ HARD LIMIT
+        ->get();
 
-                $this->processUser($user);
+    foreach ($users as $user) {
 
-                DB::table('clients')
-            ->where('id', $user->id)
-            ->update(['daily_report_sent_at' => now()->toDateString()]);
+        $sent = $this->processUser($user);
 
-                // Free memory per iteration
-                unset($user);
+        // ✅ Mark sent ONLY after success (recommended)
+       // if ($sent !== false) {
+            DB::table('clients')
+                ->where('id', $user->id)
+                ->update([
+                    'daily_report_sent_at' => now()->toDateString()
+                ]);
+        //}
+ unset($user);
                 gc_collect_cycles();
-
-                // Tiny pause to prevent CPU spikes
-                // usleep(5000); // 5 milliseconds
-                usleep(200000);
-            });
-
-        return 0;
+        // WhatsApp safe gap
+        usleep(200000); // 0.2 sec
     }
+
+    return 0;
+}
+    // public function handle()
+    // {
+
+    //     // Lazy load users one by one to reduce memory and CPU
+    //     DB::table('clients')
+    //         ->where('phone', '!=', '')
+    //         // ->whereNull('company_code')
+    //         ->where('daily_generation_report_flag', 1)
+    //         ->where(function ($q) {
+    //         $q->whereNull('daily_report_sent_at')
+    //           ->orWhere('daily_report_sent_at', '!=', now()->toDateString());
+    //     })
+    //         ->select('id', 'username', 'password', 'phone','weekly_generation_report_flag')
+    //         ->orderBy('id')
+    //         ->cursor()
+    //         ->each(function ($user) {
+
+    //             $this->processUser($user);
+
+    //             DB::table('clients')
+    //         ->where('id', $user->id)
+    //         ->update(['daily_report_sent_at' => now()->toDateString()]);
+
+    //             // Free memory per iteration
+    //             unset($user);
+    //             gc_collect_cycles();
+
+    //             // Tiny pause to prevent CPU spikes
+    //             // usleep(5000); // 5 milliseconds
+    //             usleep(200000);
+    //         });
+
+    //     return 0;
+    // }
 
     /**
      * Process a single user: fetch inverter data and send WhatsApp report
