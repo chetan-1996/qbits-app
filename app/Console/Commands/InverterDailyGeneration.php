@@ -35,6 +35,10 @@ class InverterDailyGeneration extends Command
             ->where('phone', '!=', '')
             // ->whereNull('company_code')
             ->where('daily_generation_report_flag', 1)
+            ->where(function ($q) {
+            $q->whereNull('daily_report_sent_at')
+              ->orWhere('daily_report_sent_at', '!=', now()->toDateString());
+        })
             ->select('id', 'username', 'password', 'phone','weekly_generation_report_flag')
             ->orderBy('id')
             ->cursor()
@@ -42,12 +46,17 @@ class InverterDailyGeneration extends Command
 
                 $this->processUser($user);
 
+                DB::table('clients')
+            ->where('id', $user->id)
+            ->update(['daily_report_sent_at' => now()->toDateString()]);
+
                 // Free memory per iteration
                 unset($user);
                 gc_collect_cycles();
 
                 // Tiny pause to prevent CPU spikes
-                usleep(5000); // 5 milliseconds
+                // usleep(5000); // 5 milliseconds
+                usleep(200000);
             });
 
         return 0;
