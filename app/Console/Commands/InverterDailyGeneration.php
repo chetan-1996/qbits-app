@@ -59,7 +59,7 @@ class InverterDailyGeneration extends Command
                     'daily_report_sent_at' => now()->toDateString()
                 ]);
         //}
- unset($user);
+ //unset($user);
                 gc_collect_cycles();
         // WhatsApp safe gap
         usleep(200000); // 0.2 sec
