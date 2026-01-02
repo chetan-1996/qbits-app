@@ -43,7 +43,8 @@ class InverterDailyGeneration extends Command
             'phone',
             'weekly_generation_report_flag'
         )
-        ->orderBy('id')
+        // ->orderBy('id')
+        ->inRandomOrder()
         ->limit(20) // ✅ HARD LIMIT
         ->get();
 
