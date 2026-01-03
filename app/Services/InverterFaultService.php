@@ -50,24 +50,48 @@ class InverterFaultService
                             continue;
                         }
 
+                        // foreach ($data['list'] as $row) {
+
+                        //     // Duplicate check
+                        //     $exists = DB::table('inverter_faults')
+                        //         ->where('inverter_id', $row['inverterId'])
+                        //         ->where('stime', $row['stime'])
+                        //         ->exists();
+
+                        //     if ($exists) {
+                        //         continue;
+                        //     }
+
+                        //     DB::table('inverter_faults')->insert([
+                        //         'inverter_id' => $row['inverterId'],
+                        //         'plant_id'    => $row['plantId'],
+                        //         'status'      => $row['status'],
+                        //         'inverter_sn' => $row['inverterSn'] ?? null,
+                        //         'stime'       => $row['stime'],
+                        //         'etime'       => $row['etime'] ?? null,
+                        //         'meta'        => json_encode($row['meta'] ?? []),
+                        //         'message_cn'  => json_encode($row['messagecn'] ?? []),
+                        //         'message_en'  => json_encode($row['messageen'] ?? []),
+                        //         'atun'        => $plant->atun,
+                        //         'atpd'        => $plant->atpd,
+                        //         'user_id'     => $plant->user_id,
+                        //         'created_at'  => now(),
+                        //         'updated_at'  => now(),
+                        //     ]);
+
+                        //     // Free memory inside loop
+                        //     unset($exists);
+                        // }
+
+                        $batch = [];
+
                         foreach ($data['list'] as $row) {
-
-                            // Duplicate check
-                            $exists = DB::table('inverter_faults')
-                                ->where('inverter_id', $row['inverterId'])
-                                ->where('stime', $row['stime'])
-                                ->exists();
-
-                            if ($exists) {
-                                continue;
-                            }
-
-                            DB::table('inverter_faults')->insert([
+                            $batch[] = [
                                 'inverter_id' => $row['inverterId'],
+                                'stime'       => $row['stime'],
                                 'plant_id'    => $row['plantId'],
                                 'status'      => $row['status'],
                                 'inverter_sn' => $row['inverterSn'] ?? null,
-                                'stime'       => $row['stime'],
                                 'etime'       => $row['etime'] ?? null,
                                 'meta'        => json_encode($row['meta'] ?? []),
                                 'message_cn'  => json_encode($row['messagecn'] ?? []),
@@ -77,11 +101,18 @@ class InverterFaultService
                                 'user_id'     => $plant->user_id,
                                 'created_at'  => now(),
                                 'updated_at'  => now(),
-                            ]);
-
-                            // Free memory inside loop
-                            unset($exists);
+                            ];
                         }
+
+                        DB::table('inverter_faults')->upsert(
+                            $batch,
+                            ['inverter_id', 'stime'],  // conflict keys
+                            [
+                                'plant_id','status','inverter_sn','etime',
+                                'meta','message_cn','message_en',
+                                'atun','atpd','user_id','updated_at'
+                            ]
+                        );
 
                         // Free API data memory
                         unset($data);
