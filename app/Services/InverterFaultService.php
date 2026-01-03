@@ -110,7 +110,6 @@ class InverterFaultService
                             $batch[] = [
                                 'inverter_id' => $row['inverterId'],
                                 'stime'       => $row['stime'],
-                                'stime'       => $row['stime'],
                                 'plant_id'    => $row['plantId'],
                                 'status'      => $row['status'],
                                 'inverter_sn' => $row['inverterSn'] ?? null,
