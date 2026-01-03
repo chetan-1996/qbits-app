@@ -84,56 +84,56 @@ class InverterFaultService
                         //     unset($exists);
                         // }
 
-                        $batch = [];
+                        // $batch = [];
 
                         foreach ($data['list'] as $row) {
-                            // DB::table('inverter_faults')->updateOrInsert(
-                            //     [
-                            //         'inverter_id' => $row['inverterId'],
-                            //         'stime'       => $row['stime'],
-                            //     ],
-                            //     [
-                            //         'plant_id'    => $row['plantId'],
-                            //         'status'      => $row['status'],
-                            //         'inverter_sn' => $row['inverterSn'] ?? null,
-                            //         'etime'       => $row['etime'] ?? null,
-                            //         'meta'        => json_encode($row['meta'] ?? []),
-                            //         'message_cn'  => json_encode($row['messagecn'] ?? []),
-                            //         'message_en'  => json_encode($row['messageen'] ?? []),
-                            //         'atun'        => $plant->atun,
-                            //         'atpd'        => $plant->atpd,
-                            //         'user_id'     => $plant->user_id,
-                            //         'updated_at'  => now(),
-                            //         'created_at'  => now(),
-                            //     ]
-                            // );
-                            $batch[] = [
-                                'inverter_id' => $row['inverterId'],
-                                'stime'       => $row['stime'],
-                                'plant_id'    => $row['plantId'],
-                                'status'      => $row['status'],
-                                'inverter_sn' => $row['inverterSn'] ?? null,
-                                'etime'       => $row['etime'] ?? null,
-                                'meta'        => json_encode($row['meta'] ?? []),
-                                'message_cn'  => json_encode($row['messagecn'] ?? []),
-                                'message_en'  => json_encode($row['messageen'] ?? []),
-                                'atun'        => $plant->atun,
-                                'atpd'        => $plant->atpd,
-                                'user_id'     => $plant->user_id,
-                                'created_at'  => now(),
-                                'updated_at'  => now(),
-                            ];
+                            DB::table('inverter_faults')->updateOrInsert(
+                                [
+                                    'inverter_id' => $row['inverterId'],
+                                    'stime'       => $row['stime'],
+                                ],
+                                [
+                                    'plant_id'    => $row['plantId'],
+                                    'status'      => $row['status'],
+                                    'inverter_sn' => $row['inverterSn'] ?? null,
+                                    'etime'       => $row['etime'] ?? null,
+                                    'meta'        => json_encode($row['meta'] ?? []),
+                                    'message_cn'  => json_encode($row['messagecn'] ?? []),
+                                    'message_en'  => json_encode($row['messageen'] ?? []),
+                                    'atun'        => $plant->atun,
+                                    'atpd'        => $plant->atpd,
+                                    'user_id'     => $plant->user_id,
+                                    'updated_at'  => now(),
+                                    'created_at'  => now(),
+                                ]
+                            );
+                            // $batch[] = [
+                            //     'inverter_id' => $row['inverterId'],
+                            //     'stime'       => $row['stime'],
+                            //     'plant_id'    => $row['plantId'],
+                            //     'status'      => $row['status'],
+                            //     'inverter_sn' => $row['inverterSn'] ?? null,
+                            //     'etime'       => $row['etime'] ?? null,
+                            //     'meta'        => json_encode($row['meta'] ?? []),
+                            //     'message_cn'  => json_encode($row['messagecn'] ?? []),
+                            //     'message_en'  => json_encode($row['messageen'] ?? []),
+                            //     'atun'        => $plant->atun,
+                            //     'atpd'        => $plant->atpd,
+                            //     'user_id'     => $plant->user_id,
+                            //     'created_at'  => now(),
+                            //     'updated_at'  => now(),
+                            // ];
                         }
 
-                        DB::table('inverter_faults')->upsert(
-                            $batch,
-                            ['inverter_id', 'stime'],  // conflict keys
-                            [
-                                'plant_id','status','inverter_sn','etime',
-                                'meta','message_cn','message_en',
-                                'atun','atpd','user_id','updated_at'
-                            ]
-                        );
+                        // DB::table('inverter_faults')->upsert(
+                        //     $batch,
+                        //     ['inverter_id', 'stime'],  // conflict keys
+                        //     [
+                        //         'plant_id','status','inverter_sn','etime',
+                        //         'meta','message_cn','message_en',
+                        //         'atun','atpd','user_id','updated_at'
+                        //     ]
+                        // );
 
                         // Free API data memory
                         unset($data);
