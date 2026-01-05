@@ -67,4 +67,9 @@ class Inverter extends Model
     {
         return $this->hasOne(InverterDetail::class, 'inverterId', 'id');
     }
+
+    public function plant()
+{
+    return $this->belongsTo(PlantInfo::class, 'plant_id', 'id');
+}
 }

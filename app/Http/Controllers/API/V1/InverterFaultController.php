@@ -11,6 +11,10 @@ class InverterFaultController extends BaseController
     public function index(Request $request)
     {
         $query = InverterFault::query()
+        ->with([
+            'inverter:id,plant_id,inverter_no,model,state',
+            'inverter.plant:plant_name,plant_no,country,city'
+        ])
             ->select('*'); // select only needed columns
 
         // Filter by inverter_id

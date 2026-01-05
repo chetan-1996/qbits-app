@@ -29,4 +29,11 @@ class InverterFault extends Model
         'stime'      => 'datetime',
         'etime'      => 'datetime',
     ];
+
+    // App/Models/InverterFault.php
+    public function inverter()
+    {
+        return $this->belongsTo(Inverter::class, 'inverter_id', 'id');
+    }
+
 }
