@@ -136,17 +136,79 @@ class InverterDailyGeneration extends Command
             // Prepare WhatsApp message
             $todayDate = now()->format('d M Y');
 //            $message = "🌞✨ નમસ્તે {$user->username},\n
-            $message ="
-Your Qbits Solar Inverter Daily Generation Report ☀️⚡\n
-📅 Date: {$todayDate}
-🔋 Today’s Generation: *{$totalDailyGeneration} kWh*\n
-📌 Our Special Recommendations:
-1. Clean the solar panels on time to maintain optimal generation.
-2. Check inverter data at least once a month.
-3. Keep the inverter in an open area with good air circulation and sunlight exposure.
-4. Avoid direct sunlight falling on the inverter.\n
-Submit a Ticket | Qbits: \nhttps://support.qbitsenergy.com";
+//             $message ="
+// Your Qbits Solar Inverter Daily Generation Report ☀️⚡\n
+// 📅 Date: {$todayDate}
+// 🔋 Today’s Generation: *{$totalDailyGeneration} kWh*\n
+// 📌 Our Special Recommendations:
+// 1. Clean the solar panels on time to maintain optimal generation.
+// 2. Check inverter data at least once a month.
+// 3. Keep the inverter in an open area with good air circulation and sunlight exposure.
+// 4. Avoid direct sunlight falling on the inverter.\n
+// Submit a Ticket | Qbits: \nhttps://support.qbitsenergy.com";
 
+$templates = ["
+Your Qbits Solar Inverter Daily Generation Report ☀️⚡
+
+📅 Date: {$todayDate}
+🔋 Today’s Generation: *{$totalDailyGeneration} kWh*
+
+📌 Tips to Maintain Better Generation:
+1. Clean solar panels regularly.
+2. Check inverter readings every month.
+3. Ensure proper airflow around inverter.
+4. Avoid installing inverter in direct sunlight.
+
+Submit a Ticket | Qbits:
+https://support.qbitsenergy.com
+",
+"
+Qbits Daily Solar Power Summary ☀️⚡
+
+📅 Report Date: {$todayDate}
+🔋 Energy Produced Today: *{$totalDailyGeneration} kWh*
+
+⚡ Maintenance Suggestions:
+1. Clean panels on time to avoid dust loss.
+2. Inspect inverter once a month.
+3. Keep inverter in a ventilated area.
+4. Prevent heat exposure and direct sunlight.
+
+Need Support?
+https://support.qbitsenergy.com
+",
+"
+Qbits Energy — Daily Power Report 🌞
+
+📅 Today's Date: {$todayDate}
+🔋 Your Solar Output Today: *{$totalDailyGeneration} kWh*
+
+📝 Best Practice Guide:
+1. Clean panels periodically.
+2. Review inverter performance monthly.
+3. Maintain airflow around inverter.
+4. Keep inverter away from heat & sunlight.
+
+Raise a Service Ticket:
+https://support.qbitsenergy.com
+",
+"
+Qbits Solar – Daily Generation Update ⚡
+
+📅 Date: {$todayDate}
+🔋 Power Generated Today: *{$totalDailyGeneration} kWh*
+
+💡 Efficiency Recommendations:
+1. Timely cleaning improves generation.
+2. Monitor inverter health monthly.
+3. Ensure proper cooling & ventilation.
+4. Avoid placing inverter in harsh sunlight.
+
+Contact Support:
+https://support.qbitsenergy.com
+"];
+
+$message = $templates[array_rand($templates)];
             $whatsAppContent = [
                 'Name' => $user->username,
                 'Number' => $user->phone,
