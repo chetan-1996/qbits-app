@@ -21,6 +21,8 @@ Schedule::command('inverterFault:cron')->hourly()->between('08:00', '18:00')->ru
 // Schedule::command('plantInfo:cron')->everyThirtyMinutes()->between('08:00', '19:00')->runInBackground()->withoutOverlapping();
 // Schedule::command('faults:sync')->everyThirtyMinutes()->between('08:00', '19:00')->runInBackground()->withoutOverlapping();
 Schedule::command('getInverterStatus:cron')->cron('0,30 8-19 * * *')->runInBackground()->withoutOverlapping();
-Schedule::command('plantInfo:cron')->cron('10,40 8-19 * * *')->runInBackground()->withoutOverlapping();
-Schedule::command('faults:sync')->cron('20,50 8-19 * * *')->runInBackground()->withoutOverlapping();
+Schedule::command('plantInfo:cron')->cron('0,30 8-19 * * *')->runInBackground()->withoutOverlapping();
+Schedule::command('faults:sync')->cron('0,30 8-19 * * *')->runInBackground()->withoutOverlapping();
+// Schedule::command('plantInfo:cron')->cron('10,40 8-19 * * *')->runInBackground()->withoutOverlapping();
+// Schedule::command('faults:sync')->cron('20,50 8-19 * * *')->runInBackground()->withoutOverlapping();
 //Schedule::command('test:cron')->everyMinute();
