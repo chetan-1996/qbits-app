@@ -381,6 +381,7 @@ public function groupedClients(Request $request)
               ->orWhere('c.qbits_company_code', 'LIKE', "%{$search}%")
               ->orWhere('c.email', 'LIKE', "%{$search}%")
               ->orWhere('c.collector', 'LIKE', "%{$search}%")
+              ->orWhere('c.plant_name', 'LIKE', "%{$search}%")
               ->orWhere('c.phone', 'LIKE', "%{$search}%");
         });
     }
