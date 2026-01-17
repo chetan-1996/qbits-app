@@ -12,6 +12,7 @@ Route::post('client/login', [ClientController::class, 'clientLogin']);
 Route::middleware('auth:client_api')->group(function () {
     Route::controller(ClientController::class)->group(function () {
         Route::post('client/logout', 'logout');
+        Route::post('frontend/grouped-clients', 'frontendGroupedClients');
     });
 
     // Route::get('client/grouped-clients', 'groupedClients');
