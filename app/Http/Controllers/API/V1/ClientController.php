@@ -26,7 +26,7 @@ class ClientController extends BaseController
             ], 401);
         }
 
-        $companyId=null;
+        $companyId=$client->id;
         if ($client->user_flag == 1) {
 
             // if (!$request->filled('qbits_company_code')) {
