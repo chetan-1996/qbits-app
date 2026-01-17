@@ -53,6 +53,16 @@ class ClientController extends BaseController
             'client' => $client,
         ]);
     }
+
+    public function logout(Request $request): JsonResponse
+    {
+        try {
+            $request->user()->currentAccessToken()->delete();
+            return $this->sendResponse([], 'Logged out successfully.');
+        } catch (\Throwable $e) {
+            return $this->handleException($e, 'Logout failed');
+        }
+    }
     // public function clientLogin(Request $request)
     // {
     //     $request->validate([
