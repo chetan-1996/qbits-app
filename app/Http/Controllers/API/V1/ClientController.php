@@ -7,6 +7,8 @@ use App\Models\Client;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Http\JsonResponse;
 use Exception;
 
 class ClientController extends BaseController
