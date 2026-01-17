@@ -49,7 +49,7 @@ class ClientController extends BaseController
         $token = $client->createToken('client-token')->plainTextToken;
 
         $success['access_token'] =  $user->createToken('auth_token')->plainTextToken;
-        $success['name'] =  $client->name;
+        $success['name'] =  $client->client;
         $success['user'] = $client;
         $success['token_type'] = 'Bearer';
 
