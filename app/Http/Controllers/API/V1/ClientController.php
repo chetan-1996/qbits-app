@@ -26,6 +26,7 @@ class ClientController extends BaseController
             ], 401);
         }
 
+        $companyId=null;
         if ($client->user_flag == 1) {
 
             // if (!$request->filled('qbits_company_code')) {
@@ -42,8 +43,8 @@ class ClientController extends BaseController
             }
 
             // Runtime attach (DB ma save karvani jarur nathi)
-            $client->company_id = $companyId;
         }
+        $client->company_id = $companyId;
 
         $token = $client->createToken('client-token')->plainTextToken;
 
