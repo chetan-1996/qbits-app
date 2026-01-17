@@ -8,6 +8,7 @@ use App\Http\Controllers\API\V1\InverterController;
 use App\Http\Controllers\API\V1\PlantInfoController;
 use App\Http\Controllers\API\V1\InverterFaultController;
 
+Route::post('client/login', [ClientController::class, 'clientLogin']);
 // Public routes
 Route::controller(AuthController::class)->group(function () {
     Route::post('register', 'register');

@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 
-class Client extends Model
+class Client extends Authenticatable
 {
+    use HasApiTokens;
     protected $fillable = [
         'dealer_id',
         'qbits_company_code',
@@ -33,4 +36,6 @@ class Client extends Model
         'monthly_generation_report_flag',
         'user_flag'
     ];
+
+     protected $hidden = ['password'];
 }

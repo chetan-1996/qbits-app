@@ -11,6 +11,68 @@ use Exception;
 
 class ClientController extends BaseController
 {
+    public function clientLogin(Request $request)
+    {
+        $request->validate([
+            'username' => 'required',
+            'password' => 'required',
+        ]);
+
+        $client = Client::where('username', $request->username)->first();
+
+        if (!$client || $client->password !== $request->password) {
+            return response()->json([
+                'message' => 'Invalid username or password'
+            ], 401);
+        }
+
+        if ($client->user_flag == 1) {
+
+            // if (!$request->filled('qbits_company_code')) {
+            //     return response()->json(['message' => 'Company code required'], 422);
+            // }
+
+            $companyId = Client::where('qbits_company_code', $client->qbits_company_code)
+                ->where('user_flag', 0)
+                ->pluck('id')
+                ->all();
+
+            if (!$companyId) {
+                return response()->json(['message' => 'Invalid company code'], 401);
+            }
+
+            // Runtime attach (DB ma save karvani jarur nathi)
+            $client->company_id = $companyId;
+        }
+
+        $token = $client->createToken('client-token')->plainTextToken;
+
+        return response()->json([
+            'token'  => $token,
+            'client' => $client,
+        ]);
+    }
+    // public function clientLogin(Request $request)
+    // {
+    //     $request->validate([
+    //         'email' => 'required',
+    //         'password' => 'required',
+    //     ]);
+
+    //     $client = \App\Models\Client::where('email', $request->email)->first();
+
+    //     if (!$client || !Hash::check($request->password, $client->password)) {
+    //         return response()->json(['message' => 'Invalid credentials'], 401);
+    //     }
+
+    //     $token = $client->createToken('client-token')->plainTextToken;
+
+    //     return response()->json([
+    //         'token' => $token,
+    //         'client' => $client,
+    //     ]);
+    // }
+
     public function index(Request $request)
     {
         try {
