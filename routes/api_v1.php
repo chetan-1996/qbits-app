@@ -14,7 +14,7 @@ Route::middleware('auth:client_api')->group(function () {
         Route::post('client/logout', 'logout');
     });
 
-    Route::get('client/grouped-clients', 'groupedClients');
+    // Route::get('client/grouped-clients', 'groupedClients');
     Route::get('client/profile', function () {
         return auth()->guard('client_api')->user();
     });
