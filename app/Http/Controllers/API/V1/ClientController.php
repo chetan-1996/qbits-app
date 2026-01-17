@@ -36,7 +36,7 @@ class ClientController extends BaseController
             // }
 
             $companyId = Client::where('qbits_company_code', $client->qbits_company_code)
-                ->where('user_flag', 0)
+                // ->where('user_flag', 0)
                 ->pluck('id')
                 ->all();
 
