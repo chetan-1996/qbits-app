@@ -9,6 +9,11 @@ use App\Http\Controllers\API\V1\PlantInfoController;
 use App\Http\Controllers\API\V1\InverterFaultController;
 
 Route::post('client/login', [ClientController::class, 'clientLogin']);
+Route::middleware('auth:client_api')->group(function () {
+    Route::get('client/profile', function () {
+        return auth()->guard('client_api')->user();
+    });
+});
 // Public routes
 Route::controller(AuthController::class)->group(function () {
     Route::post('register', 'register');
