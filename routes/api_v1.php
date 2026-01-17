@@ -13,7 +13,7 @@ Route::middleware('auth:client_api')->group(function () {
     Route::controller(ClientController::class)->group(function () {
         Route::post('client/logout', 'logout');
         Route::post('frontend/grouped-clients', 'frontendGroupedClients');
-        Route::get('frontend/inverter/totals', 'totals');
+        Route::get('frontend/inverter/totals', 'frontendotals');
     });
 
     // Route::get('client/grouped-clients', 'groupedClients');
