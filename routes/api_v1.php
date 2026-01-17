@@ -10,6 +10,11 @@ use App\Http\Controllers\API\V1\InverterFaultController;
 
 Route::post('client/login', [ClientController::class, 'clientLogin']);
 Route::middleware('auth:client_api')->group(function () {
+    Route::controller(ClientController::class)->group(function () {
+        Route::post('client/logout', 'logout');
+    });
+
+    // Route::get('client/grouped-clients', 'groupedClients');
     Route::get('client/profile', function () {
         return auth()->guard('client_api')->user();
     });
