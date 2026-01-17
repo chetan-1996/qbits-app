@@ -48,10 +48,17 @@ class ClientController extends BaseController
 
         $token = $client->createToken('client-token')->plainTextToken;
 
-        return response()->json([
-            'token'  => $token,
-            'client' => $client,
-        ]);
+        $success['access_token'] =  $user->createToken('auth_token')->plainTextToken;
+        $success['name'] =  $client->name;
+        $success['user'] = $client;
+        $success['token_type'] = 'Bearer';
+
+        return $this->sendResponse($success, 'User login successfully.');
+
+        // return response()->json([
+        //     'token'  => $token,
+        //     'client' => $client,
+        // ]);
     }
 
     public function logout(Request $request): JsonResponse
