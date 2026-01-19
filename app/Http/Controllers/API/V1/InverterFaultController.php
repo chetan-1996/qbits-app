@@ -7,7 +7,6 @@ use Illuminate\Http\Request;
 use App\Models\InverterFault;
 use App\Models\Client;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 class InverterFaultController extends BaseController
 {
@@ -78,10 +77,9 @@ class InverterFaultController extends BaseController
         // Limit (default 20)
         $limit = (int) $request->get('limit', 20);
 
-        DB::enableQueryLog();
         // Fastest pagination
         $faults = $query->simplePaginate($limit);
-dd(DB::getQueryLog());
+
         return $this->sendResponse([
             'faults' => $faults
         ], 'Inverter fault list fetched successfully');
