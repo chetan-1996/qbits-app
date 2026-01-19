@@ -55,4 +55,38 @@ class InverterController extends BaseController
         ], 'Inverter list fetched');
     }
 
+    public function frontendIndex(Request $request)
+    {
+        $rows = DB::table('inverters')
+            ->where('plant_id', $request->plantId)
+            ->orderBy('id')
+            ->get();
+
+        return $this->sendResponse([
+            'inverters' => $rows,
+        ], 'Inverter list fetched');
+    }
+
+    public function frontend_inverter_data(Request $request)
+    {
+        $rows = DB::table('inverter_details')
+            ->where('inverterId', $request->inverterId)
+            ->orderBy('inverterId')
+            ->get();
+
+        return $this->sendResponse([
+            'inverters' => $rows,
+        ], 'Inverter list fetched');
+    }
+
+    public function frontend_inverter_data_details(Request $request)
+    {
+        $rows = Inverter::with('latestDetail')
+            ->where('plant_id', $request->plantId)
+            ->get();
+
+        return $this->sendResponse([
+            'inverters' => $rows,
+        ], 'Inverter list fetched');
+    }
 }
