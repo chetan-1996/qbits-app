@@ -57,10 +57,10 @@ class InverterFaultController extends BaseController
         $query = InverterFault::query()
         ->with([
             'inverter:id,plant_id,inverter_no,model,state',
-            'inverter.plant:plant_name,plant_no,country,city'
+            'inverter.plant:id,plant_name,plant_no,country,city'
         ])
-            ->select('*'); // select only needed columns
-        $query->where('user_id', $companyId);
+            ->select('*')->where('user_id', $companyId); // select only needed columns
+
         // Filter by inverter_id
         if ($request->filled('inverter_id')) {
             $query->where('inverter_id', $request->inverter_id);
