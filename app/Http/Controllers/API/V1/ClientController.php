@@ -442,7 +442,7 @@ public function groupedClients(Request $request)
 
         $user = Auth::user();
 
-        $companyId=$user->id;
+        $companyId=[$user->id];
         if ($client->user_flag == 1 && !is_null($user->qbits_company_code) && $user->qbits_company_code !== '') {
             $companyId = Client::where('qbits_company_code', $user->qbits_company_code)
                     // ->where('user_flag', 0)
@@ -467,7 +467,7 @@ public function groupedClients(Request $request)
 
         $user = Auth::user();
 
-        $companyId=$user->id;
+        $companyId=[$user->id];
         if ($client->user_flag == 1 && !is_null($user->qbits_company_code) && $user->qbits_company_code !== '') {
             $companyId = Client::where('qbits_company_code', $user->qbits_company_code)
                     // ->where('user_flag', 0)
