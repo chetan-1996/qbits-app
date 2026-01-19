@@ -16,6 +16,21 @@ Route::middleware('auth:client_api')->group(function () {
         Route::get('frontend/inverter/totals', 'frontendTotals');
     });
 
+    Route::controller(PlantInfoController::class)->group(function () {
+        Route::get('frontend/plants/statistics-by-day', 'frontendByDay');
+        Route::get('frontend/plants/statistics-by-month', 'frontendByMonth');
+        Route::get('frontend/plants/statistics-by-year', 'frontendByYear');
+        Route::get('frontend/plants/statistics-by-total', 'frontendByTotal');
+        Route::get('frontend/plants/{id}', 'frontendIndex');
+        Route::get('frontend/plants/show/{id}', 'frontendShow');
+    });
+
+    Route::controller(InverterController::class)->group(function () {
+        Route::get('/frontend/inverter', 'frontendIndex');
+        Route::get('/frontend/inverter/data', 'frontend_inverter_data');
+        Route::get('/frontend/inverter/latest_data', 'frontend_inverter_data_details');
+    });
+
     // Route::get('client/grouped-clients', 'groupedClients');
     Route::get('client/profile', function () {
         return auth()->guard('client_api')->user();
