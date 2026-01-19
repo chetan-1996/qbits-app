@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API\V1;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\InverterFault;
+use Illuminate\Support\Facades\Auth;
 
 class InverterFaultController extends BaseController
 {
