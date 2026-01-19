@@ -70,6 +70,6 @@ class Inverter extends Model
 
     public function plant()
 {
-    return $this->belongsTo(PlantInfo::class, 'plant_id', 'id');
+    return $this->belongsTo(PlantInfo::class, 'plant_id', 'plant_no');
 }
 }
