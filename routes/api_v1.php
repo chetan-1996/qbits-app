@@ -31,6 +31,10 @@ Route::middleware('auth:client_api')->group(function () {
         Route::get('/frontend/inverter/latest_data', 'frontend_inverter_data_details');
     });
 
+    Route::controller(InverterFaultController::class)->group(function () {
+        Route::get('frontend/faults/', 'frontendIndex');
+    });
+
     // Route::get('client/grouped-clients', 'groupedClients');
     Route::get('client/profile', function () {
         return auth()->guard('client_api')->user();
