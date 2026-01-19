@@ -77,9 +77,10 @@ class InverterFaultController extends BaseController
         // Limit (default 20)
         $limit = (int) $request->get('limit', 20);
 
+        DB::enableQueryLog();
         // Fastest pagination
         $faults = $query->simplePaginate($limit);
-
+dd(DB::getQueryLog());
         return $this->sendResponse([
             'faults' => $faults
         ], 'Inverter fault list fetched successfully');
