@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\InverterFault;
 use App\Models\Client;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class InverterFaultController extends BaseController
 {
