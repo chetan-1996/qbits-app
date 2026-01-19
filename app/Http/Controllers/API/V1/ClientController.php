@@ -29,25 +29,25 @@ class ClientController extends BaseController
             ], 401);
         }
 
-        $companyId=$client->id;
-        if ($client->user_flag == 1) {
+        // $companyId=$client->id;
+        // if ($client->user_flag == 1) {
 
-            // if (!$request->filled('qbits_company_code')) {
-            //     return response()->json(['message' => 'Company code required'], 422);
-            // }
+        //     // if (!$request->filled('qbits_company_code')) {
+        //     //     return response()->json(['message' => 'Company code required'], 422);
+        //     // }
 
-            $companyId = Client::where('qbits_company_code', $client->qbits_company_code)
-                // ->where('user_flag', 0)
-                ->pluck('id')
-                ->all();
+        //     $companyId = Client::where('qbits_company_code', $client->qbits_company_code)
+        //         // ->where('user_flag', 0)
+        //         ->pluck('id')
+        //         ->all();
 
-            if (!$companyId) {
-                return response()->json(['message' => 'Invalid company code'], 401);
-            }
+        //     if (!$companyId) {
+        //         return response()->json(['message' => 'Invalid company code'], 401);
+        //     }
 
-            // Runtime attach (DB ma save karvani jarur nathi)
-        }
-        $client->company_id = $companyId;
+        //     // Runtime attach (DB ma save karvani jarur nathi)
+        // }
+        // $client->company_id = $companyId;
 
         $token = $client->createToken('client-token')->plainTextToken;
 
@@ -438,11 +438,17 @@ public function groupedClients(Request $request)
 
     public function frontendTotals()
     {
+
+
         $user = Auth::user();
-        $companyId = Client::where('qbits_company_code', $user->qbits_company_code)
+
+        $companyId=$user->id;
+        if ($client->user_flag == 1 && !is_null($user->qbits_company_code) && $user->qbits_company_code !== '') {
+            $companyId = Client::where('qbits_company_code', $user->qbits_company_code)
                     // ->where('user_flag', 0)
                     ->pluck('id')
                     ->all();
+        }
 
         // FAST: Single SQL query – no loops, no memory usage
         $result = DB::table('inverter_status')->selectRaw('
@@ -460,10 +466,14 @@ public function groupedClients(Request $request)
     {
 
         $user = Auth::user();
-        $companyId = Client::where('qbits_company_code', $user->qbits_company_code)
+
+        $companyId=$user->id;
+        if ($client->user_flag == 1 && !is_null($user->qbits_company_code) && $user->qbits_company_code !== '') {
+            $companyId = Client::where('qbits_company_code', $user->qbits_company_code)
                     // ->where('user_flag', 0)
                     ->pluck('id')
                     ->all();
+        }
         $search   = $request->search;
         $perPage  = $request->per_page ?? 20;
 
