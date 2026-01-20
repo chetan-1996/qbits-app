@@ -104,7 +104,11 @@ class InverterController extends BaseController
                     ->all();
         }
 
-        $rows = Inverter::with('latestDetail')
+        $rows = Inverter::
+            with([
+                'latestDetail:*',
+                'inverter.plant:id,plant_name,plant_no,country,city'
+            ])
             ->where('user_id', $companyId)
             ->get();
 
