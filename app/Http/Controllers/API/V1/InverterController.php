@@ -110,7 +110,7 @@ class InverterController extends BaseController
                 'latestDetail',
                 'plant:id,plant_name,plant_no,country,city'
             ])
-            ->where('user_id', $companyId)
+            ->whereIn('user_id', $companyId)
             ->get();
 
         return $this->sendResponse([

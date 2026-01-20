@@ -59,7 +59,7 @@ class InverterFaultController extends BaseController
             'inverter:id,plant_id,inverter_no,model,state',
             'inverter.plant:id,plant_name,plant_no,country,city'
         ])
-            ->select('*')->where('user_id', $companyId); // select only needed columns
+            ->select('*')->whereIn('user_id', $companyId); // select only needed columns
 
         // Filter by inverter_id
         if ($request->filled('inverter_id')) {
