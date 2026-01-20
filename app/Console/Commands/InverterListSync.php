@@ -125,7 +125,7 @@ class InverterListSync extends Command
                                 'inverter_no','inverter_address','collector_address','model','state',
                                 'control','register0a','register31','register29','register2a',
                                 'remark1','remark2','remark3','remark4','room_id','plant_id','timezone',
-                                'record_time','inverter_type','load','panel','panel_num','updated_at'
+                                'record_time','inverter_type','load','panel','panel_num','updated_at','user_id','atun','atpd'
                             ]
                         );
 
