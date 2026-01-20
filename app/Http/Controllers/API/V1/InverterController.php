@@ -57,6 +57,21 @@ class InverterController extends BaseController
         ], 'Inverter list fetched');
     }
 
+    public function inverter_data_details_list(Request $request)
+    {
+        $rows = Inverter::
+        // with(['latestDetail', 'plant'])
+            with([
+                'latestDetail',
+                'plant:id,plant_name,plant_no,country,city'
+            ])
+            ->get();
+
+        return $this->sendResponse([
+            'inverters' => $rows,
+        ], 'Inverter list fetched');
+    }
+
     public function frontendIndex(Request $request)
     {
         $rows = DB::table('inverters')
