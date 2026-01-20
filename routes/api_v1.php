@@ -29,6 +29,8 @@ Route::middleware('auth:client_api')->group(function () {
         Route::get('/frontend/inverter', 'frontendIndex');
         Route::get('/frontend/inverter/data', 'frontend_inverter_data');
         Route::get('/frontend/inverter/latest_data', 'frontend_inverter_data_details');
+        Route::get('/frontend/inverter/all_latest_data', 'frontend_inverter_data_details_list');
+
     });
 
     Route::controller(InverterFaultController::class)->group(function () {
