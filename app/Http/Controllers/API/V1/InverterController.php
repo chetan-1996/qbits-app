@@ -5,8 +5,10 @@ namespace App\Http\Controllers\API\V1;
 use App\Services\MqttService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use App\Models\Inverter;
 use App\Models\InverterDetail;
+use App\Models\Client;
 
 class InverterController extends BaseController
 {
@@ -83,6 +85,27 @@ class InverterController extends BaseController
     {
         $rows = Inverter::with('latestDetail')
             ->where('plant_id', $request->plantId)
+            ->get();
+
+        return $this->sendResponse([
+            'inverters' => $rows,
+        ], 'Inverter list fetched');
+    }
+
+    public function frontend_inverter_data_details_list(Request $request)
+    {
+        $user = Auth::user();
+
+        $companyId=[$user->id];
+        if ($user->user_flag == 1 && !is_null($user->qbits_company_code) && $user->qbits_company_code !== '') {
+            $companyId = Client::where('qbits_company_code', $user->qbits_company_code)
+                    // ->where('user_flag', 0)
+                    ->pluck('id')
+                    ->all();
+        }
+
+        $rows = Inverter::with('latestDetail')
+            ->where('user_id', $companyId)
             ->get();
 
         return $this->sendResponse([
