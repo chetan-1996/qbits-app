@@ -30,6 +30,9 @@ class Inverter extends Model
         'load',
         'panel',
         'panel_num',
+        'user_id',
+        'atun',
+        'atpd',
     ];
 
     /**

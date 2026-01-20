@@ -125,6 +125,9 @@ class InverterDetail extends Model
         'meterPower',
         'meterTotal',
         'meterRetotal',
+        'user_id',
+        'atun',
+        'atpd',
     ];
 
     /**

@@ -109,6 +109,9 @@ class InverterListSync extends Command
                                 'load'              => $inv['load'] ?? null,
                                 'panel'             => $inv['panel'] ?? null,
                                 'panel_num'         => $inv['panelnum'] ?? null,
+                                'user_id'           => $client->id,
+                                'atun'              => $client->username,
+                                'atpd'              => $client->password,
                                 'created_at'        => now(),
                                 'updated_at'        => now(),
                             ];
@@ -248,6 +251,10 @@ class InverterListSync extends Command
                                 'meterPower'         => $row['meterPower'] ?? null,
                                 'meterTotal'         => $row['meterTotal'] ?? null,
                                 'meterRetotal'       => $row['meterRetotal'] ?? null,
+
+                                'user_id'            => $client->id,
+                                'atun'               => $client->username,
+                                'atpd'               => $client->password,
 
                                 'created_at'         => now(),
                                 'updated_at'         => now(),
