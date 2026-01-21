@@ -63,7 +63,7 @@ class InverterController extends BaseController
         // with(['latestDetail', 'plant'])
             with([
                 'latestDetail',
-                'plant:id,plant_name,plant_no,country,city'
+                'plant:id,plant_name,plant_no,country,city,plantstate'
             ])
             ->get();
 
@@ -123,7 +123,7 @@ class InverterController extends BaseController
         // with(['latestDetail', 'plant'])
             with([
                 'latestDetail',
-                'plant:id,plant_name,plant_no,country,city'
+                'plant:id,plant_name,plant_no,country,city,plantstate'
             ])
             ->whereIn('user_id', $companyId)
             ->get();
