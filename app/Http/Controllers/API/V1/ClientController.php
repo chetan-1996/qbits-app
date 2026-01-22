@@ -591,7 +591,19 @@ public function groupedClients(Request $request)
             ->leftJoin('inverter_status as s', 's.user_id', '=', 'c.id')
             ->whereIn('c.id', $companyId)
             ->select(
-                'c.*',
+                'c.id',
+                'c.username',
+                'c.qbits_company_code',
+                'c.phone',
+                'c.email',
+                'c.qbits_company_code',
+                'c.plant_name',
+                'c.inverter_type',
+                'c.city_name',
+                'c.longitude',
+                'c.latitude',
+                'c.gmt',
+                'c.plant_type',
                 DB::raw('COALESCE(s.all_plant,0)     AS all_plant'),
                 DB::raw('COALESCE(s.normal_plant,0)  AS normal_plant'),
                 DB::raw('COALESCE(s.alarm_plant,0)   AS alarm_plant'),
