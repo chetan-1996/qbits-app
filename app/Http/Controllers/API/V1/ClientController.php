@@ -225,29 +225,6 @@ class ClientController extends BaseController
         }
     }
 
-    // public function index(Request $request)
-    // {
-    //     $perPage = $request->input('per_page', 1);
-    //     $lastId = $request->input('last_id', null);
-
-    //     $query = Client::select('id', 'name', 'email', 'created_at')
-    //         ->orderBy('id', 'asc');
-
-    //     if ($lastId) {
-    //         $query->where('id', '>', $lastId);
-    //     }
-
-    //     $clients = $query->limit($perPage)->get();
-
-    //     return response()->json([
-    //         'success' => true,
-    //         'message' => 'Batch fetched successfully',
-    //         'last_id' => $clients->last()?->id,
-    //         'has_more' => $clients->count() === $perPage,
-    //         'data' => $clients,
-    //     ], 200);
-    // }
-
     public function postWhatsAppNotificationUpdate(Request $request)
     {
         $validated = $request->validate([
@@ -436,28 +413,52 @@ public function groupedClients(Request $request)
     ], 'MAX optimized client list.');
 }
 
+    // public function frontendTotals()
+    // {
+
+
+    //     $user = Auth::user();
+
+    //     $companyId=[$user->id];
+    //     if ($user->user_flag == 1 && !is_null($user->qbits_company_code) && $user->qbits_company_code !== '') {
+    //         $companyId = Client::where('qbits_company_code', $user->qbits_company_code)
+    //                 // ->where('user_flag', 0)
+    //                 ->pluck('id')
+    //                 ->all();
+    //     }
+
+    //     // FAST: Single SQL query – no loops, no memory usage
+    //     $result = DB::table('inverter_status')->selectRaw('
+    //         SUM(all_plant) as total_all_plant,
+    //         SUM(normal_plant) as total_normal_plant,
+    //         SUM(alarm_plant) as total_alarm_plant,
+    //         SUM(offline_plant) as total_offline_plant
+    //     ')->whereIn('user_id', $companyId)->first();
+
+
+    //     return $this->sendResponse($result, 'fetched successfully.');
+    // }
+
     public function frontendTotals()
     {
-
-
         $user = Auth::user();
 
-        $companyId=[$user->id];
-        if ($user->user_flag == 1 && !is_null($user->qbits_company_code) && $user->qbits_company_code !== '') {
-            $companyId = Client::where('qbits_company_code', $user->qbits_company_code)
-                    // ->where('user_flag', 0)
-                    ->pluck('id')
-                    ->all();
+        $query = DB::table('inverter_status as s')
+            ->join('clients as c', 'c.id', '=', 's.user_id')
+            ->selectRaw('
+                COALESCE(SUM(s.all_plant),0) as total_all_plant,
+                COALESCE(SUM(s.normal_plant),0) as total_normal_plant,
+                COALESCE(SUM(s.alarm_plant),0) as total_alarm_plant,
+                COALESCE(SUM(s.offline_plant),0) as total_offline_plant
+            ');
+
+        if ($user->user_flag == 1 && !empty($user->qbits_company_code)) {
+            $query->where('c.qbits_company_code', $user->qbits_company_code);
+        } else {
+            $query->where('c.id', $user->id);
         }
 
-        // FAST: Single SQL query – no loops, no memory usage
-        $result = DB::table('inverter_status')->selectRaw('
-            SUM(all_plant) as total_all_plant,
-            SUM(normal_plant) as total_normal_plant,
-            SUM(alarm_plant) as total_alarm_plant,
-            SUM(offline_plant) as total_offline_plant
-        ')->whereIn('user_id', $companyId)->first();
-
+        $result = $query->first();
 
         return $this->sendResponse($result, 'fetched successfully.');
     }
@@ -552,134 +553,4 @@ public function groupedClients(Request $request)
             'offline_plant' => $offlinePlant
         ], 'MAX optimized client list.');
     }
-
-
-    // public function groupedClients(Request $request)
-    // {
-    //     $search = $request->input('search');
-    //     $limit  = $request->input('limit', 20);
-
-    //     // Ultra optimized base query (only 1 DB hit)
-    //     $query = DB::table('clients as c')
-    //         ->leftJoin('inverter_status as s', 's.user_id', '=', 'c.id')
-    //         ->select(
-    //             'c.*',
-    //             DB::raw('COALESCE(s.all_plant,0) as all_plant'),
-    //             DB::raw('COALESCE(s.normal_plant,0) as normal_plant'),
-    //             DB::raw('COALESCE(s.alarm_plant,0) as alarm_plant'),
-    //             DB::raw('COALESCE(s.offline_plant,0) as offline_plant')
-    //         );
-
-    //     // Optimized search (index-friendly)
-    //     if ($search) {
-    //         $query->where(function ($q) use ($search) {
-    //             $q->where('c.username', 'LIKE', "%{$search}%")
-    //             ->orWhere('c.company_name', 'LIKE', "%{$search}%")
-    //             ->orWhere('c.qbits_company_code', 'LIKE', "%{$search}%")
-    //             ->orWhere('c.email', 'LIKE', "%{$search}%")
-    //             ->orWhere('c.phone', 'LIKE', "%{$search}%");
-    //         });
-    //     }
-
-    //     // Only one pagination query
-    //     $paginated = $query->paginate($limit);
-
-    //     // Convert to collection (in-memory filtering)
-    //     $items = collect($paginated->items());
-
-    //     // Group results from same dataset
-    //     $allPlant     = $items;
-    //     $normalPlant  = $items->where('normal_plant',  '>', 0)->values();
-    //     $alarmPlant   = $items->where('alarm_plant',   '>', 0)->values();
-    //     $offlinePlant = $items->where('offline_plant', '>', 0)->values();
-
-    //     return $this->sendResponse([
-    //         'pagination'     => $paginated,
-    //         'all_plant'      => $allPlant,
-    //         'normal_plant'   => $normalPlant,
-    //         'alarm_plant'    => $alarmPlant,
-    //         'offline_plant'  => $offlinePlant,
-    //     ], 'Optimized grouped client list fetched successfully.');
-    // }
-
-
-    // public function groupedClients(Request $request)
-    // {
-    //     $search = $request->search ?? null;
-    //     $limit  = $request->limit ?? 200;
-
-    //     // Base query (pagination ONLY once)
-    //     $query = DB::table('clients as c')
-    //         ->leftJoin('inverter_status as s', 's.user_id', '=', 'c.id')
-    //         ->select(
-    //             'c.*',
-    //             DB::raw('COALESCE(s.all_plant,0) as all_plant'),
-    //             DB::raw('COALESCE(s.normal_plant,0) as normal_plant'),
-    //             DB::raw('COALESCE(s.alarm_plant,0) as alarm_plant'),
-    //             DB::raw('COALESCE(s.offline_plant,0) as offline_plant')
-    //         );
-
-    //     // Search filter
-    //     if ($search) {
-    //         $query->where(function ($q) use ($search) {
-    //             $q->where('c.username', 'LIKE', "%{$search}%")
-    //             ->orWhere('c.company_name', 'LIKE', "%{$search}%")
-    //             ->orWhere('c.qbits_company_code', 'LIKE', "%{$search}%")
-    //             ->orWhere('c.email', 'LIKE', "%{$search}%")
-    //             ->orWhere('c.phone', 'LIKE', "%{$search}%");
-    //         });
-    //     }
-
-    //     // ❗ COMMON Pagination
-    //     $paginated = $query->paginate($limit);
-
-    //     // Convert paginated results to collection
-    //     $items = collect($paginated->items());
-
-    //     // GROUPED LISTS FROM SAME PAGINATED RESULTS
-    //     $allPlant     = $items; // all records inside paginated page
-    //     $normalPlant  = $items->where('normal_plant',  '>', 0)->values();
-    //     $alarmPlant   = $items->where('alarm_plant',   '>', 0)->values();
-    //     $offlinePlant = $items->where('offline_plant', '>', 0)->values();
-
-    //     return $this->sendResponse([
-    //         'pagination'     => $paginated,   // 🔹 Only one pagination
-    //         'all_plant'      => $allPlant,
-    //         'normal_plant'   => $normalPlant,
-    //         'alarm_plant'    => $alarmPlant,
-    //         'offline_plant'  => $offlinePlant,
-    //     ], 'Grouped client list with common pagination fetched.');
-    // }
-
-    // public function groupedClients()
-    // {
-    //     // Base query for re-use
-    //     $base = DB::table('clients as c')
-    //         ->leftJoin('inverter_status as s', 's.user_id', '=', 'c.id')
-    //         ->select(
-    //             'c.id',
-    //             'c.company_name',
-    //             'c.qbits_company_code',
-    //             'c.username',
-    //             'c.email',
-    //             'c.phone',
-    //             DB::raw('COALESCE(s.all_plant,0) as all_plant'),
-    //             DB::raw('COALESCE(s.normal_plant,0) as normal_plant'),
-    //             DB::raw('COALESCE(s.alarm_plant,0) as alarm_plant'),
-    //             DB::raw('COALESCE(s.offline_plant,0) as offline_plant')
-    //         );
-
-    //     // GROUPS
-    //     $allPlant = (clone $base)->get();
-    //     $normalPlant = (clone $base)->where('s.normal_plant', '>', 0)->get();
-    //     $alarmPlant = (clone $base)->where('s.alarm_plant', '>', 0)->get();
-    //     $offlinePlant = (clone $base)->where('s.offline_plant', '>', 0)->get();
-
-    //     return $this->sendResponse([
-    //         'all_plant'     => $allPlant,
-    //         'normal_plant'  => $normalPlant,
-    //         'alarm_plant'   => $alarmPlant,
-    //         'offline_plant' => $offlinePlant,
-    //     ], 'Grouped client list fetched.');
-    // }
 }
