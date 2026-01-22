@@ -463,7 +463,7 @@ public function groupedClients(Request $request)
         return $this->sendResponse($result, 'fetched successfully.');
     }
 
-    public function frontendGroupedClients(Request $request)
+    public function frontendGroupedClients1(Request $request)
     {
 
         $user = Auth::user();
@@ -553,4 +553,105 @@ public function groupedClients(Request $request)
             'offline_plant' => $offlinePlant
         ], 'MAX optimized client list.');
     }
+
+    public function frontendGroupedClients(Request $request)
+{
+    $user = Auth::user();
+
+    $companyId = [$user->id];
+    if ($user->user_flag == 1 && !empty($user->qbits_company_code)) {
+        $companyId = Client::where('qbits_company_code', $user->qbits_company_code)
+            ->pluck('id')
+            ->all();
+    }
+
+    $search  = trim($request->search ?? '');
+    $perPage = (int) ($request->per_page ?? 20);
+
+    $pages = [
+        'all'     => (int) ($request->page_all     ?? 1),
+        'normal'  => (int) ($request->page_normal  ?? 1),
+        'alarm'   => (int) ($request->page_alarm   ?? 1),
+        'offline' => (int) ($request->page_offline ?? 1),
+    ];
+
+    $companyHash = md5(json_encode($companyId));
+
+    $cacheKey = function ($type, $page) use ($search, $perPage, $companyHash) {
+        return "clients:{$companyHash}:{$type}:{$search}:{$page}:{$perPage}";
+    };
+
+    $cached = function ($key, $callback) {
+        return Cache::remember($key, now()->addSeconds(30), $callback); // 30 sec enough
+    };
+
+    // ✅ Create fresh builder each time (NO clone)
+    $makeQuery = function () use ($companyId, $search) {
+        $q = DB::table('clients as c')
+            ->leftJoin('inverter_status as s', 's.user_id', '=', 'c.id')
+            ->whereIn('c.id', $companyId)
+            ->select(
+                'c.id',
+                'c.username',
+                'c.company_name',
+                'c.phone',
+                'c.email',
+                'c.qbits_company_code',
+                'c.plant_name',
+                DB::raw('COALESCE(s.all_plant,0)     AS all_plant'),
+                DB::raw('COALESCE(s.normal_plant,0)  AS normal_plant'),
+                DB::raw('COALESCE(s.alarm_plant,0)   AS alarm_plant'),
+                DB::raw('COALESCE(s.offline_plant,0) AS offline_plant'),
+                DB::raw('COALESCE(s.power,0) AS power'),
+                DB::raw('COALESCE(s.capacity,0) AS capacity'),
+                DB::raw('COALESCE(s.day_power,0) AS day_power'),
+                DB::raw('COALESCE(s.month_power,0) AS month_power'),
+                DB::raw('COALESCE(s.total_power,0) AS total_power'),
+                's.updated_at'
+            );
+
+        if (!empty($search)) {
+            $q->where(function ($qq) use ($search) {
+                $qq->where('c.username', 'LIKE', "%{$search}%")
+                    ->orWhere('c.company_name', 'LIKE', "%{$search}%")
+                    ->orWhere('c.qbits_company_code', 'LIKE', "%{$search}%")
+                    ->orWhere('c.email', 'LIKE', "%{$search}%")
+                    ->orWhere('c.collector', 'LIKE', "%{$search}%")
+                    ->orWhere('c.plant_name', 'LIKE', "%{$search}%")
+                    ->orWhere('c.phone', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return $q->orderByDesc('c.id');
+    };
+
+    // ✅ simplePaginate (NO count query)
+    $simplePaginate = function ($query, $pageName, $page) use ($perPage) {
+        return $query->simplePaginate($perPage, ['*'], $pageName, $page);
+    };
+
+    $allPlant = $cached($cacheKey('all', $pages['all']), function () use ($makeQuery, $simplePaginate, $pages) {
+        return $simplePaginate($makeQuery(), 'page_all', $pages['all']);
+    });
+
+    $normalPlant = $cached($cacheKey('normal', $pages['normal']), function () use ($makeQuery, $simplePaginate, $pages) {
+        return $simplePaginate($makeQuery()->where('s.normal_plant', '>', 0), 'page_normal', $pages['normal']);
+    });
+
+    $alarmPlant = $cached($cacheKey('alarm', $pages['alarm']), function () use ($makeQuery, $simplePaginate, $pages) {
+        return $simplePaginate($makeQuery()->where('s.alarm_plant', '>', 0), 'page_alarm', $pages['alarm']);
+    });
+
+    $offlinePlant = $cached($cacheKey('offline', $pages['offline']), function () use ($makeQuery, $simplePaginate, $pages) {
+        return $simplePaginate($makeQuery()->where('s.offline_plant', '>', 0), 'page_offline', $pages['offline']);
+    });
+
+    return $this->sendResponse([
+        'all_plant'     => $allPlant,
+        'normal_plant'  => $normalPlant,
+        'alarm_plant'   => $alarmPlant,
+        'offline_plant' => $offlinePlant,
+    ], 'MAX optimized client list.');
+}
+
 }
