@@ -596,6 +596,7 @@ public function groupedClients(Request $request)
                 'c.qbits_company_code',
                 'c.phone',
                 'c.email',
+                'c.collector',
                 'c.qbits_company_code',
                 'c.plant_name',
                 'c.inverter_type',
