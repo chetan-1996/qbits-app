@@ -463,7 +463,7 @@ public function groupedClients(Request $request)
         return $this->sendResponse($result, 'fetched successfully.');
     }
 
-    public function frontendGroupedClients1(Request $request)
+    public function frontendGroupedClients(Request $request)
     {
 
         $user = Auth::user();
@@ -554,7 +554,7 @@ public function groupedClients(Request $request)
         ], 'MAX optimized client list.');
     }
 
-    public function frontendGroupedClients(Request $request)
+    public function frontendGroupedClients1(Request $request)
 {
     $user = Auth::user();
 
