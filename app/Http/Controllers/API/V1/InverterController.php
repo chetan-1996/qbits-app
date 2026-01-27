@@ -12,7 +12,29 @@ use App\Models\Client;
 
 class InverterController extends BaseController
 {
-    public function sendCommand(Request $request, $id)
+    public function sendCommand(Request $request)
+    {
+        $mqtt = new MqttService();
+
+        $clientId = config('mqtt.client_id_prefix') . '-publisher';
+        $mqtt->connect($clientId);
+
+        $topic = "inverter/{$request->inverter_id}/command";
+
+        $payload = json_encode([
+            'action' => $request->action,
+            'value'  => $request->value,
+        ]);
+
+        $mqtt->publish($topic, $payload);
+
+        return response()->json([
+            'status' => 'Command sent',
+            'topic'  => $topic,
+        ]);
+    }
+
+    /*public function sendCommand(Request $request, $id)
     {
         $command = $request->all();
         $topic = "inverters/{$id}/command";
@@ -20,7 +42,7 @@ class InverterController extends BaseController
         app(MqttService::class)->publish($topic, $command, 1); // QoS 1
 
         return response()->json(['status' => 'sent', 'inverter' => $id]);
-    }
+    }*/
 
     public function index(Request $request)
     {
