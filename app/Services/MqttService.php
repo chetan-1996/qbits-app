@@ -17,6 +17,8 @@ class MqttService
             ->setPassword(config('mqtt.password'))
             ->setUseTls(true)
             ->setTlsCertificateAuthorityFile(config('mqtt.ca_file'))
+            ->setTlsVerifyPeer(true)
+            ->setTlsVerifyPeerName(false) // ⭐ KEY LINE ⭐
             ->setKeepAliveInterval(60);
             // ->setCleanSession(false); // persistent
 
