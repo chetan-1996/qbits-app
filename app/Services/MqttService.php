@@ -17,8 +17,8 @@ class MqttService
             ->setPassword(config('mqtt.password'))
             ->setUseTls(true)
             ->setTlsCertificateAuthorityFile(config('mqtt.ca_file'))
-            ->setKeepAliveInterval(60)
-            ->setCleanSession(false); // persistent
+            ->setKeepAliveInterval(60);
+            // ->setCleanSession(false); // persistent
 
         $this->client = new MqttClient(
             config('mqtt.host'),
