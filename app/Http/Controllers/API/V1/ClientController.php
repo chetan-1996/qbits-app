@@ -177,7 +177,7 @@ class ClientController extends BaseController
             $dir     = $validated['dir'] ?? 'desc';
             $search  = $validated['search'] ?? null;
 
-            $query = Client::select('*')
+            $query = DB::table('clients')->select('*')
                 ->where('user_flag',1)
                 // ->whereNotNull('qbits_company_code')->whereNull('dealer_id')
                 ->when($search, function ($q) use ($search) {
