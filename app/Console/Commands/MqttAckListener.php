@@ -13,8 +13,8 @@ class MqttAckListener extends Command
 
     public function handle()
     {
-        $this->info("ACK:");
         $mqtt = new MqttService();
+        $this->info("ACK1");
         $mqtt->connect(config('mqtt.client_id_prefix') .'-ack-sub');
 
         $mqtt->subscribe('heaven/devices/+/ack', function ($topic, $message) {
