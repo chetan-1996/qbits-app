@@ -24,10 +24,10 @@ class MqttAckListener extends Command
             DB::table('device_ack')->insert([
                 'collector_id' => $payload['cid'] ?? null,
                 'inverter_id'  => $payload['inv_id'] ?? null,
-                'type'         => $payload['type'],
+                'p_type'         => $payload['p_type'],
                 'ref_id'       => $payload['ref_id'],
                 'status'       => $payload['status'],
-                'reason'       => $payload['f_reason'],
+                'f_reason'       => $payload['f_reason'],
                 'created_at'   => now(),
             ]);
 
