@@ -52,7 +52,7 @@ Route::controller(AuthController::class)->group(function () {
     Route::post('company/generate/code', 'generateCode');
 });
 
-oute::controller(InverterCommandController::class)->group(function () {
+Route::controller(InverterCommandController::class)->group(function () {
     Route::post('/inverter/command/cmd', 'sendCmd');
     Route::post('/inverter/command/ota', 'sendOta');
     // Route::post('/inverters/{id}/command', 'sendCommand');
