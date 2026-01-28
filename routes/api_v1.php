@@ -7,6 +7,7 @@ use App\Http\Controllers\API\V1\ClientController;
 use App\Http\Controllers\API\V1\InverterController;
 use App\Http\Controllers\API\V1\PlantInfoController;
 use App\Http\Controllers\API\V1\InverterFaultController;
+use App\Http\Controllers\API\V1\InverterCommandController;
 
 Route::post('client/login', [ClientController::class, 'clientLogin']);
 Route::middleware('auth:client_api')->group(function () {
@@ -49,6 +50,12 @@ Route::controller(AuthController::class)->group(function () {
     Route::post('company/register', 'companyRegister');
     Route::post('individual', 'companyIndividual');
     Route::post('company/generate/code', 'generateCode');
+});
+
+oute::controller(InverterCommandController::class)->group(function () {
+    Route::post('/inverter/command/cmd', 'sendCmd');
+    Route::post('/inverter/command/ota', 'sendOta');
+    // Route::post('/inverters/{id}/command', 'sendCommand');
 });
 
 Route::controller(InverterController::class)->group(function () {

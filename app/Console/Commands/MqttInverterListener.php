@@ -15,7 +15,7 @@ class MqttInverterListener extends Command
     public function handle()
     {
         $mqtt = new MqttService();
-        $mqtt->connect(config('mqtt.client_prefix') . '-subscriber');
+        $mqtt->connect(config('mqtt.client_id_prefix') . '-subscriber');
 
         $mqtt->subscribe('inverter/+/data', function ($topic, $message) {
 
