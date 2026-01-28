@@ -15,11 +15,10 @@ class MqttAckListener extends Command
     {
         $mqtt = new MqttService();
         $mqtt->connect(config('mqtt.client_id_prefix') .'-ack-sub');
-$this->info("ACK5");
+
         $mqtt->subscribe('heaven/devices/+/ack', function ($topic, $message) {
-$this->info("ACK6");
             $payload = json_decode($message, true);
-$this->info("ACK7");
+
             DB::table('device_ack')->insert([
                 'collector_id' => $payload['cid'] ?? null,
                 'inverter_id'  => $payload['inv_id'] ?? null,
