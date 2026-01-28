@@ -12,7 +12,7 @@ class InverterCommandController extends BaseController
     {
         $collector = $request->collector;
 
-        $payload = [
+        $payload = json_encode([
             'p_type' => 'cmd',
             'collector' => $collector,
             'inverter_id' => $request->inverter_id,
@@ -23,7 +23,7 @@ class InverterCommandController extends BaseController
                 'set_on_off'      => $request->set_on_off,
                 'set_safe_v'      => $request->set_safe_v,
             ], fn ($v) => $v !== null),
-        ];
+        ]);
 
         $mqtt = new MqttService();
         $mqtt->connect(
@@ -42,14 +42,14 @@ class InverterCommandController extends BaseController
     {
         $collector = $request->collector;
 
-        $payload = [
+        $payload = json_encode([
             'cid'      => $collector,
             'ota_id'   => $request->ota_id,
             'ver'      => $request->ver,
             'url'      => $request->url,
             'checksum' => $request->checksum,
             'force'    => $request->force ?? false,
-        ];
+        ]);
 
         $mqtt = new MqttService();
         $mqtt->connect(
