@@ -8,11 +8,9 @@ use Illuminate\Support\Facades\DB;
 
 class DashboardController extends BaseController
 {
-    //
-
     public function widgetTotals(){
         $totals = DB::table('clients as c')
-        ->where('c.user_flag', 1)  // 👈 filter early
+        // ->where('c.user_flag', 1)  // 👈 filter early
         ->leftJoin('inverter_status as s', 's.user_id', '=', 'c.id')
         ->selectRaw('
             SUM(s.all_plant)     AS all_plant,
