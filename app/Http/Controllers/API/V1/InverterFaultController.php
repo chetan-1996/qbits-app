@@ -32,6 +32,7 @@ class InverterFaultController extends BaseController
         if ($request->status != -1) {
             $query->where('status', $request->status);
         }
+        $query->orderBy('stime', 'desc');
         // Limit (default 20)
         $limit = (int) $request->get('limit', 20);
 
@@ -74,6 +75,7 @@ class InverterFaultController extends BaseController
         if ($request->status != -1) {
             $query->where('status', $request->status);
         }
+        $query->orderBy('stime', 'desc');
         // Limit (default 20)
         $limit = (int) $request->get('limit', 20);
 
