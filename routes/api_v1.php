@@ -8,6 +8,7 @@ use App\Http\Controllers\API\V1\InverterController;
 use App\Http\Controllers\API\V1\PlantInfoController;
 use App\Http\Controllers\API\V1\InverterFaultController;
 use App\Http\Controllers\API\V1\InverterCommandController;
+use App\Http\Controllers\API\V1\DashboardController;
 
 Route::post('client/login', [ClientController::class, 'clientLogin']);
 Route::middleware('auth:client_api')->group(function () {
@@ -69,6 +70,11 @@ Route::controller(InverterController::class)->group(function () {
 
 // Protected routes (require authentication)
 Route::middleware('auth:sanctum')->group(function () {
+
+    Route::controller(DashboardController::class)->group(function () {
+        Route::get('dashboard/widget-total', 'widgetTotals');
+    });
+
     Route::controller(AuthController::class)->group(function () {
         Route::get('profile', 'profile');
         Route::post('logout', 'logout');
