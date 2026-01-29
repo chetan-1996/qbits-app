@@ -15,13 +15,13 @@ return [
     'redis_queue_list' => env('MQTT_REDIS_LIST', 'mqtt:inverter_queue'),
 
     // ✅ TLS CA file
-    'ca_file' => env('MQTT_CA_FILE', '/etc/mosquitto/certs/ca.crt'),
+    // 'ca_file' => env('MQTT_CA_FILE', '/etc/mosquitto/certs/ca.crt'),
 
     // ✅ SSL verify settings (same like mosquitto_pub/sub cafile)
-    'tls' => [
-        'enabled' => env('MQTT_TLS', true),
-        'verify_peer' => env('MQTT_TLS_VERIFY_PEER', true),
-        'verify_peer_name' => env('MQTT_TLS_VERIFY_PEER_NAME', true),
-        'allow_self_signed' => env('MQTT_TLS_ALLOW_SELF_SIGNED', false),
-    ],
+    // 'tls' => [
+    //     'enabled' => env('MQTT_TLS', true),
+    //     'verify_peer' => env('MQTT_TLS_VERIFY_PEER', true),
+    //     'verify_peer_name' => env('MQTT_TLS_VERIFY_PEER_NAME', true),
+    //     'allow_self_signed' => env('MQTT_TLS_ALLOW_SELF_SIGNED', false),
+    // ],
 ];
