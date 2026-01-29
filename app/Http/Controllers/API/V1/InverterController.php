@@ -70,7 +70,12 @@ class InverterController extends BaseController
 
     public function inverter_data_details(Request $request)
     {
-        $rows = Inverter::with('latestDetail')
+        $rows = Inverter::
+        // with('latestDetail')
+             with([
+                'latestDetail',
+                'plant:id,plant_name,plant_no,country,city,plantstate,capacity,acpower,eday,etot,kpi,month_power,year_power'
+            ])
             ->where('plant_id', $request->plantId)
             ->get();
 
@@ -85,7 +90,7 @@ class InverterController extends BaseController
         // with(['latestDetail', 'plant'])
             with([
                 'latestDetail',
-                'plant:id,plant_name,plant_no,country,city,plantstate'
+                'plant:id,plant_name,plant_no,country,city,plantstate,capacity,acpower,eday,etot,kpi,month_power,year_power'
             ])
             ->get();
 
@@ -120,7 +125,12 @@ class InverterController extends BaseController
 
     public function frontend_inverter_data_details(Request $request)
     {
-        $rows = Inverter::with('latestDetail')
+        $rows = Inverter::
+        // with('latestDetail')
+            with([
+                'latestDetail',
+                'plant:id,plant_name,plant_no,country,city,plantstate,capacity,acpower,eday,etot,kpi,month_power,year_power'
+            ])
             ->where('plant_id', $request->plantId)
             ->get();
 
@@ -145,7 +155,7 @@ class InverterController extends BaseController
         // with(['latestDetail', 'plant'])
             with([
                 'latestDetail',
-                'plant:id,plant_name,plant_no,country,city,plantstate'
+                'plant:id,plant_name,plant_no,country,city,plantstate,capacity,acpower,eday,etot,kpi,month_power,year_power'
             ])
             ->whereIn('user_id', $companyId)
             ->get();
