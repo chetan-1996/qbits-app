@@ -26,4 +26,38 @@ class DashboardController extends BaseController
         ->first();
          return $this->sendResponse($totals, 'User login successfully.');
     }
+
+    public function frontendWidgetTotals()
+    {
+        $user = Auth::user();
+
+        $totalsQuery = DB::table('inverter_status as s')
+            ->selectRaw('
+                SUM(s.all_plant)     AS all_plant,
+                SUM(s.normal_plant)  AS normal_plant,
+                SUM(s.alarm_plant)   AS alarm_plant,
+                SUM(s.offline_plant) AS offline_plant,
+                SUM(s.power)         AS power,
+                SUM(s.capacity)      AS capacity,
+                SUM(s.day_power)     AS day_power,
+                SUM(s.month_power)   AS month_power,
+                SUM(s.total_power)   AS total_power
+            ');
+
+        // If main company user → include all clients with same qbits_company_code
+        if ($user->user_flag == 1 && !is_null($user->qbits_company_code) && $user->qbits_company_code !== '') {
+            $totalsQuery->whereIn('s.user_id', function ($q) use ($user) {
+                $q->select('id')
+                ->from('clients')
+                ->where('qbits_company_code', $user->qbits_company_code);
+            });
+        } else {
+            // Normal user → only own data
+            $totalsQuery->where('s.user_id', $user->id);
+        }
+
+        $totals = $totalsQuery->first();
+
+        return $this->sendResponse($totals, 'Dashboard data successfully.');
+    }
 }
