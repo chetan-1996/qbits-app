@@ -453,7 +453,7 @@ public function groupedClients(Request $request)
             ');
 
         if ($user->user_flag == 1 && !empty($user->qbits_company_code)) {
-            $query->where('c.qbits_company_code', $user->qbits_company_code);
+            $query->wherein('c.qbits_company_code', $user->qbits_company_code);
         } else {
             $query->where('c.id', $user->id);
         }
