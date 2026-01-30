@@ -32,31 +32,36 @@ class DashboardController extends BaseController
     {
         $user = Auth::user();
 
-        $companyId=[$user->id];
-        if ($user->user_flag == 1 && !is_null($user->qbits_company_code) && $user->qbits_company_code !== '') {
-            $companyId = DB::table('clients as c')->where('qbits_company_code', $user->qbits_company_code)
-                    // ->where('user_flag', 0)
-                    ->pluck('id')
-                    ->all();
-        }
+        // $companyId=[$user->id];
+        // if ($user->user_flag == 1 && !is_null($user->qbits_company_code) && $user->qbits_company_code !== '') {
+        //     $companyId = DB::table('clients as c')->where('qbits_company_code', $user->qbits_company_code)
+        //             // ->where('user_flag', 0)
+        //             ->pluck('id')
+        //             ->all();
+        // }
 
-        $totals = DB::table('clients as c')
+        $query = DB::table('clients as c')
         ->join('inverter_status as s', 's.user_id', '=', 'c.id')
         ->selectRaw('
-            SUM(s.all_plant)     AS all_plant,
-            SUM(s.normal_plant)  AS normal_plant,
-            SUM(s.alarm_plant)   AS alarm_plant,
-            SUM(s.offline_plant) AS offline_plant,
+            COALESCE(SUM(s.all_plant),0) as total_all_plant,
+            COALESCE(SUM(s.normal_plant),0) as total_normal_plant,
+            COALESCE(SUM(s.alarm_plant),0) as total_alarm_plant,
+            COALESCE(SUM(s.offline_plant),0) as total_offline_plant
             SUM(s.power)         AS power,
             SUM(s.capacity)      AS capacity,
             SUM(s.day_power)     AS day_power,
             SUM(s.month_power)   AS month_power,
             SUM(s.total_power)   AS total_power
-        ')
-        ->whereIn('c.id', $companyId)
-        ->first();
+        ');
+       if ($user->user_flag == 1 && !empty($user->qbits_company_code)) {
+            $query->where('c.qbits_company_code', $user->qbits_company_code);
+        } else {
+            $query->where('c.id', $user->id);
+        }
 
-        unset($companyId);
-         return $this->sendResponse($totals, 'User login successfully.');
+        $result = $query->first();
+
+        // unset($companyId);
+         return $this->sendResponse($result, 'User login successfully.');
     }
 }
