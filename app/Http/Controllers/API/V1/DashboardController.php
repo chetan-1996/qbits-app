@@ -41,8 +41,7 @@ class DashboardController extends BaseController
         }
 
         $totals = DB::table('clients as c')
-        // ->where('c.user_flag', 1)  // 👈 filter early
-        ->leftJoin('inverter_status as s', 's.user_id', '=', 'c.id')
+        ->join('inverter_status as s', 's.user_id', '=', 'c.id')
         ->selectRaw('
             SUM(s.all_plant)     AS all_plant,
             SUM(s.normal_plant)  AS normal_plant,
