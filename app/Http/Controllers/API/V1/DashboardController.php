@@ -29,39 +29,42 @@ class DashboardController extends BaseController
     }
 
     public function frontendWidgetTotals()
-    {
-        $user = Auth::user();
+{
+    $user = Auth::user();
 
-        $query = DB::table('clients as c')
-            ->join('inverter_status as s', 's.user_id', '=', 'c.id')
-            ->selectRaw('
-                SUM(s.all_plant)     AS all_plant,
-                SUM(s.normal_plant)  AS normal_plant,
-                SUM(s.alarm_plant)   AS alarm_plant,
-                SUM(s.offline_plant) AS offline_plant,
-                SUM(s.power)         AS power,
-                SUM(s.capacity)      AS capacity,
-                SUM(s.day_power)     AS day_power,
-                SUM(s.month_power)   AS month_power,
-                SUM(s.total_power)   AS total_power
-            ');
+    $totals = DB::table('inverter_status as s')
+        ->selectRaw('
+            SUM(s.all_plant)     AS all_plant,
+            SUM(s.normal_plant)  AS normal_plant,
+            SUM(s.alarm_plant)   AS alarm_plant,
+            SUM(s.offline_plant) AS offline_plant,
+            SUM(s.power)         AS power,
+            SUM(s.capacity)      AS capacity,
+            SUM(s.day_power)     AS day_power,
+            SUM(s.month_power)   AS month_power,
+            SUM(s.total_power)   AS total_power
+        ')
+        ->whereIn('s.user_id', function ($q) use ($user) {
 
-        // Company master user → all clients of same company
-        if (
-            $user->user_flag == 1 &&
-            !is_null($user->qbits_company_code) &&
-            $user->qbits_company_code !== ''
-        ) {
-            $query->where('c.qbits_company_code', $user->qbits_company_code);
-        }
-        // Normal user → only his own client row
-        else {
-            $query->where('c.id', $user->id);
-        }
+            // normal user → only his own id
+            if (
+                $user->user_flag != 1 ||
+                is_null($user->qbits_company_code) ||
+                $user->qbits_company_code === ''
+            ) {
+                $q->select(DB::raw((int)$user->id));
+            }
+            // company master user → all ids with same company code
+            else {
+                $q->select('id')
+                  ->from('clients')
+                  ->where('qbits_company_code', $user->qbits_company_code);
+            }
+        })
+        ->first();
 
-        $totals = $query->first();
+    return $this->sendResponse($totals, 'User login successfully.');
+}
 
-        return $this->sendResponse($totals, 'User login successfully.');
-    }
 
 }
