@@ -28,9 +28,9 @@ class DashboardController extends BaseController
          return $this->sendResponse($totals, 'User login successfully.');
     }
 
-    public function frontendWidgetTotals(){
-
-    $user = Auth::user();
+    public function frontendWidgetTotals()
+    {
+        $user = Auth::user();
 
         $companyId=[$user->id];
         if ($user->user_flag == 1 && !is_null($user->qbits_company_code) && $user->qbits_company_code !== '') {
@@ -39,6 +39,7 @@ class DashboardController extends BaseController
                     ->pluck('id')
                     ->all();
         }
+
         $totals = DB::table('clients as c')
         // ->where('c.user_flag', 1)  // 👈 filter early
         ->leftJoin('inverter_status as s', 's.user_id', '=', 'c.id')
@@ -55,6 +56,8 @@ class DashboardController extends BaseController
         ')
         ->whereIn('c.id', $companyId)
         ->first();
+
+        unset($companyId);
          return $this->sendResponse($totals, 'User login successfully.');
     }
 }
