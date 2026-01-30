@@ -28,33 +28,43 @@ class DashboardController extends BaseController
          return $this->sendResponse($totals, 'User login successfully.');
     }
 
-    public function frontendWidgetTotals(){
-
+    public function frontendWidgetTotals()
+{
     $user = Auth::user();
 
-        $companyId=[$user->id];
-        if ($user->user_flag == 1 && !is_null($user->qbits_company_code) && $user->qbits_company_code !== '') {
-            $companyId = DB::table('clients as c')->where('qbits_company_code', $user->qbits_company_code)
-                    // ->where('user_flag', 0)
-                    ->pluck('id')
-                    ->all();
-        }
-        $totals = DB::table('clients as c')
-        // ->where('c.user_flag', 1)  // 👈 filter early
-        ->leftJoin('inverter_status as s', 's.user_id', '=', 'c.id')
+    $query = DB::table('inverter_status as s')
         ->selectRaw('
-            SUM(s.all_plant)     AS all_plant,
-            SUM(s.normal_plant)  AS normal_plant,
-            SUM(s.alarm_plant)   AS alarm_plant,
-            SUM(s.offline_plant) AS offline_plant,
-            SUM(s.power)         AS power,
-            SUM(s.capacity)      AS capacity,
-            SUM(s.day_power)     AS day_power,
-            SUM(s.month_power)   AS month_power,
-            SUM(s.total_power)   AS total_power
-        ')
-        ->whereIn('s.user_id', $companyId)
-        ->first();
-         return $this->sendResponse($totals, 'User login successfully.');
+            COALESCE(SUM(s.all_plant), 0)     AS all_plant,
+            COALESCE(SUM(s.normal_plant), 0)  AS normal_plant,
+            COALESCE(SUM(s.alarm_plant), 0)   AS alarm_plant,
+            COALESCE(SUM(s.offline_plant), 0) AS offline_plant,
+            COALESCE(SUM(s.power), 0)         AS power,
+            COALESCE(SUM(s.capacity), 0)      AS capacity,
+            COALESCE(SUM(s.day_power), 0)     AS day_power,
+            COALESCE(SUM(s.month_power), 0)   AS month_power,
+            COALESCE(SUM(s.total_power), 0)   AS total_power
+        ');
+
+    // If main company user, include all clients with same qbits_company_code
+    if (
+        $user->user_flag == 1 &&
+        !is_null($user->qbits_company_code) &&
+        $user->qbits_company_code !== ''
+    ) {
+        $query->whereIn('s.user_id', function ($sub) use ($user) {
+            $sub->select('id')
+                ->from('clients')
+                ->where('qbits_company_code', $user->qbits_company_code);
+        });
     }
+    // Otherwise only logged-in user's own data
+    else {
+        $query->where('s.user_id', $user->id);
+    }
+
+    $totals = $query->first();
+
+    return $this->sendResponse($totals, 'User login successfully.');
+}
+
 }
