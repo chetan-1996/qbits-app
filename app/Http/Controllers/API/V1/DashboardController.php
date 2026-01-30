@@ -44,10 +44,10 @@ class DashboardController extends BaseController
         // ->where('c.user_flag', 1)  // 👈 filter early
         ->leftJoin('inverter_status as s', 's.user_id', '=', 'c.id')
         ->selectRaw('
-            SUM(s.all_plant)     AS all_plant,
-            SUM(s.normal_plant)  AS normal_plant,
-            SUM(s.alarm_plant)   AS alarm_plant,
-            SUM(s.offline_plant) AS offline_plant,
+            s.all_plant     AS all_plant,
+            s.normal_plant  AS normal_plant,
+            s.alarm_plant   AS alarm_plant,
+            s.offline_plant AS offline_plant,
             SUM(s.power)         AS power,
             SUM(s.capacity)      AS capacity,
             SUM(s.day_power)     AS day_power,
