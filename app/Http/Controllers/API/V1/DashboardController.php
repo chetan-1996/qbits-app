@@ -53,7 +53,7 @@ class DashboardController extends BaseController
             SUM(s.month_power)   AS month_power,
             SUM(s.total_power)   AS total_power
         ')
-        ->whereIn('c.user_id', $companyId)
+        ->whereIn('c.id', $companyId)
         ->first();
          return $this->sendResponse($totals, 'User login successfully.');
     }
