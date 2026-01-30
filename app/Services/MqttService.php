@@ -15,10 +15,10 @@ class MqttService
         $settings = (new ConnectionSettings)
             ->setUsername(config('mqtt.username'))
             ->setPassword(config('mqtt.password'))
-            ->setUseTls(true)
-            ->setTlsCertificateAuthorityFile(config('mqtt.ca_file'))
-            ->setTlsVerifyPeer(true)
-            ->setTlsVerifyPeerName(false) // ⭐ KEY LINE ⭐
+            // ->setUseTls(true)
+            // ->setTlsCertificateAuthorityFile(config('mqtt.ca_file'))
+            // ->setTlsVerifyPeer(true)
+            // ->setTlsVerifyPeerName(false) // ⭐ KEY LINE ⭐
             ->setKeepAliveInterval(60);
             // ->setCleanSession(false); // persistent
 
