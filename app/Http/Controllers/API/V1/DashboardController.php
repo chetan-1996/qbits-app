@@ -32,13 +32,13 @@ class DashboardController extends BaseController
     {
         $user = Auth::user();
 
-        // $companyId=[$user->id];
-        // if ($user->user_flag == 1 && !is_null($user->qbits_company_code) && $user->qbits_company_code !== '') {
-        //     $companyId = DB::table('clients as c')->where('qbits_company_code', $user->qbits_company_code)
-        //             // ->where('user_flag', 0)
-        //             ->pluck('id')
-        //             ->all();
-        // }
+        $companyId=[$user->id];
+        if ($user->user_flag == 1 && !is_null($user->qbits_company_code) && $user->qbits_company_code !== '') {
+            $companyId = DB::table('clients as c')->where('qbits_company_code', $user->qbits_company_code)
+                    // ->where('user_flag', 0)
+                    ->pluck('id')
+                    ->all();
+        }
 
         $query = DB::table('clients as c')
         ->join('inverter_status as s', 's.user_id', '=', 'c.id')
@@ -53,11 +53,7 @@ class DashboardController extends BaseController
             SUM(s.month_power)   AS month_power,
             SUM(s.total_power)   AS total_power
         ');
-       if ($user->user_flag == 1 && !empty($user->qbits_company_code)) {
-            $query->where('c.qbits_company_code', $user->qbits_company_code);
-        } else {
-            $query->where('c.id', $user->id);
-        }
+       $query->wherein('c.id', $companyId);
 
         $result = $query->first();
 
