@@ -45,8 +45,8 @@ class DashboardController extends BaseController
         ->selectRaw('
             COALESCE(SUM(s.all_plant),0) as all_plant,
             COALESCE(SUM(s.normal_plant),0) as normal_plant,
-            COALESCE(SUM(s.alarm_plant),0) as total_alarm_plant,
-            COALESCE(SUM(s.offline_plant),0) as total_offline_plant,
+            COALESCE(SUM(s.alarm_plant),0) as alarm_plant,
+            COALESCE(SUM(s.offline_plant),0) as offline_plant,
             SUM(s.power)         AS power,
             SUM(s.capacity)      AS capacity,
             SUM(s.day_power)     AS day_power,
