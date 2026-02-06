@@ -12,17 +12,34 @@ class InverterCommandController extends BaseController
     {
         $collector = $request->collector;
 
+        // $payload = json_encode([
+        //     'p_type' => $request->p_type,
+        //     'collector' => $collector,
+        //     'inverter_id' => $request->inverter_id,
+        //     'cmd_id' => $request->cmd_id,
+        //     'cmd' => array_filter([
+        //         'set_act_pow_lim' => $request->set_act_pow_lim,
+        //         'set_react_pow'   => $request->set_react_pow,
+        //         'set_on_off'      => $request->set_on_off,
+        //         'set_safe_v'      => $request->set_safe_v,
+        //     ], fn ($v) => $v !== null),
+        // ]);
+
+        $cmdInput = $request->input('cmd', []);
+
+        $cmd = array_filter([
+            'set_act_pow_lim' => $cmdInput['set_act_pow_lim'] ?? null,
+            'set_react_pow'   => $cmdInput['set_react_pow'] ?? null,
+            'set_on_off'      => $cmdInput['set_on_off'] ?? null,
+            'set_safe_v'      => $cmdInput['set_safe_v'] ?? null,
+        ], fn ($v) => $v !== null);
+
         $payload = json_encode([
-            'p_type' => 'cmd',
+            'p_type' => $request->p_type,
             'collector' => $collector,
             'inverter_id' => $request->inverter_id,
             'cmd_id' => $request->cmd_id,
-            'cmd' => array_filter([
-                'set_act_pow_lim' => $request->set_act_pow_lim,
-                'set_react_pow'   => $request->set_react_pow,
-                'set_on_off'      => $request->set_on_off,
-                'set_safe_v'      => $request->set_safe_v,
-            ], fn ($v) => $v !== null),
+            'cmd' => empty($cmd) ? (object)[] : $cmd,
         ]);
 
         $mqtt = new MqttService();
