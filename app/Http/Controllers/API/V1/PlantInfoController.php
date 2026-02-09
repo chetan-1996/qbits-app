@@ -456,4 +456,56 @@ class PlantInfoController extends BaseController
         }
     }
 
+    public function createPlant(Request $request)
+    {
+        $query = [
+            'userName'        => $request->userName,
+            'password'        => $request->password,
+            'plantName'       => $request->plantName,
+            'city'            => $request->city,
+            'longitude'       => $request->longitude,
+            'latitude'        => $request->latitude,
+            'stationtype'     => $request->stationtype ?? 0,
+            'capacity'        => $request->capacity,
+            'batterycapacity' => $request->batterycapacity,
+        ];
+
+        $response = Http::withOptions([
+            'verify' => false,
+        ])
+        ->timeout(30)
+        ->post(
+            'https://www.aotaisolarcloud.com/ATSolarInfo/appcanxAddPlantToUser.action?' . http_build_query($query)
+        );
+
+        return response()->json([
+            'status' => $response->status(),
+            'data'   => $response->json(),
+        ]);
+    }
+
+    public function addCollector(Request $request)
+    {
+        $query = [
+            'userName' => $request->userName,
+            'password' => $request->password,
+            'plantId'  => $request->plantId,
+            'Serial'   => $request->serial,
+            'type'     => $request->type ?? 'WiFi-USB',
+        ];
+
+        $response = Http::withOptions([
+            'verify' => false,
+        ])
+        ->timeout(30)
+        ->post(
+            'https://www.aotaisolarcloud.com/ATSolarInfo/appcanxAddCollectorToPlant.action?' . http_build_query($query)
+        );
+
+        return response()->json([
+            'status' => $response->status(),
+            'data'   => $response->json(),
+        ]);
+    }
+
 }
