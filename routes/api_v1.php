@@ -9,6 +9,20 @@ use App\Http\Controllers\API\V1\PlantInfoController;
 use App\Http\Controllers\API\V1\InverterFaultController;
 use App\Http\Controllers\API\V1\InverterCommandController;
 use App\Http\Controllers\API\V1\DashboardController;
+// use App\Http\Controllers\API\V1\LeadCategoryController;
+// use App\Http\Controllers\API\V1\LeadSubcategoryController;
+
+// Route::get('/lead-categories', [LeadCategoryController::class,'index']);
+// Route::post('/lead-categories', [LeadCategoryController::class, 'store']);
+// Route::put('/lead-categories/{id}', [LeadCategoryController::class, 'update']);
+// Route::delete('/lead-categories/{id}', [LeadCategoryController::class, 'destroy']);
+// Route::get('/lead-categories/{id}', [LeadCategoryController::class, 'show']);
+
+// Route::apiResource(
+//   'lead-subcategories',
+//   LeadSubcategoryController::class
+// );
+
 
 Route::post('client/login', [ClientController::class, 'clientLogin']);
 Route::middleware('auth:client_api')->group(function () {
@@ -28,6 +42,8 @@ Route::middleware('auth:client_api')->group(function () {
         Route::get('frontend/plants/statistics-by-total', 'frontendByTotal');
         Route::get('frontend/plants/{id}', 'frontendIndex');
         Route::get('frontend/plants/show/{id}', 'frontendShow');
+        Route::post('frontend/create-plant', 'createPlant');
+        Route::post('frontend/add-collector', 'addCollector');
     });
 
     Route::controller(InverterController::class)->group(function () {
