@@ -19,4 +19,9 @@ class ChannelPartner extends Model
         'latitude',
         'longitude'
     ];
+
+    public function state()
+    {
+        return $this->belongsTo(State::class, 'state');
+    }
 }
