@@ -11,6 +11,8 @@ use App\Http\Controllers\API\V1\InverterCommandController;
 use App\Http\Controllers\API\V1\DashboardController;
 // use App\Http\Controllers\API\V1\LeadCategoryController;
 // use App\Http\Controllers\API\V1\LeadSubcategoryController;
+use App\Http\Controllers\API\V1\StateController;
+use App\Http\Controllers\API\V1\ChannelPartnerController;
 
 // Route::get('/lead-categories', [LeadCategoryController::class,'index']);
 // Route::post('/lead-categories', [LeadCategoryController::class, 'store']);
@@ -25,6 +27,14 @@ use App\Http\Controllers\API\V1\DashboardController;
 
 
 Route::post('client/login', [ClientController::class, 'clientLogin']);
+Route::get('/states', [StateController::class, 'index']);
+Route::prefix('channel-partners')->controller(ChannelPartnerController::class)->group(function () {
+    Route::get('/', 'index');
+    Route::get('/{id}','show');
+    Route::post('/','store');
+    Route::post('/{id}','update');
+    Route::delete('/{id}','destroy');
+});
 Route::middleware('auth:client_api')->group(function () {
     Route::controller(DashboardController::class)->group(function () {
         Route::get('frontend/dashboard/widget-total', 'frontendWidgetTotals');
