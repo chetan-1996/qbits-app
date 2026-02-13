@@ -11,7 +11,7 @@ class ChannelPartnerController extends BaseController
 {
     public function index()
     {
-       $data = ChannelPartner::latest()->paginate(20);
+       $data = ChannelPartner::with('state:id,name')->latest()->paginate(20);
 
         return response()->json([
             'status' => true,
@@ -49,6 +49,8 @@ class ChannelPartnerController extends BaseController
 
             'latitude' => 'required|numeric|between:-90,90',
             'longitude' => 'required|numeric|between:-180,180',
+        ], [
+            'mobile.unique' => 'Mobile number already exists.',
         ]);
 
         $data['photo'] = $req->file('photo')
@@ -83,6 +85,8 @@ class ChannelPartnerController extends BaseController
 
             'latitude' => 'required|numeric|between:-90,90',
             'longitude' => 'required|numeric|between:-180,180',
+        ], [
+            'mobile.unique' => 'Mobile number already exists.',
         ]);
 
         // only if new photo uploaded
