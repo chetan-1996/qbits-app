@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use App\Models\Client;
+use Illuminate\Support\Facades\Storage;
+use App\Models\ChannelPartner;
 use Exception;
 
 class WebhookController extends Controller
@@ -341,6 +343,191 @@ Thank you,
         } catch (Exception $e) {
             Log::error('Webhook error', ['error' => $e->getMessage()]);
             DB::disconnect();
+            gc_collect_cycles();
+
+            return response()->json([
+                'status'  => false,
+                'message' => 'Error processing webhook',
+                'error'   => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function channelPartenList(Request $request)
+    {
+        try {
+            /* ----------------------------------------------------
+             * ✅ 1. Verify HMAC Signature (secure)
+             * ---------------------------------------------------- */
+            // ✅ Optional: Verify webhook signature
+            $signature = $request->header('X-Signature');
+            if ($signature !== config('webhook.secret')) {
+                return response()->json(['error' => 'Invalid signature'], 401);
+            }
+
+            /* ----------------------------------------------------
+             * ✅ 2. Parse JSON payload
+             * ---------------------------------------------------- */
+            // $payload = $request->json()->all();
+            // $data = is_array($payload) && isset($payload[0]) ? $payload[0] : $payload;
+
+
+            /* ----------------------------------------------------
+             * ✅ 3. Prepare cleaned mapping
+             * ---------------------------------------------------- */
+            $query = ChannelPartner::query()
+            ->from('channel_partners as cp')
+            ->select([
+                'cp.id',
+                'cp.name',
+                'cp.designation',
+                'cp.company_name',
+                'cp.mobile',
+                'cp.whatsapp_no',
+                'cp.photo',
+                'cp.city',
+                's.name as state_name'
+            ])
+            ->leftJoin('states as s', 's.id', '=', 'cp.state');
+
+        // ✅ state filter
+        if ($request->filled('state_id')) {
+            $query->where('cp.state_id', $request->integer('state_id'));
+        }
+
+        // ✅ city filter
+        if ($request->filled('city')) {
+            $query->where('cp.city', $request->city);
+        }
+
+        $partners = $query
+            ->orderByDesc('cp.id')
+            ->simplePaginate(20);   // ⚡ fast paginate
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Partner List View',
+            'data' => $partners
+        ]);
+        } catch (Exception $e) {
+            gc_collect_cycles();
+
+            return response()->json([
+                'status'  => false,
+                'message' => 'Error processing webhook',
+                'error'   => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+
+    public function channelPartenMapList(Request $request)
+    {
+        try {
+            /* ----------------------------------------------------
+             * ✅ 1. Verify HMAC Signature (secure)
+             * ---------------------------------------------------- */
+            // ✅ Optional: Verify webhook signature
+            $signature = $request->header('X-Signature');
+            if ($signature !== config('webhook.secret')) {
+                return response()->json(['error' => 'Invalid signature'], 401);
+            }
+
+            /* ----------------------------------------------------
+             * ✅ 2. Parse JSON payload
+             * ---------------------------------------------------- */
+            // $payload = $request->json()->all();
+            // $data = is_array($payload) && isset($payload[0]) ? $payload[0] : $payload;
+
+
+            /* ----------------------------------------------------
+             * ✅ 3. Prepare cleaned mapping
+             * ---------------------------------------------------- */
+            $query = ChannelPartner::query()
+            ->from('channel_partners as cp')
+            ->select([
+                'cp.id',
+                'cp.name',
+                'cp.designation',
+                'cp.company_name',
+                'cp.mobile',
+                'cp.whatsapp_no',
+                'cp.photo',
+                'cp.city',
+                'cp.address',
+                'cp.latitude',
+                'cp.longitude',
+                's.name as state_name'
+            ])
+            ->leftJoin('states as s', 's.id', '=', 'cp.state')
+            ->orderBy('cp.id');
+
+            // ✅ Stream response (no big array in memory)
+            return response()->stream(function () use ($query) {
+
+                echo '{"status":true,"message":"Partner List View","data":[';
+
+                $first = true;
+
+                foreach ($query->cursor() as $row) {
+                    if (!$first) {
+                        echo ',';
+                    }
+
+                    echo json_encode($row, JSON_UNESCAPED_UNICODE);
+                    $first = false;
+                }
+
+                echo ']}';
+
+            }, 200, [
+                'Content-Type' => 'application/json',
+    ]);
+        } catch (Exception $e) {
+            gc_collect_cycles();
+
+            return response()->json([
+                'status'  => false,
+                'message' => 'Error processing webhook',
+                'error'   => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function stateList(Request $request)
+    {
+        try {
+            /* ----------------------------------------------------
+             * ✅ 1. Verify HMAC Signature (secure)
+             * ---------------------------------------------------- */
+            // ✅ Optional: Verify webhook signature
+            $signature = $request->header('X-Signature');
+            if ($signature !== config('webhook.secret')) {
+                return response()->json(['error' => 'Invalid signature'], 401);
+            }
+
+            /* ----------------------------------------------------
+             * ✅ 2. Parse JSON payload
+             * ---------------------------------------------------- */
+            // $payload = $request->json()->all();
+            // $data = is_array($payload) && isset($payload[0]) ? $payload[0] : $payload;
+
+
+            /* ----------------------------------------------------
+             * ✅ 3. Prepare cleaned mapping
+             * ---------------------------------------------------- */
+            $query = DB::table('states')->where('status', 1)
+                ->orderBy('name')
+                ->get(['id','name']);
+
+
+
+        return response()->json([
+            'status' => true,
+            'message' => 'state List',
+            'data' => $query
+        ]);
+        } catch (Exception $e) {
             gc_collect_cycles();
 
             return response()->json([

@@ -23,6 +23,9 @@ Route::prefix($apiVersion)->group(function () use ($apiVersion) {
 Route::prefix('v1')->group(function () {
     Route::post('/webhook/individual', [WebhookController::class, 'individualReceive']);
     Route::post('/webhook/company', [WebhookController::class, 'companyReceive']);
+    Route::get('/webhook/channel-partner/list-view', [WebhookController::class, 'channelPartenList']);
+    Route::get('/webhook/channel-partner/map-view', [WebhookController::class, 'channelPartenMapList']);
+    Route::get('/webhook/state', [WebhookController::class, 'stateList']);
     Route::post('/webhook/whatsapp-notification/update', [WebhookController::class, 'postWhatsAppNotification']);
     Route::get('/webhook/whatsapp-notification/{userId}', [WebhookController::class, 'getWhatsAppNotification']);
     Route::post('/webhook/validate-company-code', [WebhookController::class, 'validateCompanyCode']);
