@@ -30,6 +30,7 @@ class InverterDailyGeneration extends Command
     public function handle()
 {
     $users = DB::table('clients')
+        ->where('id', 531)
         ->where('phone', '!=', '')
         ->where('daily_generation_report_flag', 1)
         ->where(function ($q) {
