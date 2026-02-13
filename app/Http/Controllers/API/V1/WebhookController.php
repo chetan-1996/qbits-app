@@ -392,7 +392,7 @@ Thank you,
 
         // ✅ state filter
         if ($request->filled('state_id')) {
-            $query->where('cp.state_id', $request->integer('state_id'));
+            $query->where('cp.state', $request->integer('state_id'));
         }
 
         // ✅ city filter
