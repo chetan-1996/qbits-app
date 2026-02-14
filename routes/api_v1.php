@@ -28,6 +28,7 @@ use App\Http\Controllers\API\V1\ChannelPartnerController;
 
 Route::post('client/login', [ClientController::class, 'clientLogin']);
 Route::get('/states', [StateController::class, 'index']);
+Route::get('/states/{id}/cities', [StateController::class, 'cityList']);
 Route::prefix('channel-partners')->controller(ChannelPartnerController::class)->group(function () {
     Route::get('/', 'index');
     Route::get('/{id}','show');
