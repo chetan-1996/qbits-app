@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Cache;
 use App\Models\Client;
 use Illuminate\Support\Facades\Storage;
 use App\Models\ChannelPartner;
@@ -516,16 +517,69 @@ Thank you,
             /* ----------------------------------------------------
              * ✅ 3. Prepare cleaned mapping
              * ---------------------------------------------------- */
-            $query = DB::table('states')->where('status', 1)
-                ->orderBy('name')
-                ->get(['id','name']);
+            $states = Cache::remember('states_list', 86400, function () {
+                return DB::table('states')
+                    ->select('id','name')
+                    ->where('status',1)
+                    ->orderBy('name')
+                    ->get();
+            });
 
 
 
         return response()->json([
             'status' => true,
             'message' => 'state List',
-            'data' => $query
+            'data' => $states
+        ]);
+        } catch (Exception $e) {
+            gc_collect_cycles();
+
+            return response()->json([
+                'status'  => false,
+                'message' => 'Error processing webhook',
+                'error'   => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function cityList(Request $request,$id)
+    {
+        try {
+            /* ----------------------------------------------------
+             * ✅ 1. Verify HMAC Signature (secure)
+             * ---------------------------------------------------- */
+            // ✅ Optional: Verify webhook signature
+            $signature = $request->header('X-Signature');
+            if ($signature !== config('webhook.secret')) {
+                return response()->json(['error' => 'Invalid signature'], 401);
+            }
+
+            /* ----------------------------------------------------
+             * ✅ 2. Parse JSON payload
+             * ---------------------------------------------------- */
+            // $payload = $request->json()->all();
+            // $data = is_array($payload) && isset($payload[0]) ? $payload[0] : $payload;
+
+
+            /* ----------------------------------------------------
+             * ✅ 3. Prepare cleaned mapping
+             * ---------------------------------------------------- */
+            $cities = Cache::remember("cities_$id", 86400, function () use ($id) {
+                return DB::table('cities')
+                    ->select('id','name')
+                    ->where('state_id',$id)
+                    ->where('status',1)
+                    ->orderBy('name')
+                    ->get();
+            });
+
+
+
+        return response()->json([
+            'status' => true,
+            'message' => 'city List',
+            'data' => $cities
         ]);
         } catch (Exception $e) {
             gc_collect_cycles();
