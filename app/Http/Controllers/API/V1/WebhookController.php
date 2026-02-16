@@ -357,71 +357,63 @@ Thank you,
     public function channelPartenList(Request $request)
     {
         try {
-            /* ----------------------------------------------------
-             * ✅ 1. Verify HMAC Signature (secure)
-             * ---------------------------------------------------- */
-            // ✅ Optional: Verify webhook signature
-            $signature = $request->header('X-Signature');
-            if ($signature !== config('webhook.secret')) {
+            if ($request->header('X-Signature') !== config('webhook.secret')) {
                 return response()->json(['error' => 'Invalid signature'], 401);
             }
 
-            /* ----------------------------------------------------
-             * ✅ 2. Parse JSON payload
-             * ---------------------------------------------------- */
-            // $payload = $request->json()->all();
-            // $data = is_array($payload) && isset($payload[0]) ? $payload[0] : $payload;
+            // normalize inputs
+            $state = (int) $request->get('state_id', 0);
+            $city  = (int) $request->get('city', 0);
+            $page  = (int) $request->get('page', 1);
 
+            $cacheKey = "cp_list_s{$state}_c{$city}_p{$page}";
 
-            /* ----------------------------------------------------
-             * ✅ 3. Prepare cleaned mapping
-             * ---------------------------------------------------- */
-            $query = ChannelPartner::query()
-            ->from('channel_partners as cp')
-            ->select([
-                'cp.id',
-                'cp.name',
-                'cp.designation',
-                'cp.company_name',
-                'cp.mobile',
-                'cp.whatsapp_no',
-                'cp.photo',
-                'cp.city',
-                's.name as state_name',
-                'c.name as city_name'
-            ])
-            ->join('states as s', 's.id', '=', 'cp.state')
-            ->join('cities as c', 'c.id', '=', 'cp.city');
+            $partners = Cache::tags(['channel_partners'])
+                ->remember($cacheKey, 300, function () use ($request) {
 
-        // ✅ state filter
-        if ($request->filled('state_id')) {
-            $query->where('cp.state', $request->integer('state_id'));
-        }
+                    $query = ChannelPartner::query()
+                        ->from('channel_partners as cp')
+                        ->select([
+                            'cp.id',
+                            'cp.name',
+                            'cp.designation',
+                            'cp.company_name',
+                            'cp.mobile',
+                            'cp.whatsapp_no',
+                            'cp.photo',
+                            'cp.city',
+                            's.name as state_name'
+                        ])
+                        ->leftJoin('states as s', 's.id', '=', 'cp.state');
 
-        // ✅ city filter
-        if ($request->filled('city')) {
-            $query->where('cp.city', $request->integer('city'));
-        }
+                    if ($request->filled('state_id')) {
+                        $query->where('cp.state', $request->integer('state_id'));
+                    }
 
-        $partners = $query
-            ->orderByDesc('cp.id')
-            ->simplePaginate(20);   // ⚡ fast paginate
+                    if ($request->filled('city')) {
+                        $query->where('cp.city', $request->city);
+                    }
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Partner List View',
-            'data' => $partners
-        ]);
-        } catch (Exception $e) {
-            gc_collect_cycles();
+                    return $query->orderByDesc('cp.id')
+                                ->simplePaginate(20);
+                });
 
             return response()->json([
-                'status'  => false,
-                'message' => 'Error processing webhook',
-                'error'   => $e->getMessage(),
+                'status' => true,
+                'message' => 'Partner List View',
+                'data' => $partners
+            ]);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Error',
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
+
+
 
 
     public function channelPartenMapList(Request $request)
@@ -470,7 +462,7 @@ Thank you,
             // ✅ Stream response (no big array in memory)
             return response()->stream(function () use ($query) {
 
-                echo '{"status":true,"message":"Partner List View","data":[';
+                echo '{"status":true,"message":"Partner Map View","data":[';
 
                 $first = true;
 
