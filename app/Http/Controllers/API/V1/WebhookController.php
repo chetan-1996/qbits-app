@@ -355,63 +355,63 @@ Thank you,
     }
 
     public function channelPartenList(Request $request)
-{
-    try {
-        if ($request->header('X-Signature') !== config('webhook.secret')) {
-            return response()->json(['error' => 'Invalid signature'], 401);
+    {
+        try {
+            if ($request->header('X-Signature') !== config('webhook.secret')) {
+                return response()->json(['error' => 'Invalid signature'], 401);
+            }
+
+            // normalize inputs
+            $state = (int) $request->get('state_id', 0);
+            $city  = (int) $request->get('city', 0);
+            $page  = (int) $request->get('page', 1);
+
+            $cacheKey = "cp_list_s{$state}_c{$city}_p{$page}";
+
+            $partners = Cache::tags(['channel_partners'])
+                ->remember($cacheKey, 300, function () use ($request) {
+
+                    $query = ChannelPartner::query()
+                        ->from('channel_partners as cp')
+                        ->select([
+                            'cp.id',
+                            'cp.name',
+                            'cp.designation',
+                            'cp.company_name',
+                            'cp.mobile',
+                            'cp.whatsapp_no',
+                            'cp.photo',
+                            'cp.city',
+                            's.name as state_name'
+                        ])
+                        ->leftJoin('states as s', 's.id', '=', 'cp.state');
+
+                    if ($request->filled('state_id')) {
+                        $query->where('cp.state', $request->integer('state_id'));
+                    }
+
+                    if ($request->filled('city')) {
+                        $query->where('cp.city', $request->city);
+                    }
+
+                    return $query->orderByDesc('cp.id')
+                                ->simplePaginate(20);
+                });
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Partner List View',
+                'data' => $partners
+            ]);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Error',
+                'error' => $e->getMessage(),
+            ], 500);
         }
-
-        // normalize inputs
-        $state = (int) $request->get('state_id', 0);
-        $city  = (int) $request->get('city', 0);
-        $page  = (int) $request->get('page', 1);
-
-        $cacheKey = "cp_list_s{$state}_c{$city}_p{$page}";
-
-        $partners = Cache::tags(['channel_partners'])
-            ->remember($cacheKey, 300, function () use ($request) {
-
-                $query = ChannelPartner::query()
-                    ->from('channel_partners as cp')
-                    ->select([
-                        'cp.id',
-                        'cp.name',
-                        'cp.designation',
-                        'cp.company_name',
-                        'cp.mobile',
-                        'cp.whatsapp_no',
-                        'cp.photo',
-                        'cp.city',
-                        's.name as state_name'
-                    ])
-                    ->leftJoin('states as s', 's.id', '=', 'cp.state');
-
-                if ($request->filled('state_id')) {
-                    $query->where('cp.state', $request->integer('state_id'));
-                }
-
-                if ($request->filled('city')) {
-                    $query->where('cp.city', $request->city);
-                }
-
-                return $query->orderByDesc('cp.id')
-                             ->simplePaginate(20);
-            });
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Partner List View',
-            'data' => $partners
-        ]);
-
-    } catch (Exception $e) {
-        return response()->json([
-            'status' => false,
-            'message' => 'Error',
-            'error' => $e->getMessage(),
-        ], 500);
     }
-}
 
 
 
