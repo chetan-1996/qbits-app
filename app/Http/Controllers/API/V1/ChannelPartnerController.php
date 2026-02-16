@@ -11,7 +11,7 @@ class ChannelPartnerController extends BaseController
 {
     public function index()
     {
-       $data = ChannelPartner::with('state:id,name')->latest()->paginate(20);
+       $data = ChannelPartner::with(['state:id,name','city:id,name'])->latest()->paginate(20);
 
         return response()->json([
             'status' => true,
