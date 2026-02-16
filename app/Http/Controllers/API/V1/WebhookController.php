@@ -382,9 +382,11 @@ Thank you,
                             'cp.whatsapp_no',
                             'cp.photo',
                             'cp.city',
-                            's.name as state_name'
+                            's.name as state_name',
+                            'c.name as city_name'
                         ])
-                        ->leftJoin('states as s', 's.id', '=', 'cp.state');
+                        ->join('states as s', 's.id', '=', 'cp.state')
+                        ->join('cities as c', 'c.id', '=', 'cp.city');
 
                     if ($request->filled('state_id')) {
                         $query->where('cp.state', $request->integer('state_id'));
