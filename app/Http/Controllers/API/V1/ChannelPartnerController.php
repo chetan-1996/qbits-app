@@ -4,15 +4,23 @@ namespace App\Http\Controllers\API\V1;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use App\Models\ChannelPartner;
 
 class ChannelPartnerController extends BaseController
 {
-    public function index()
+    public function index(Request $request)
     {
-       $data = ChannelPartner::with('state:id,name')->latest()->paginate(20);
+    //    $data = ChannelPartner::with(['state:id,name','city:id,name'])->latest()->paginate(20);
+    $page = $request->get('page', 1);
 
+    $data = Cache::tags(['channel_partners'])
+        ->remember("list_page_{$page}", now()->addMinutes(5), function () {
+            return ChannelPartner::with(['state:id,name','city:id,name'])
+                ->latest()
+                ->paginate(20);
+        });
         return response()->json([
             'status' => true,
             'message' => 'Channel Partner List',
@@ -22,8 +30,12 @@ class ChannelPartnerController extends BaseController
 
     public function show($id)
     {
-        $partner = ChannelPartner::findOrFail($id);
-
+        // $partner = ChannelPartner::findOrFail($id);
+        $partner = Cache::tags(['channel_partners'])
+        ->remember("detail_{$id}", now()->addMinutes(10), function () use ($id) {
+            return ChannelPartner::with(['state:id,name','city:id,name'])
+                ->findOrFail($id);
+        });
         return response()->json([
             'status' => true,
             'message' => 'Channel Partner Detail',

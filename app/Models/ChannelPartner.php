@@ -24,4 +24,9 @@ class ChannelPartner extends Model
     {
         return $this->belongsTo(State::class, 'state');
     }
+
+    public function city()
+    {
+        return $this->belongsTo(City::class, 'city');
+    }
 }
