@@ -191,16 +191,12 @@ class InverterController extends BaseController
         $collectorId = $request->collector_id;
 
         $data = DB::table('device_ack')
-            ->select(['id', 'collector_id', 'payload', 'created_at'])
+            ->select('*')
             ->when($collectorId, function ($q) use ($collectorId) {
                 $q->where('collector_id', $collectorId);
             })
             ->orderByDesc('id')
             ->simplePaginate(50);
-
-        foreach ($data->items() as $row) {
-            $row->payload = json_decode($row->payload, true);
-        }
 
         return $this->sendResponse([
             'ack' => $data,
