@@ -15,6 +15,7 @@ class PlantInfo extends Command
 
     public function handle()
     {
+        DB::disableQueryLog();
         $this->info("=== Plant Info Command Started ===");
 
         $curTime = date('Y-m');  // faster than now()->format()

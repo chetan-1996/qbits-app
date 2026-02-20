@@ -13,6 +13,7 @@ class MqttTelemetryListener extends Command
 
     public function handle()
     {
+        DB::disableQueryLog();
         $mqtt = new MqttService();
         $mqtt->connect(config('mqtt.client_id_prefix') .'-telemetry-sub');
 

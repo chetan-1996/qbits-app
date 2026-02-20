@@ -41,6 +41,7 @@ class InverterFault extends Command
 
     public function handle()
     {
+        DB::disableQueryLog();
         $faultSolutions = $this->getFaultSolutions();
 
         // Process users in batches to reduce memory footprint

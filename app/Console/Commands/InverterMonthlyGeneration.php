@@ -13,6 +13,7 @@ class InverterMonthlyGeneration extends Command
 
     public function handle()
     {
+        DB::disableQueryLog();
         $now   = now();
         $month = $now->copy()->subMonth()->format('M Y');
         $dateParam = $now->copy()->subMonth()->format('Y-m');

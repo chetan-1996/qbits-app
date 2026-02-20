@@ -16,6 +16,7 @@ class GetInverterStatus extends Command
 
     public function handle()
     {
+        DB::disableQueryLog();
         $users = DB::table('clients')
             ->select('id', 'username', 'password')
             ->orderBy('id')
