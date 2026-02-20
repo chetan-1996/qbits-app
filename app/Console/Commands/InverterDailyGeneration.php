@@ -40,7 +40,7 @@ class InverterDailyGeneration extends Command
         /* ---------------- STREAM USERS ---------------- */
 
         DB::table('clients')
-            ->whereIn('id', [12, 20])
+            // ->whereIn('id', [12, 20])
             ->where('daily_generation_report_flag', 1)
             ->whereNotNull('phone')
             ->where(function ($q) use ($today) {
