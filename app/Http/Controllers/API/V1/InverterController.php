@@ -164,4 +164,46 @@ class InverterController extends BaseController
             'inverters' => $rows,
         ], 'Inverter list fetched');
     }
+
+    public function teleHistory(Request $request)
+    {
+        $collectorId = $request->collector_id;
+
+        $data = DB::table('telemetry_raw')
+            ->select(['id', 'collector_id', 'payload', 'created_at'])
+            ->when($collectorId, function ($q) use ($collectorId) {
+                $q->where('collector_id', $collectorId);
+            })
+            ->orderByDesc('id')
+            ->simplePaginate(50);
+
+        foreach ($data->items() as $row) {
+            $row->payload = json_decode($row->payload, true);
+        }
+
+        return $this->sendResponse([
+            'telemetry' => $data,
+        ], 'telemetry list fetched');
+    }
+
+    public function ackHistory(Request $request)
+    {
+        $collectorId = $request->collector_id;
+
+        $data = DB::table('device_ack')
+            ->select(['id', 'collector_id', 'payload', 'created_at'])
+            ->when($collectorId, function ($q) use ($collectorId) {
+                $q->where('collector_id', $collectorId);
+            })
+            ->orderByDesc('id')
+            ->simplePaginate(50);
+
+        foreach ($data->items() as $row) {
+            $row->payload = json_decode($row->payload, true);
+        }
+
+        return $this->sendResponse([
+            'ack' => $data,
+        ], 'ack list fetched');
+    }
 }

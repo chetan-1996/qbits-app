@@ -9,22 +9,8 @@ use App\Http\Controllers\API\V1\PlantInfoController;
 use App\Http\Controllers\API\V1\InverterFaultController;
 use App\Http\Controllers\API\V1\InverterCommandController;
 use App\Http\Controllers\API\V1\DashboardController;
-// use App\Http\Controllers\API\V1\LeadCategoryController;
-// use App\Http\Controllers\API\V1\LeadSubcategoryController;
 use App\Http\Controllers\API\V1\StateController;
 use App\Http\Controllers\API\V1\ChannelPartnerController;
-
-// Route::get('/lead-categories', [LeadCategoryController::class,'index']);
-// Route::post('/lead-categories', [LeadCategoryController::class, 'store']);
-// Route::put('/lead-categories/{id}', [LeadCategoryController::class, 'update']);
-// Route::delete('/lead-categories/{id}', [LeadCategoryController::class, 'destroy']);
-// Route::get('/lead-categories/{id}', [LeadCategoryController::class, 'show']);
-
-// Route::apiResource(
-//   'lead-subcategories',
-//   LeadSubcategoryController::class
-// );
-
 
 Route::post('client/login', [ClientController::class, 'clientLogin']);
 Route::get('/states', [StateController::class, 'index']);
@@ -96,6 +82,8 @@ Route::controller(InverterController::class)->group(function () {
     Route::get('/inverter/data', 'inverter_data');
     Route::get('/inverter/latest_data', 'inverter_data_details');
     Route::get('/inverter/all_latest_data', 'inverter_data_details_list');
+    Route::get('/telemetry/history', 'teleHistory');
+    Route::get('/telemetry/ack', 'ackHistory');
 });
 
 // Protected routes (require authentication)
