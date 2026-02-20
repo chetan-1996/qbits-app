@@ -29,7 +29,7 @@ class InverterWeeklyGeneration extends Command
      */
     public function handle()
     {
-
+        DB::disableQueryLog();
         // Lazy load users one by one to reduce memory and CPU
         DB::table('clients as u')
             ->join('qbits_daily_generations as g', 'u.username', '=', 'g.username')
