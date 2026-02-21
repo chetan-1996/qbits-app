@@ -9,12 +9,12 @@ use Illuminate\Support\Facades\Schedule;
 // })->purpose('Display an inspiring quote');
 Schedule::command('inverterWeeklyGeneration:cron')->weeklyOn(1, '3:15')->runInBackground()->withoutOverlapping();
 Schedule::command('inverterMonthlyGeneration:cron')->monthlyOn(1, '4:45')->runInBackground()->withoutOverlapping();
-Schedule::command('inverterDailyGeneration:cron')
-    ->everyThirtyMinutes()
-    ->between('19:00', '23:00')
-    ->runInBackground()
-    ->withoutOverlapping();
-//Schedule::command('inverterDailyGeneration:cron')->dailyAt('19:00')->runInBackground()->withoutOverlapping();
+// Schedule::command('inverterDailyGeneration:cron')
+//     ->everyThirtyMinutes()
+//     ->between('19:00', '23:00')
+//     ->runInBackground()
+//     ->withoutOverlapping();
+Schedule::command('inverterDailyGeneration:cron')->dailyAt('19:00')->runInBackground()->withoutOverlapping();
 // Schedule::command('inverterFault:cron')->twiceDaily(10, 16)->runInBackground()->withoutOverlapping();
 Schedule::command('inverterFault:cron')->hourly()->between('08:00', '18:00')->runInBackground()->withoutOverlapping();
 // Schedule::command('getInverterStatus:cron')->everyThirtyMinutes()->between('08:00', '19:00')->runInBackground()->withoutOverlapping();
