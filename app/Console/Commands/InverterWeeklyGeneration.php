@@ -5,99 +5,156 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 class InverterWeeklyGeneration extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
     protected $signature = 'inverterWeeklyGeneration:cron';
+    protected $description = 'Weekly Generation WhatsApp Report (Ultra Optimized)';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Send weekly generation report to WhatsApp with minimal CPU usage';
-
-    /**
-     * Execute the console command.
-     *
-     * @return int
-     */
     public function handle()
     {
         DB::disableQueryLog();
-        // Lazy load users one by one to reduce memory and CPU
-        DB::table('clients as u')
-            ->join('qbits_daily_generations as g', 'u.username', '=', 'g.username')
-            ->where('u.phone', '!=', '')
-            // ->whereNull('u.company_code')
-            ->where('u.weekly_generation_report_flag', 1)
-            ->select('g.id', 'g.username', 'g.total_daily_generation','u.phone')
-            ->orderBy('u.id')
-            ->cursor()
-            ->each(function ($user) {
 
-                $this->processUser($user);
+        register_shutdown_function(function () {
+            Log::info('Weekly Cron Peak Memory', [
+                'peak_mb' => round(memory_get_peak_usage(true) / 1024 / 1024, 2)
+            ]);
+        });
 
-                // Free memory per iteration
-                unset($user);
-                gc_collect_cycles();
+        /* ---------------- WEEK RANGE ---------------- */
 
-                // Tiny pause to prevent CPU spikes
-                usleep(5000); // 5 milliseconds
+        $weekStart = Carbon::now()->subWeek()->startOfWeek()->format('d-m-Y');
+        $weekEnd   = Carbon::now()->subWeek()->endOfWeek()->format('d-m-Y');
+
+        /* ---------------- HTTP CLIENT ---------------- */
+
+        $waClient = $this->createHttpClient();
+        $counter  = 0;
+
+        /* ---------------- STREAM USERS + GENERATION ---------------- */
+
+        DB::table('clients as c')
+            ->join(
+                'qbits_daily_generations as g',
+                'g.username',
+                '=',
+                'c.username'
+            )
+            ->where('c.weekly_generation_report_flag', 1)
+            ->whereNotNull('c.phone')
+            // ->whereIn('c.id', [12, 20])
+            ->whereNotNull('g.total_daily_generation')
+            ->where('g.total_daily_generation', '>', 0)
+            ->select(
+                'c.id',
+                'c.username',
+                'c.phone',
+                'g.total_daily_generation'
+            )
+            ->orderBy('c.id')
+            ->lazyById(100, 'c.id')
+            ->each(function ($user) use (
+                &$waClient,
+                &$counter,
+                $weekStart,
+                $weekEnd
+            ) {
+
+                $counter++;
+
+                if ($this->sendWhatsApp(
+                    $waClient,
+                    $user,
+                    $user->total_daily_generation,
+                    $weekStart,
+                    $weekEnd
+                )) {
+                    DB::table('qbits_daily_generations')
+                        ->where('username', $user->username)
+                        ->limit(1)
+                        ->delete();
+                }
+
+                if ($counter % 200 === 0) {
+                    Log::info('Weekly Cron Running', [
+                        'processed_users' => $counter,
+                        'memory_mb' => round(memory_get_usage(true) / 1024 / 1024, 2)
+                    ]);
+                }
+
+                if ($counter % 500 === 0) {
+                    $waClient = $this->createHttpClient();
+                }
+
+                if (memory_get_usage(true) > 200 * 1024 * 1024) {
+                    Log::warning('Memory threshold reached. Graceful stop.');
+                    return false; // stops lazy collection safely
+                }
             });
 
-        return 0;
+        return Command::SUCCESS;
     }
 
-    /**
-     * Process a single user: fetch inverter data and send WhatsApp report
-     */
-    private function processUser($user,$totalDailyGeneration = 0)
+    /* ===================================================== */
+
+    private function createHttpClient()
     {
+        return Http::withOptions([
+            'verify'  => false,
+            'timeout' => 8,
+        ])->withHeaders([
+            'Content-Type' => 'application/json',
+        ]);
+    }
+
+    /* ===================================================== */
+
+    private function sendWhatsApp(
+        $waClient,
+        $user,
+        $generation,
+        $startDisplay,
+        $endDisplay
+    ): bool {
         try {
-            $startDate = now()->subWeek()->startOfWeek(); // last Monday 00:00
-            $endDate   = now()->subWeek()->endOfWeek();   // last Sunday 23:59
-            $startDateFormatted = $startDate->format('d-m-Y');
-            $endDateFormatted   = $endDate->format('d-m-Y');
-            $totalDailyGeneration = $user->total_daily_generation;
-            // Prepare WhatsApp message
-            $todayDate = now()->format('d M Y');
-//            $message = "🌞✨ નમસ્તે {$user->username},\n
-            $message ="
-Your Qbits Solar Inverter Weekly Generation Report ☀️⚡\n
-📅 Date: {$startDateFormatted} to {$endDateFormatted}
-🔋 Weekly’s Generation: *{$user->total_daily_generation} kWh*\n
-📌 Our Special Recommendations:
-1. Clean the solar panels on time to maintain optimal generation.
-2. Check inverter data at least once a month.
-3. Keep the inverter in an open area with good air circulation and sunlight exposure.
-4. Avoid direct sunlight falling on the inverter.\n
-Submit a Ticket | Qbits \nhttps://support.qbitsenergy.com";
+            $response = $waClient->post(
+                'https://app.11za.in/apis/template/sendTemplate',
+                [
+                    'authToken'     => "U2FsdGVkX19F1SxG2t/SCM6FZsYxNRogvfHM9vr7dDjh8drxCK+CiQyv/Y/fSiJ/VKsIOqARcT7mnU0xN3jHlQa/1OFlrCw0gntC4xsUlo3ljR6rqW7bncim8YbGunV6PykJr6/qnpgi53swkm54cdDqXWvsUAea/eKtSgQpUpqL5nybHLepdP3rPyNRWXMA",
+                    'name'          => $user->username,
+                    'sendto'        => $user->phone,
+                    'originWebsite' => 'https://qbitsenergy.com/',
+                    'templateName'  => 'qbits_weekly_generation_reports',
+                    'language'      => 'en',
+                    'data' => [
+                        $startDisplay,
+                        $endDisplay,
+                        $generation
+                    ]
+                ]
+            );
 
-            $whatsAppContent = [
-                'Name' => $user->username,
-                'Number' => $user->phone,
-                'Message' => $message,
-            ];
-            // Send report to Wabb API
-            $wabbWebhookUrl = config('services.webhook.url');
-            Http::withOptions(['verify' => false])->timeout(5)->get($wabbWebhookUrl, $whatsAppContent);
+            if (!$response->ok()) {
+                return false;
+            }
 
-            DB::table('qbits_daily_generations')
-                ->where('username', $user->username)
-                ->delete();
+            $data = $response->json();
 
-            // Cleanup
-            unset($whatsAppContent);
-            sleep(random_int(5, 60));
-            // usleep(random_int(1000000, 3000000)); // microseconds (1s – 3s)
+            if (
+                empty($data['IsSuccess']) ||
+                empty($data['Data']['messageId'])
+            ) {
+                Log::warning("WA Failed User {$user->id}", $data);
+                return false;
+            }
+
+            return true;
+
         } catch (\Throwable $e) {
-            \Log::error("DailyGenerationReport error for user {$user->id}: {$e->getMessage()}");
+            Log::error("WeeklyGeneration User {$user->id}: {$e->getMessage()}");
+            return false;
         }
     }
 }
