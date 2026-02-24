@@ -52,7 +52,8 @@ class ChannelPartnerController extends BaseController
             'company_name' => 'required|string|max:150',
             'designation' => 'required|string|max:100',
 
-            'mobile' => 'required|regex:/^\+?[0-9]{10,15}$/|unique:channel_partners,mobile',
+            // 'mobile' => 'required|regex:/^\+?[0-9]{10,15}$/|unique:channel_partners,mobile',
+            'mobile' => 'required|regex:/^\+?[0-9]{10,15}$/',
             'whatsapp_no' => 'required|regex:/^\+?[0-9]{10,15}$/',
 
             'address' => 'required|string',
