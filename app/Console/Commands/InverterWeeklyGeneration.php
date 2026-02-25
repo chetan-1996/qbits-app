@@ -25,13 +25,15 @@ class InverterWeeklyGeneration extends Command
 
         /* ---------------- WEEK RANGE ---------------- */
 
-        $weekStart = Carbon::now()->subWeek()->startOfWeek()->format('d-m-Y');
-        $weekEnd   = Carbon::now()->subWeek()->endOfWeek()->format('d-m-Y');
+        $lastWeek  = Carbon::now()->subWeek();
+        $weekStart = $lastWeek->copy()->startOfWeek()->format('d-m-Y');
+        $weekEnd   = $lastWeek->copy()->endOfWeek()->format('d-m-Y');
 
         /* ---------------- HTTP CLIENT ---------------- */
 
         $waClient = $this->createHttpClient();
         $counter  = 0;
+        $deleteUsernames = [];
 
         /* ---------------- STREAM USERS + GENERATION ---------------- */
 
@@ -44,7 +46,7 @@ class InverterWeeklyGeneration extends Command
             )
             ->where('c.weekly_generation_report_flag', 1)
             ->whereNotNull('c.phone')
-            // ->whereIn('c.id', [12, 20])
+            // ->whereIn('c.id', [70, 73])
             ->whereNotNull('g.total_daily_generation')
             ->where('g.total_daily_generation', '>', 0)
             ->select(
@@ -58,6 +60,7 @@ class InverterWeeklyGeneration extends Command
             ->each(function ($user) use (
                 &$waClient,
                 &$counter,
+                &$deleteUsernames,
                 $weekStart,
                 $weekEnd
             ) {
@@ -71,10 +74,14 @@ class InverterWeeklyGeneration extends Command
                     $weekStart,
                     $weekEnd
                 )) {
+                    $deleteUsernames[] = $user->username;
+                }
+
+                if (count($deleteUsernames) >= 200) {
                     DB::table('qbits_daily_generations')
-                        ->where('username', $user->username)
-                        ->limit(1)
+                        ->whereIn('username', $deleteUsernames)
                         ->delete();
+                    $deleteUsernames = [];
                 }
 
                 if ($counter % 200 === 0) {
@@ -94,6 +101,12 @@ class InverterWeeklyGeneration extends Command
                 }
             });
 
+        if ($deleteUsernames) {
+            DB::table('qbits_daily_generations')
+                ->whereIn('username', $deleteUsernames)
+                ->delete();
+        }
+
         return Command::SUCCESS;
     }
 
@@ -106,6 +119,7 @@ class InverterWeeklyGeneration extends Command
             'timeout' => 8,
         ])->withHeaders([
             'Content-Type' => 'application/json',
+            'Connection' => 'keep-alive',
         ]);
     }
 
@@ -146,7 +160,10 @@ class InverterWeeklyGeneration extends Command
                 empty($data['IsSuccess']) ||
                 empty($data['Data']['messageId'])
             ) {
-                Log::warning("WA Failed User {$user->id}", $data);
+                Log::warning("WA Failed User {$user->id}", [
+                    'IsSuccess' => $data['IsSuccess'] ?? null,
+                    'message' => $data['Message'] ?? null,
+                ]);
                 return false;
             }
 

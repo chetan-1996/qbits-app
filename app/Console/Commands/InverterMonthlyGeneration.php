@@ -9,142 +9,98 @@ use Illuminate\Support\Facades\Http;
 class InverterMonthlyGeneration extends Command
 {
     protected $signature = 'inverterMonthlyGeneration:cron';
-    protected $description = 'Send monthly generation report to WhatsApp with minimal CPU & memory usage';
+    protected $description = 'Send monthly generation report to WhatsApp';
 
     public function handle()
     {
         DB::disableQueryLog();
-        $now   = now();
+        $now = now();
         $month = $now->copy()->subMonth()->format('M Y');
         $dateParam = $now->copy()->subMonth()->format('Y-m');
 
-        $counter = 0;
-
-        // Lazy load users one by one
         DB::table('clients')
             ->where('phone', '!=', '')
-            // ->whereNull('company_code')
+            // ->whereIn('id', [12, 20])
             ->where('monthly_generation_report_flag', 1)
             ->select('id', 'username', 'password', 'phone')
             ->orderBy('id')
-            ->cursor()
-            ->each(function ($user) use ($month, $dateParam, &$counter) {
-                $this->processUser($user, $month, $dateParam);
-
-                unset($user);
-                gc_collect_cycles();
-
-                $counter++;
-                if ($counter % 10 === 0) {
-                    usleep(5000); // tiny pause after every 10 users
-                }
+            ->lazyById(50)
+            ->each(function ($user) use ($month, $dateParam) {
+                $this->process($user, $month, $dateParam);
             });
 
-        return 0;
+        return Command::SUCCESS;
     }
 
-    /**
-     * Process each user: login, fetch data, send WhatsApp
-     */
-    private function processUser($user, $month, $dateParam,$total=0)
+    private function process($user, $month, $dateParam, $total=0)
     {
         try {
-            // Step 1: Login
-            [$contentMd5, $timestamp] = $this->generateCustomString(new \DateTime());
-
-            $loginResponse = Http::withOptions(['verify' => false])->withHeaders([
-                'Content-MD5'  => $contentMd5,
-                'timestamp'    => $timestamp,
-                'Content-Type' => 'application/x-www-form-urlencoded',
-            ])->asForm()
-                ->timeout(10)
+            // Login
+            [$contentMd5, $timestamp] = $this->sign();
+            
+            $login = Http::withOptions(['verify' => false, 'timeout' => 15])
+                ->withHeaders([
+                    'Content-MD5' => $contentMd5,
+                    'timestamp' => $timestamp,
+                    'Content-Type' => 'application/x-www-form-urlencoded',
+                ])->asForm()
                 ->post('https://www.aotaisolarcloud.com/solarweb/api/login', [
                     'atun' => $user->username,
                     'atpd' => $user->password,
                 ]);
 
-            if (!$loginResponse->successful() || empty($loginResponse['data'])) {
-                \Log::warning("MonthlyReport: Login failed for user {$user->id}");
-                return;
-            }
+            if (!$login->successful() || empty($login['data'])) return;
 
-            // Step 2: Prepare token headers
-            $token     = $loginResponse['data']['token']['token'];
-            $appSecret = $loginResponse['data']['token']['appSecret'];
-            $ts        = (string) round(microtime(true) * 1000);
+            // Fetch data
+            $token = $login['data']['token']['token'];
+            $secret = $login['data']['token']['appSecret'];
+            $ts = (string) round(microtime(true) * 1000);
+            
+            $md5 = $this->hash($token, $secret, $ts);
+            
+            $resp = Http::withOptions(['verify' => false, 'timeout' => 15])
+                ->withHeaders([
+                    'content-length' => '0',
+                    'content-md5' => $md5,
+                    'timestamp' => $ts,
+                    'token' => $token,
+                ])
+                ->get("https://www.aotaisolarcloud.com/solarweb/api/user/getMonthBar?date={$dateParam}");
 
-            $contentMd5 = $this->generateTokenHash($token, $appSecret, $ts);
+            if (!$resp->successful() || empty($resp['data'])) return;
 
-            $headers = [
-                'content-length' => '0',
-                'content-md5'    => $contentMd5,
-                'timestamp'      => $ts,
-                'token'          => $token,
-            ];
-
-            // Step 3: Fetch monthly data
-            $url      = "https://www.aotaisolarcloud.com/solarweb/api/user/getMonthBar?date={$dateParam}";
-            $response = Http::withOptions(['verify' => false])->withHeaders($headers)->timeout(10)->get($url);
-
-            if (!$response->successful() || empty($response['data'])) {
-                \Log::warning("MonthlyReport: Data fetch failed for user {$user->id}");
-                return;
-            }
-
-            $total = array_sum($response['data']);
+            // Calculate total
+            // $total = 0;
+            // foreach ($resp['data'] as $v) $total += $v;
+            $total = array_sum($resp['data']);
             if ($total <= 0) return;
 
-            // Step 4: Prepare WhatsApp message
-//            $msg = "🌞✨ નમસ્તે {$user->username},\n
-            $msg = "
-Your Qbits Solar Inverter Monthly Generation Report ☀️⚡\n
-📅 Month: {$month}
-⚡ This Month's Generation: *{$total} kWh*\n
-📌 Our Special Recommendations:
-1. Clean the solar panels on time to maintain optimal generation.
-2. Check inverter data at least once a month.
-3. Keep the inverter in an open area with good air circulation and sunlight exposure.
-4. Avoid direct sunlight falling on the inverter.\n
-Submit a Ticket | Qbits: \nhttps://support.qbitsenergy.com";
-
-            $payload = [
-                'Name'   => $user->username,
-                'Number' => $user->phone,
-                'Message'=> $msg,
-            ];
-
-            // Step 5: Send WhatsApp via Wabb webhook
-            $wabbWebhookUrl = config('services.webhook.url');
-            Http::withOptions(['verify' => false])->timeout(5)->get(
-                $wabbWebhookUrl,
-                $payload
-            );
-            sleep(random_int(5, 60));
+            // Send WhatsApp
+            Http::withOptions(['verify' => false, 'timeout' => 8])
+                ->post('https://app.11za.in/apis/template/sendTemplate', [
+                    'authToken' => 'U2FsdGVkX19F1SxG2t/SCM6FZsYxNRogvfHM9vr7dDjh8drxCK+CiQyv/Y/fSiJ/VKsIOqARcT7mnU0xN3jHlQa/1OFlrCw0gntC4xsUlo3ljR6rqW7bncim8YbGunV6PykJr6/qnpgi53swkm54cdDqXWvsUAea/eKtSgQpUpqL5nybHLepdP3rPyNRWXMA',
+                    'name' => $user->username,
+                    'sendto' => $user->phone,
+                    'originWebsite' => 'https://qbitsenergy.com/',
+                    'templateName' => 'qbits_monthly_generation_report',
+                    'language' => 'en',
+                    'data' => [$month, number_format($total, 2, '.', '')],
+                ]);
         } catch (\Throwable $e) {
-            \Log::error("MonthlyReport error for user {$user->id}: {$e->getMessage()}");
+            \Log::error("MonthlyReport: User {$user->id} - {$e->getMessage()}");
         }
     }
 
-    private function calculateMd5($input)
+    private function sign()
     {
-        return base64_encode(md5($input));
+        $t = (string) (time() * 1000);
+        $r = strrev($t);
+        $m = base64_encode(md5("{$t}&-api-&{$r}"));
+        return [$m . $t, $t];
     }
 
-    private function generateCustomString(\DateTime $dateTime)
+    private function hash($token, $secret, $ts)
     {
-        $timestamp = (string) ($dateTime->getTimestamp() * 1000);
-        $rev       = strrev($timestamp);
-        $str       = $timestamp . '&-api-&' . $rev;
-        $md5       = $this->calculateMd5($str);
-
-        return [$md5 . $timestamp, $timestamp];
-    }
-
-    private function generateTokenHash($token, $appSecret, $timestamp = null)
-    {
-        $ts     = $timestamp ?? now()->toString();
-        $rawStr = "{$token}&{$appSecret}&{$ts}";
-
-        return $this->calculateMd5($rawStr);
+        return base64_encode(md5("{$token}&{$secret}&{$ts}"));
     }
 }
