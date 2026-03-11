@@ -69,7 +69,7 @@ class StateController extends BaseController
         ]);
 
         if ($validator->fails()) {
-            return $this->sendError('Validation Error.', $validator->errors(), 422);
+            return $this->sendError('Validation Error.', $validator->errors(), 400);
         }
 
         try {
@@ -88,7 +88,7 @@ class StateController extends BaseController
 
             return $this->sendError('Validation Error.', [
                 'name' => ['The city already exists for this state.']
-            ], 422);
+            ], 400);
         }
     }
 }
