@@ -22,6 +22,7 @@ Route::prefix('channel-partners')->controller(ChannelPartnerController::class)->
     Route::post('/{id}','update');
     Route::delete('/{id}','destroy');
 });
+Route::post('/cities', [StateController::class, 'store']);
 Route::middleware('auth:client_api')->group(function () {
     Route::controller(DashboardController::class)->group(function () {
         Route::get('frontend/dashboard/widget-total', 'frontendWidgetTotals');
