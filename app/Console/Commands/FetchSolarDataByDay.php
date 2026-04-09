@@ -24,8 +24,8 @@ class FetchSolarDataByDay extends Command
         $today = $this->argument('date')
         ? \Carbon\Carbon::parse($this->argument('date'))->toDateString()
         : now()->toDateString();
-//  $today = now()->toDateString(); // e.g. "2025-04-09"
-//  $today =  "2025-04-08"; // e.g. "2025-04-09"
+        //  $today = now()->toDateString(); // e.g. "2025-04-09"
+        //  $today =  "2025-04-08"; // e.g. "2025-04-09"
        \DB::table('inverter_details')
     ->select('plantId', 'user_id', 'atun', 'atpd')
     ->whereNotNull('plantId')
