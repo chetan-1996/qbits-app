@@ -84,6 +84,7 @@ Route::controller(InverterController::class)->group(function () {
     Route::get('/inverter/latest_data', 'inverter_data_details');
     Route::get('/inverter/all_latest_data', 'inverter_data_details_list');
     Route::get('/telemetry/history', 'teleHistory');
+    Route::get('/telemetry/heartbeats', 'teleHeartbeatHistory');
     Route::get('/telemetry/ack', 'ackHistory');
 });
 
