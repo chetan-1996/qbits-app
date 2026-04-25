@@ -74,9 +74,14 @@ class InverterCommandController extends BaseController
         );
 
         $mqtt->publish(
-            "heaven/devices/{$collector}/ota",
+            "rtsg-1/Ongridrooftop/{$collector}/ota/sub",
             $payload
         );
+
+        //  $mqtt->publish(
+        //     "heaven/devices/{$collector}/ota",
+        //     $payload
+        // );
 
         return response()->json(['status' => 'OTA_SENT']);
     }
