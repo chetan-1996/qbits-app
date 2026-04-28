@@ -11,6 +11,7 @@ use App\Http\Controllers\API\V1\InverterCommandController;
 use App\Http\Controllers\API\V1\DashboardController;
 use App\Http\Controllers\API\V1\StateController;
 use App\Http\Controllers\API\V1\ChannelPartnerController;
+use App\Http\Controllers\API\V1\TelemetryController;
 
 Route::post('client/login', [ClientController::class, 'clientLogin']);
 Route::get('/states', [StateController::class, 'index']);
@@ -83,6 +84,10 @@ Route::controller(InverterController::class)->group(function () {
     Route::get('/inverter/data', 'inverter_data');
     Route::get('/inverter/latest_data', 'inverter_data_details');
     Route::get('/inverter/all_latest_data', 'inverter_data_details_list');
+});
+
+// Telemetry routes (no authentication required)
+Route::controller(TelemetryController::class)->group(function () {
     Route::get('/telemetry/history', 'teleHistory');
     Route::get('/telemetry/heartbeats', 'teleHeartbeatHistory');
     Route::get('/telemetry/ack', 'ackHistory');
