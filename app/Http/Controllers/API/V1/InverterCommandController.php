@@ -57,16 +57,18 @@ class InverterCommandController extends BaseController
 
     public function sendOta(Request $request)
     {
-        $collector = $request->collector;
+        $collector = $request->cid;
 
-        $payload = json_encode([
-            'cid'      => $collector,
-            'ota_id'   => $request->ota_id,
-            'ver'      => $request->ver,
-            'url'      => $request->url,
-            'checksum' => $request->checksum,
-            'force'    => $request->force ?? false,
-        ]);
+        $payload = json_encode($request->all());
+
+        // $payload = json_encode([
+        //     'cid'      => $collector,
+        //     'ota_id'   => $request->ota_id,
+        //     'ver'      => $request->ver,
+        //     'url'      => $request->url,
+        //     'checksum' => $request->checksum,
+        //     'force'    => $request->force ?? false,
+        // ]);
 
         $mqtt = new MqttService();
         $mqtt->connect(
