@@ -57,7 +57,7 @@ class InverterCommandController extends BaseController
 
     public function sendOta(Request $request)
     {
-        $collector = $request->cid;
+        $collector = $request->IMEI;
 
         $payload = json_encode($request->all());
 
