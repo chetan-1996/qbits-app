@@ -8,7 +8,7 @@ use App\Services\MqttService;
 
 class InverterCommandController extends BaseController
 {
-    public function sendCmd(Request $request)
+    /*public function sendCmd(Request $request)
     {
         $collector = $request->collector;
 
@@ -53,14 +53,14 @@ class InverterCommandController extends BaseController
         );
 
         return response()->json(['status' => 'CMD_SENT']);
-    }
+    }*/
 
     public function sendOta(Request $request)
     {
         $collector = $request->IMEI;
 
-        $payload = json_encode($request->all());
 
+        $payload = json_encode($request->all(), JSON_UNESCAPED_SLASHES);
         // $payload = json_encode([
         //     'cid'      => $collector,
         //     'ota_id'   => $request->ota_id,
@@ -86,5 +86,81 @@ class InverterCommandController extends BaseController
         // );
 
         return response()->json(['status' => 'OTA_SENT']);
+    }
+
+    public function sendCmd(Request $request)
+    {
+        $collector = $request->IMEI;
+
+        $payload = json_encode($request->all());
+
+        $mqtt = new MqttService();
+        $mqtt->connect(
+            config('mqtt.client_id_prefix') . '-cmd-' . $collector . '-' . uniqid()
+        );
+
+        $mqtt->publish(
+            "rtsg-1/Ongridrooftop/{$collector}/config/sub",
+            $payload
+        );
+
+        return response()->json(['status' => 'CMD_SENT']);
+    }
+
+    public function sendOndemand(Request $request)
+    {
+        $collector = $request->IMEI;
+
+        $payload = json_encode($request->all());
+
+        $mqtt = new MqttService();
+        $mqtt->connect(
+            config('mqtt.client_id_prefix') . '-ondemand-' . $collector . '-' . uniqid()
+        );
+
+        $mqtt->publish(
+            "rtsg-1/Ongridrooftop/{$collector}/ondemand/sub",
+            $payload
+        );
+
+        return response()->json(['status' => 'ONDEMAND_SENT']);
+    }
+
+    public function sendMessagekey(Request $request)
+    {
+        $collector = $request->IMEI;
+
+        $payload = json_encode($request->all());
+
+        $mqtt = new MqttService();
+        $mqtt->connect(
+            config('mqtt.client_id_prefix') . '-messagekey-' . $collector . '-' . uniqid()
+        );
+
+        $mqtt->publish(
+            "rtsg-1/Ongridrooftop/{$collector}/messagekey/sub",
+            $payload
+        );
+
+        return response()->json(['status' => 'MESSAGEKEY_SENT']);
+    }
+
+    public function sendInfo(Request $request)
+    {
+        $collector = $request->IMEI;
+
+        $payload = json_encode($request->all());
+
+        $mqtt = new MqttService();
+        $mqtt->connect(
+            config('mqtt.client_id_prefix') . '-info-' . $collector . '-' . uniqid()
+        );
+
+        $mqtt->publish(
+            "rtsg-1/Ongridrooftop/{$collector}/info/sub",
+            $payload
+        );
+
+        return response()->json(['status' => 'INFO_SENT']);
     }
 }
