@@ -74,6 +74,9 @@ Route::controller(AuthController::class)->group(function () {
 Route::controller(InverterCommandController::class)->group(function () {
     Route::post('/inverter/command/cmd', 'sendCmd');
     Route::post('/inverter/command/ota', 'sendOta');
+    Route::post('/inverter/command/ondemand', 'sendOndemand');
+    Route::post('/inverter/command/messagekey', 'sendMessagekey');
+    Route::post('/inverter/command/info', 'sendInfo');
     // Route::post('/inverters/{id}/command', 'sendCommand');
 });
 
