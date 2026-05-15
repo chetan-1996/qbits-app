@@ -94,14 +94,14 @@ class InverterFault extends Command
                                     if (isset($faultSolutions[$fault])) {
                                         $details = $faultSolutions[$fault];
                                         $messages[] = "*" . (++$idx) . ". {$details['code']} {$fault}*";
-                                        $messages[] = "💡 Solution:\n" . $details['solution'] . "\n";
+                                        $messages[] = "Solution:\n" . $details['solution'] . "\n";
                                     }
                                 }
                             }
 
                             if (!empty($messages) && $user->inverter_fault_flag == 1) {
                                 $plantName = $item['plant']['plantName'] ?? 'Unknown Plant';
-                                $whatsAppContent = [
+                                /*$whatsAppContent = [
                                     'Name'    => $user->username,
                                     'Number'  => $user->phone,
                                     'Message' => "🌱 Plant: {$plantName}\n\n⚠ Detected Faults:\n"
@@ -112,7 +112,19 @@ class InverterFault extends Command
                                 ];
                                 $wabbWebhookUrl = config('services.webhook.url');
                                 Http::withOptions(['verify' => false])->get($wabbWebhookUrl, $whatsAppContent);
-                                sleep(random_int(5, 60));
+                                sleep(random_int(5, 60));*/
+
+                                // Send WhatsApp
+                                Http::withOptions(['verify' => false, 'timeout' => 8])
+                                    ->post('https://app.11za.in/apis/template/sendTemplate', [
+                                        'authToken' => 'U2FsdGVkX19F1SxG2t/SCM6FZsYxNRogvfHM9vr7dDjh8drxCK+CiQyv/Y/fSiJ/VKsIOqARcT7mnU0xN3jHlQa/1OFlrCw0gntC4xsUlo3ljR6rqW7bncim8YbGunV6PykJr6/qnpgi53swkm54cdDqXWvsUAea/eKtSgQpUpqL5nybHLepdP3rPyNRWXMA',
+                                        'name' => $user->username,
+                                        'sendto' => $user->phone,
+                                        'originWebsite' => 'https://qbitsenergy.com/',
+                                        'templateName' => 'qbits_faults',
+                                        'language' => 'en',
+                                        'data' => [$plantName, $messages],
+                                    ]);
                             }
                         }
 
