@@ -78,6 +78,7 @@
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="telemetryDropdown">
                             <li><a class="dropdown-item" href="{{ route('telemetry.history') }}">History</a></li>
+                            <li><a class="dropdown-item" href="{{ route('telemetry.history.filtered') }}">History (Date Filter)</a></li>
                             <li><a class="dropdown-item" href="{{ route('telemetry.heartbeat') }}">Heartbeat</a></li>
                         </ul>
                     </li>
