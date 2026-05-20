@@ -16,5 +16,7 @@ Route::get('/mqtt-test', function (MqttService $mqtt) {
 // Telemetry Dashboard Routes
 Route::controller(TelemetryController::class)->prefix('telemetry')->group(function () {
     Route::get('history', 'index')->name('telemetry.history');
+    Route::get('history-filtered', 'filteredIndex')->name('telemetry.history.filtered');
+    Route::get('history-filtered/export', 'exportFiltered')->name('telemetry.history.filtered.export');
     Route::get('heartbeat', 'heartbeatView')->name('telemetry.heartbeat');
 });
