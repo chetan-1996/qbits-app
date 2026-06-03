@@ -746,7 +746,7 @@ Thank you,
             ], 401);
         }
 
-        $cacheKey = 'plant_list_' . md5($token);
+        $cacheKey = 'plant_info_' . md5($token);
 
         $plants = Cache::remember($cacheKey, 100, function () use ($token) {
 
@@ -779,8 +779,7 @@ Thank you,
                     'plant_infos.month_power as month_production',
                     'plant_infos.year_power as year_production',
                     'plant_infos.remark1 as location',
-                    'plant_infos.plantstate as plan_status',
-                
+                    'plant_infos.plantstate as plant_status',
                 ])
                 ->get();
         });
@@ -792,18 +791,9 @@ Thank you,
             ], 401);
         }
 
-        $plants->transform(function ($plant) {
-            if (is_string($plant->peak_power)) {
-                $decodedPeakPower = json_decode($plant->peak_power, true);
-                $plant->peak_power = json_last_error() === JSON_ERROR_NONE ? $decodedPeakPower : [];
-            }
-
-            return $plant;
-        });
-
         return response()->json([
             'status'  => true,
-            'message' => 'Plant list fetched successfully',
+            'message' => 'Plant info fetched successfully',
             'data'    => [
                 'plants' => $plants
             ]
