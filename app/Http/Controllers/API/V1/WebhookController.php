@@ -735,6 +735,81 @@ Thank you,
         ], 200);
     }
 
+    public function getAllPlanInfo(Request $request)
+    {
+        $token = $request->header('token');
+
+        if (!$token) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Token is required'
+            ], 401);
+        }
+
+        $cacheKey = 'plant_list_' . md5($token);
+
+        $plants = Cache::remember($cacheKey, 100, function () use ($token) {
+
+            $client = Client::select('qbits_company_code')
+                ->where([
+                    'api_token' => $token,
+                    'user_flag' => 1
+                ])
+                ->first();
+
+            if (!$client) {
+                return null;
+            }
+
+            return PlantInfo::query()
+                ->join('clients', 'clients.id', '=', 'plant_infos.user_id')
+                ->where('clients.qbits_company_code', $client->qbits_company_code)
+                ->select([
+                    'plant_infos.id',
+                    'plant_infos.user_id',
+                    'plant_infos.plant_no as plant_id',
+                    'plant_infos.plant_name as name',
+                    DB::raw("'India' as country"),
+                    'clients.longitude',
+                    'clients.latitude',
+                    'plant_infos.capacity',
+                    'plant_infos.acpower as peak_power',
+                    'plant_infos.eday as day_production',
+                    'plant_infos.etot as total_production',
+                    'plant_infos.month_power as month_production',
+                    'plant_infos.year_power as year_production',
+                    'plant_infos.remark1 as location',
+                    'plant_infos.plantstate as plan_status',
+                
+                ])
+                ->get();
+        });
+
+        if (!$plants) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid or expired token'
+            ], 401);
+        }
+
+        $plants->transform(function ($plant) {
+            if (is_string($plant->peak_power)) {
+                $decodedPeakPower = json_decode($plant->peak_power, true);
+                $plant->peak_power = json_last_error() === JSON_ERROR_NONE ? $decodedPeakPower : [];
+            }
+
+            return $plant;
+        });
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Plant list fetched successfully',
+            'data'    => [
+                'plants' => $plants
+            ]
+        ]);
+    }
+
     /*public function getAllPlanList(Request $request)
     {
         $token = $request->header('token');

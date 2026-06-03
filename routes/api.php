@@ -32,6 +32,7 @@ Route::prefix('v1')->group(function () {
     Route::post('/webhook/validate-company-code', [WebhookController::class, 'validateCompanyCode']);
     Route::get('/plant/list', [WebhookController::class, 'getAllPlanList']);
     Route::get('/plant/list/{id}', [WebhookController::class, 'getPlantDetails']);
+    Route::get('/plant/info', [WebhookController::class, 'getAllPlanInfo']);
    // Route::post('/webhook/company', [WebhookController::class, 'companyReceive']);
 });
 
