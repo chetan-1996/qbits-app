@@ -628,7 +628,7 @@ Thank you,
                     'plant_infos.id',
                     'plant_infos.plant_no as plant_id',
                     'plant_infos.plant_name as name',
-                    'plant_infos.country',
+                    DB::raw("'India' as country"),
                     'clients.longitude',
                     'clients.latitude',
                     'solar_power_logs.json_payload as peak_power',
@@ -643,6 +643,15 @@ Thank you,
                 'message' => 'Invalid or expired token'
             ], 401);
         }
+
+        $plants->transform(function ($plant) {
+            if (is_string($plant->peak_power)) {
+                $decodedPeakPower = json_decode($plant->peak_power, true);
+                $plant->peak_power = json_last_error() === JSON_ERROR_NONE ? $decodedPeakPower : [];
+            }
+
+            return $plant;
+        });
 
         return response()->json([
             'status'  => true,
@@ -695,7 +704,7 @@ Thank you,
                     'plant_infos.id',
                     'plant_infos.plant_no as plant_id',
                     'plant_infos.plant_name as name',
-                    'plant_infos.country',
+                    DB::raw("'India' as country"),
                     'clients.longitude',
                     'clients.latitude',
                     'solar_power_logs.json_payload as peak_power',
