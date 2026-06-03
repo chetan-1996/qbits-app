@@ -712,6 +712,11 @@ Thank you,
             ], 404);
         }
 
+        if (is_string($plant->peak_power)) {
+            $decodedPeakPower = json_decode($plant->peak_power, true);
+            $plant->peak_power = json_last_error() === JSON_ERROR_NONE ? $decodedPeakPower : [];
+        }
+
         return response()->json([
             'status'  => true,
             'message' => 'Plant details fetched successfully',
