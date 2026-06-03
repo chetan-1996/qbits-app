@@ -13,6 +13,7 @@ class SolarPowerLog extends Model
         'ac_momentary_power',
         'irradiation',
         'eday',
+        'json_payload',
         'user_id',
         'atun',
         'atpd',
