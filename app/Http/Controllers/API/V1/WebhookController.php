@@ -626,6 +626,7 @@ Thank you,
                 ->where('solar_power_logs.record_date', today())
                 ->select([
                     'plant_infos.id',
+                    'plant_infos.user_id',
                     'plant_infos.plant_no as plant_id',
                     'plant_infos.plant_name as name',
                     DB::raw("'India' as country"),
@@ -702,6 +703,7 @@ Thank you,
                 ->where('solar_power_logs.record_date', today())
                 ->select([
                     'plant_infos.id',
+                    'plant_infos.user_id',
                     'plant_infos.plant_no as plant_id',
                     'plant_infos.plant_name as name',
                     DB::raw("'India' as country"),
