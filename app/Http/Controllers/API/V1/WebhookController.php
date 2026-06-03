@@ -655,7 +655,7 @@ Thank you,
 
         return response()->json([
             'status'  => true,
-            'message' => 'Company code is valid',
+            'message' => 'Plant list fetched successfully',
             'data'    => [
                 'plants' => $plants
             ]
