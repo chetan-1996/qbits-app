@@ -653,10 +653,10 @@ Thank you,
         ]);
     }
 
-    public function getPlantDetails(Request $request)
+    public function getPlantDetails(Request $request,$id)
     {
         $token = $request->header('token');
-        $plantNo = $request->plant_no;
+        $plantNo = $id;
 
         if (!$token) {
             return response()->json([
