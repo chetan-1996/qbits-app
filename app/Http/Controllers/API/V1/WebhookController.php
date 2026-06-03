@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Cache;
 use App\Models\Client;
 use Illuminate\Support\Facades\Storage;
 use App\Models\ChannelPartner;
+use App\Models\PlantInfo;
 use Exception;
 
 class WebhookController extends Controller
@@ -589,4 +590,240 @@ Thank you,
             ], 500);
         }
     }
+
+    public function getAllPlanList(Request $request)
+    {
+        $token = $request->header('token');
+
+        if (!$token) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Token is required'
+            ], 401);
+        }
+
+        $cacheKey = 'plant_list_' . md5($token);
+
+        $plants = Cache::remember($cacheKey, 100, function () use ($token) {
+
+            $client = Client::select('qbits_company_code')
+                ->where([
+                    'api_token' => $token,
+                    'user_flag' => 1
+                ])
+                ->first();
+
+            if (!$client) {
+                return null;
+            }
+
+            return PlantInfo::query()
+                ->join('clients', 'clients.id', '=', 'plant_infos.user_id')
+                ->join('solar_power_logs', function ($join) {
+                    $join->on('solar_power_logs.plant_id', '=', 'plant_infos.plant_no');
+                })
+                ->where('clients.qbits_company_code', $client->qbits_company_code)
+                ->where('solar_power_logs.record_date', today())
+                ->select([
+                    'plant_infos.id',
+                    'plant_infos.plant_no as plant_id',
+                    'plant_infos.plant_name as name',
+                    'plant_infos.country',
+                    'clients.longitude',
+                    'clients.latitude',
+                    'solar_power_logs.json_payload as peak_power',
+                    'solar_power_logs.eday as total_energy'
+                ])
+                ->get();
+        });
+
+        if (!$plants) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid or expired token'
+            ], 401);
+        }
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Company code is valid',
+            'data'    => [
+                'plants' => $plants
+            ]
+        ]);
+    }
+
+    public function getPlantDetails(Request $request)
+    {
+        $token = $request->header('token');
+        $plantNo = $request->plant_no;
+
+        if (!$token) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Token is required'
+            ], 401);
+        }
+
+        if (!$plantNo) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Plant No is required'
+            ], 400);
+        }
+
+        $cacheKey = 'plant_details_' . md5($token . '_' . $plantNo);
+
+        $plant = Cache::remember($cacheKey, 900, function () use ($token, $plantNo) {
+
+            $client = Client::select('qbits_company_code')
+                ->where('api_token', $token)
+                ->where('user_flag', 1)
+                ->first();
+
+            if (!$client) {
+                return null;
+            }
+
+            return PlantInfo::query()
+                ->join('clients', 'clients.id', '=', 'plant_infos.user_id')
+                ->join('solar_power_logs', 'solar_power_logs.plant_id', '=', 'plant_infos.plant_no')
+                ->where('clients.qbits_company_code', $client->qbits_company_code)
+                ->where('plant_infos.plant_no', $plantNo)
+                ->where('plant_infos.record_date', today())
+                ->select([
+                    'plant_infos.id',
+                    'plant_infos.plant_no as plant_id',
+                    'plant_infos.plant_name as name',
+                    'plant_infos.country',
+                    'clients.longitude',
+                    'clients.latitude',
+                    'solar_power_logs.json_payload as peak_power',
+                    'solar_power_logs.eday as total_energy'
+                ])
+                ->orderByDesc('solar_power_logs.id')
+                ->first();
+        });
+
+        if (!$plant) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Plant not found or invalid token'
+            ], 404);
+        }
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Plant details fetched successfully',
+            'data'    => $plant
+        ], 200);
+    }
+
+    /*public function getAllPlanList(Request $request)
+    {
+        $token = $request->header('token');
+
+        if (empty($token)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Token is required'
+            ], 401);
+        }
+
+        $cacheKey = 'plant_list_' . md5($token);
+
+        $result = Cache::remember($cacheKey, now()->addMinutes(15), function () use ($token) {
+
+            $client = Client::select('id', 'qbits_company_code')
+                ->where('api_token', $token)
+                ->where('user_flag', 1)
+                ->first();
+
+            if (!$client) return null;
+
+            $clients = Client::select('id', 'longitude', 'latitude')
+                ->where('qbits_company_code', $client->qbits_company_code)
+                ->get()
+                ->keyBy('id');
+
+            $clientIds = $clients->keys();
+
+            $plants = PlantInfo::join('solar_power_logs', 'solar_power_logs.plant_id', '=', 'plant_infos.plant_no')
+                ->select(
+                    'plant_infos.id',
+                    'plant_infos.plant_no as plant_id',
+                    'plant_infos.plant_name as name',
+                    'plant_infos.user_id',
+                    'plant_infos.country',
+                    'solar_power_logs.json_payload as peak_power',
+                    'solar_power_logs.eday as total_energy'
+                )
+                ->whereIn('plant_infos.user_id', $clientIds)
+                ->where('plant_infos.record_date', now()->toDateString())
+                ->get();
+
+            return $plants->map(function ($plant) use ($clients) {
+                $clientData = $clients->get($plant->user_id);
+                $plant->longitude = $clientData->longitude ?? null;
+                $plant->latitude  = $clientData->latitude ?? null;
+                return $plant;
+            });
+        });
+
+        if (!$result) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid or expired token'
+            ], 401);
+        }
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Company code is valid',
+            'data'    => [
+                'plants' => $result
+            ]
+        ], 200);
+    }*/
+
+    /*public function getAllPlanList(Request $request)
+    {
+        $token = $request->header('token');
+
+        if (empty($token)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Token is required'
+            ], 401);
+        }
+
+         $client = Client::select('id', 'name', 'qbits_company_code')
+            ->where('api_token', $token)
+            ->where('user_flag', 1)
+            ->first();
+
+            $clients = Client::select('id', 'longitude','latitude', 'qbits_company_code')
+                ->where('qbits_company_code', $client->qbits_company_code)
+                ->get();
+
+            foreach ($clients as $clientData) {
+
+            $plantInfos = PlantInfo::join('solar_power_logs', 'solar_power_logs.plant_id', '=', 'plant_infos.plant_no')
+                            ->select('plant_infos.id','plant_infos.plant_no as plant_id', 'plant_infos.plant_name as name', 'plant_infos.user_id', 'plant_infos.country','solar_power_logs.json_payload as peak_power',' solar_power_logs.eday as total_energy')
+                            ->where('plant_infos.user_id', $clientData->id)
+                            ->where('plant_infos.record_date', date('Y-m-d'))
+                            ->get();
+
+                $plantInfos->longitude = $clientData->longitude;
+                $plantInfos->latitude = $clientData->latitude;
+               
+            }
+        return response()->json([
+            'status'  => true,
+            'message' => 'Company code is valid',
+            'data' => [
+                'dealer_id' => $client->id
+            ]
+        ], 200); // ✅ OK 
+    }*/
 }

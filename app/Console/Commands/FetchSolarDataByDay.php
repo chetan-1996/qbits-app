@@ -110,6 +110,7 @@ class FetchSolarDataByDay extends Command
                     'ac_momentary_power' => (float) 0.00,
                     'irradiation'        => (int) 0,
                     'eday'               => $eday,
+                    'json_payload'       => json_encode($records),
                     'created_at'         => now(),
                     'updated_at'         => now(),
                 ];
@@ -118,7 +119,7 @@ class FetchSolarDataByDay extends Command
             SolarPowerLog::upsert(
                 $upsertRows,
                 ['plant_id', 'record_date'],  // unique keys
-                ['ac_momentary_power', 'irradiation', 'eday', 'updated_at','user_id','atun','atpd']  // update if exists
+                ['ac_momentary_power', 'irradiation', 'eday', 'updated_at','user_id','atun','atpd','json_payload']  // update if exists
             );
 
             $this->info("Plant {$plant['plantId']}: stored " . count($upsertRows) . ' records');
