@@ -688,7 +688,7 @@ Thank you,
             return PlantInfo::query()
                 ->join('clients', 'clients.id', '=', 'plant_infos.user_id')
                 ->join('solar_power_logs', 'solar_power_logs.plant_id', '=', 'plant_infos.plant_no')
-                ->where('clients.qbits_company_code', $client->qbits_company_code)
+                // ->where('clients.qbits_company_code', $client->qbits_company_code)
                 ->where('plant_infos.plant_no', $plantNo)
                 ->where('solar_power_logs.record_date', today())
                 ->select([
