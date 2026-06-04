@@ -33,6 +33,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/plant/list', [WebhookController::class, 'getAllPlanList']);
     Route::get('/plant/list/{id}', [WebhookController::class, 'getPlantDetails']);
     Route::get('/plant/info', [WebhookController::class, 'getAllPlanInfo']);
+    Route::get('/inverter-faults', [WebhookController::class, 'getInverterFaults']);
    // Route::post('/webhook/company', [WebhookController::class, 'companyReceive']);
 });
 

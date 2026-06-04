@@ -12,6 +12,7 @@ use App\Models\Client;
 use Illuminate\Support\Facades\Storage;
 use App\Models\ChannelPartner;
 use App\Models\PlantInfo;
+use App\Models\InverterFault;
 use Exception;
 
 class WebhookController extends Controller
@@ -796,6 +797,84 @@ Thank you,
             'message' => 'Plant info fetched successfully',
             'data'    => [
                 'plants' => $plants
+            ]
+        ]);
+    }
+
+    public function getInverterFaults(Request $request)
+    {
+        $token = $request->header('token');
+
+        if (!$token) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Token is required'
+            ], 401);
+        }
+
+        $client = Client::select('qbits_company_code')
+            ->where('api_token', $token)
+            ->where('user_flag', 1)
+            ->first();
+
+        if (!$client) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid or expired token'
+            ], 401);
+        }
+
+        // Get all plant_nos for this company
+        $plantIds = PlantInfo::join('clients', 'clients.id', '=', 'plant_infos.user_id')
+            ->where('clients.qbits_company_code', $client->qbits_company_code)
+            ->pluck('plant_infos.plant_no')
+            ->toArray();
+
+        if (empty($plantIds)) {
+            return response()->json([
+                'status'  => true,
+                'message' => 'No plants found',
+                'data'    => [
+                    'faults' => []
+                ]
+            ]);
+        }
+
+        $query = InverterFault::query()
+            ->with([
+                'inverter:id,plant_id,inverter_no,model,state',
+                'inverter.plant:plant_name,plant_no,country,city'
+            ])
+            ->select('*')
+            ->whereIn('plant_id', $plantIds);
+
+        // Filter by inverter_id
+        if ($request->filled('inverter_id')) {
+            $query->where('inverter_id', $request->inverter_id);
+        }
+
+        // Filter by plant_id
+        if ($request->filled('plant_id')) {
+            $query->where('plant_id', $request->plant_id);
+        }
+
+        // Filter by status
+        if ($request->has('status') && $request->status != -1) {
+            $query->where('status', $request->status);
+        }
+
+        $query->orderBy('stime', 'desc');
+
+        // Limit (default 20)
+        $limit = (int) $request->get('limit', 20);
+
+        $faults = $query->simplePaginate($limit);
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Inverter fault list fetched successfully',
+            'data'    => [
+                'faults' => $faults
             ]
         ]);
     }
