@@ -843,9 +843,21 @@ Thank you,
         $query = InverterFault::query()
             ->with([
                 'inverter:id,plant_id,inverter_no,model,state',
-                'inverter.plant:plant_name,plant_no,country,city'
+                'inverter.plant:plant_name,plant_no'
             ])
-            ->select('*')
+            ->select([
+                'id',
+                'inverter_id',
+                'plant_id',
+                'status',
+                'itype',
+                'inverter_sn',
+                'stime',
+                'etime',
+                'meta',
+                'message_cn',
+                'message_en'
+            ])
             ->whereIn('plant_id', $plantIds);
 
         // Filter by inverter_id
