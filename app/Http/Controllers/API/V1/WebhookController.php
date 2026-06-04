@@ -855,7 +855,6 @@ Thank you,
                 'stime',
                 'etime',
                 'meta',
-                'message_cn',
                 'message_en'
             ])
             ->whereIn('plant_id', $plantIds);
