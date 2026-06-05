@@ -803,6 +803,7 @@ Thank you,
 
     public function getInverterFaults(Request $request)
     {
+        dd($request->status);
         $token = $request->header('token');
 
         if (!$token) {
