@@ -830,8 +830,6 @@ Thank you,
             ->pluck('plant_infos.plant_no')
             ->toArray();
 
-            print_r($plantIds);
-
         if (empty($plantIds)) {
             return response()->json([
                 'status'  => true,
@@ -877,8 +875,6 @@ Thank you,
         }
 
         $query->orderBy('stime', 'desc');
-
-        dd($query->toSql());
 
         // Limit (default 20)
         $limit = (int) $request->get('limit', 20);
