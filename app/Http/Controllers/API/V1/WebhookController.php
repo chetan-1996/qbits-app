@@ -624,7 +624,7 @@ Thank you,
                     $join->on('solar_power_logs.plant_id', '=', 'plant_infos.plant_no');
                 })
                 ->where('clients.qbits_company_code', $client->qbits_company_code)
-                ->where('solar_power_logs.record_date', today())
+                ->where('solar_power_logs.record_date', today()->subDay())
                 ->select([
                     'plant_infos.id',
                     'plant_infos.user_id',
@@ -701,7 +701,7 @@ Thank you,
                 ->join('solar_power_logs', 'solar_power_logs.plant_id', '=', 'plant_infos.plant_no')
                 // ->where('clients.qbits_company_code', $client->qbits_company_code)
                 ->where('plant_infos.plant_no', $plantNo)
-                ->where('solar_power_logs.record_date', today())
+                ->where('solar_power_logs.record_date', today()->subDay())
                 ->select([
                     'plant_infos.id',
                     'plant_infos.user_id',
