@@ -803,7 +803,6 @@ Thank you,
 
     public function getInverterFaults(Request $request)
     {
-        dd($request->status);
         $token = $request->header('token');
 
         if (!$token) {
@@ -871,8 +870,9 @@ Thank you,
         }
 
         // Filter by status
-        if ($request->has('status') && $request->status != -1) {
-            $query->where('status', $request->status);
+        $status = $request->input('status');
+        if (!is_null($status) && $status !== '' && (int) $status !== -1) {
+            $query->where('status', $status);
         }
 
         $query->orderBy('stime', 'desc');
@@ -880,7 +880,7 @@ Thank you,
         // Limit (default 20)
         $limit = (int) $request->get('limit', 20);
 
-        $faults = $query->simplePaginate($limit);
+        $faults = $query->simplePaginate($limit)->appends($request->query());
 
         return response()->json([
             'status'  => true,
