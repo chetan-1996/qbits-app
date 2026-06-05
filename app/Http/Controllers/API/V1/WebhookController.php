@@ -878,6 +878,8 @@ Thank you,
 
         $query->orderBy('stime', 'desc');
 
+        dd($query->toSql());
+
         // Limit (default 20)
         $limit = (int) $request->get('limit', 20);
 
