@@ -830,6 +830,8 @@ Thank you,
             ->pluck('plant_infos.plant_no')
             ->toArray();
 
+            print_r($plantIds);
+
         if (empty($plantIds)) {
             return response()->json([
                 'status'  => true,
