@@ -157,7 +157,7 @@ class AuthController extends BaseController
                 // Webhook → lightweight POST (no headers needed)
                 $webhookUrl = env('APP_URL') . "api/" . config('app.api_version') . "/webhook/company";
 
-                $response = $http->withHeaders([
+                $http->withHeaders([
                    'X-Signature' => "eyJhbGciOi3nMiGM6H9FNFUROf3wh7SmQ30",
                 ])->post($webhookUrl, [
                     'atun'                => $validated['user_id'],
@@ -167,11 +167,7 @@ class AuthController extends BaseController
                     'mobile_device_token' => '',
                     'company_name'        => $validated['company_name'],
                 ]);
-dd(
-    $webhookUrl,
-    $response->status(),
-    $response->body()
-);
+
                 return $this->sendResponse([], 'Company registered successfully.');
             }
 
