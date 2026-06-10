@@ -97,8 +97,7 @@ class InverterFault extends Command
                                         $messages[] = "Solution:\n" . $details['solution'] . "\n";
                                     }
                                 }
-                            }
-
+                            }                                            
                             if (!empty($messages) && $user->inverter_fault_flag == 1) {
                                 $plantName = $item['plant']['plantName'] ?? 'Unknown Plant';
                                 /*$whatsAppContent = [
@@ -345,7 +344,7 @@ class InverterFault extends Command
                 "code" => "F2:12",
                 "solution" => "1.Check the AC phase voltage is not greater than Safety Voltage.\n2.Check whether the AC terminal is burned out"
             ],
-            "Phase A voltage is too low" => [
+            /*"Phase A voltage is too low" => [
                 "code" => "F2:11",
                 "solution" => "1.Check whether the grid is being lost.\n2.Check whether the AC terminal is burned out.\n3.Check whether the air switch of the distribution box works properly"
             ],
@@ -356,7 +355,7 @@ class InverterFault extends Command
             "Phase C voltage is too low" => [
                 "code" => "F2:09",
                 "solution" => "1.Check whether the grid is being lost.\n2.Check whether the AC terminal is burned out.\n3.Check whether the air switch of the distribution box works properly"
-            ],
+            ],*/
             "Phase A current is too high" => [
                 "code" => "F2:08",
                 "solution" => "If the internal filter inductance of the inverter is damaged or the AC output oscillates, please contact our after-sales"
