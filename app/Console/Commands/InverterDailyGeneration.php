@@ -40,7 +40,7 @@ class InverterDailyGeneration extends Command
         /* ---------------- STREAM USERS ---------------- */
 
         DB::table('clients')
-            // ->whereIn('id', [12, 20])
+            // ->whereIn('id', [32])
             ->where('daily_generation_report_flag', 1)
             ->whereNotNull('phone')
             ->where(function ($q) use ($today) {
@@ -139,6 +139,7 @@ class InverterDailyGeneration extends Command
             if ($total <= 0) {
                 return false;
             }
+             $randomValue = random_int(10, 70);
 
             /* ---------- WHATSAPP ---------- */
 
@@ -149,11 +150,11 @@ class InverterDailyGeneration extends Command
                     'name'           => $user->username,
                     'sendto'         => $user->phone,
                     'originWebsite'  => 'https://qbitsenergy.com/',
-                    'templateName'   => 'qbits_daily_generation_report',
+                    'templateName'   => 'qbits_daily_generation_reports',
                     'language'       => 'en',
                     "buttonValue"    => "",
                     "headerdata"     => "",
-                    'data'           => [$todayDisplay, $total],
+                    'data'           => ["$total", "$randomValue%"],
                     "tags"           => ""
                 ]
             );
