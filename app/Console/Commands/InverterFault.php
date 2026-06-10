@@ -97,7 +97,8 @@ class InverterFault extends Command
                                         $messages[] = "Solution:\n" . $details['solution'] . "\n";
                                     }
                                 }
-                            }                                            
+                            }   
+                                                                     
                             if (!empty($messages) && $user->inverter_fault_flag == 1) {
                                 $plantName = $item['plant']['plantName'] ?? 'Unknown Plant';
                                 /*$whatsAppContent = [
