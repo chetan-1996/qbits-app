@@ -126,4 +126,16 @@ return [
 
     'api_version' => env('API_VERSION', 'v1'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Admin Password
+    |--------------------------------------------------------------------------
+    |
+    | This password is used to protect admin-only pages such as the
+    | firmware upload dashboard. Set it in your .env file.
+    |
+    */
+
+    'admin_password' => env('ADMIN_PASSWORD'),
+
 ];
