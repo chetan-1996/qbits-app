@@ -154,7 +154,7 @@ class InverterDailyGeneration extends Command
                     'language'       => 'en',
                     "buttonValue"    => "",
                     "headerdata"     => "",
-                    'data'           => ["$total", "$randomValue%"],
+                    'data'           => [$todayDisplay,$total],
                     "tags"           => ""
                 ]
             );
