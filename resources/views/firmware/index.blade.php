@@ -128,10 +128,9 @@
                                                         <span>&#9660;</span> Download
                                                     </a>
                                                     <button class="btn btn-outline-secondary btn-sm" type="button"
-                                                            onclick="copyToClipboard('url-{{ $loop->index }}', this)">
+                                                            data-url="{{ $file['url'] }}" onclick="copyToClipboard(this)">
                                                         <span class="copy-label">Copy URL</span>
                                                     </button>
-                                                    <input type="hidden" id="url-{{ $loop->index }}" value="{{ $file['url'] }}">
                                                     <form method="POST" action="{{ route('firmware.destroy') }}"
                                                           onsubmit="return confirm('Delete {{ $file['name'] }}? This cannot be undone.')"
                                                           class="d-inline">
@@ -227,25 +226,52 @@ dropZone.addEventListener('drop', function(e) {
     }
 }, false);
 
-function copyToClipboard(elementId, btn) {
-    const input = document.getElementById(elementId);
-    if (!input) return;
-    input.select();
-    input.setSelectionRange(0, 99999);
-    navigator.clipboard.writeText(input.value).then(() => {
-        const label = btn.querySelector('.copy-label') || btn;
-        const original = label.innerText;
+function copyToClipboard(btn) {
+    const url = btn.getAttribute('data-url');
+    if (!url) return;
+
+    const label = btn.querySelector('.copy-label') || btn;
+    const original = label.innerText;
+
+    const showCopied = function() {
         label.innerText = 'Copied!';
         btn.classList.remove('btn-outline-secondary');
         btn.classList.add('btn-success');
-        setTimeout(() => {
+        setTimeout(function() {
             label.innerText = original;
             btn.classList.remove('btn-success');
             btn.classList.add('btn-outline-secondary');
         }, 1500);
-    }).catch(() => {
+    };
+
+    const showFailed = function() {
         label.innerText = 'Failed';
-    });
+        setTimeout(function() {
+            label.innerText = original;
+        }, 1500);
+    };
+
+    // Modern API (requires HTTPS or localhost)
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(url).then(showCopied).catch(showFailed);
+        return;
+    }
+
+    // Fallback for HTTP / older browsers
+    const ta = document.createElement('textarea');
+    ta.value = url;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    try {
+        document.execCommand('copy');
+        showCopied();
+    } catch (err) {
+        showFailed();
+    }
+    document.body.removeChild(ta);
 }
 </script>
 @endsection
