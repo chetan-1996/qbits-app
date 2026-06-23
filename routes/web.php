@@ -20,6 +20,8 @@ Route::controller(TelemetryController::class)->prefix('telemetry')->group(functi
     Route::get('history-filtered', 'filteredIndex')->name('telemetry.history.filtered');
     Route::get('history-filtered/export', 'exportFiltered')->name('telemetry.history.filtered.export');
     Route::get('heartbeat', 'heartbeatView')->name('telemetry.heartbeat');
+    Route::get('chart', 'chart')->name('telemetry.chart');
+    Route::post('chart/data', 'chartData')->name('telemetry.chart.data');
 });
 
 // Firmware Upload (Admin Only)
