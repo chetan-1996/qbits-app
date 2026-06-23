@@ -232,6 +232,161 @@ class TelemetryController extends BaseController
     }
 
     /**
+     * Display telemetry chart page
+     */
+    public function chart(Request $request)
+    {
+        $collectorId = $request->collector_id;
+        $dateFrom    = $request->date_from ?? now()->subDays(7)->format('Y-m-d');
+        $dateTo      = $request->date_to   ?? now()->format('Y-m-d');
+
+        return view('telemetry.chart', compact('collectorId', 'dateFrom', 'dateTo'));
+    }
+
+    /**
+     * Get telemetry chart data (API)
+     */
+    public function chartData(Request $request)
+    {
+        $request->validate([
+            'collector_id' => 'required|string',
+            'date_from'    => 'required|date',
+            'date_to'      => 'required|date',
+            'parameters'   => 'required|array|min:1',
+            'parameters.*' => 'string',
+            'normalize'    => 'boolean',
+            'x_axis'       => 'nullable|string|in:created_at,TIMESTAMP',
+        ]);
+
+        $collectorId = $request->collector_id;
+        $dateFrom    = $request->date_from;
+        $dateTo      = $request->date_to;
+        $parameters  = $request->parameters;
+        $normalize   = $request->boolean('normalize', false);
+        $xAxis       = $request->input('x_axis', 'created_at');
+
+        $data = DB::table('telemetry_raw')
+            ->select(['id', 'collector_id', 'payload', 'created_at'])
+            ->where('collector_id', $collectorId)
+            ->whereDate('created_at', '>=', $dateFrom)
+            ->whereDate('created_at', '<=', $dateTo)
+            ->orderBy('created_at')
+            ->get();
+
+        $payloadKeyMap = [
+            'I' => 'IS-1-0---I', 'PF' => 'IS-1-0---PF', 'VN' => 'IS-1-0---VN',
+            'FT1' => 'IS-1-0---FT1', 'FT2' => 'IS-1-0---FT2', 'FT3' => 'IS-1-0---FT3',
+            'FT4' => 'IS-1-0---FT4', 'FT5' => 'IS-1-0---FT5',
+            'IST' => 'IS-1-0---IST', 'LON' => 'IS-1-0---LON', 'POW' => 'IS-1-0---POW',
+            'TON' => 'IS-1-0---TON', 'APOW' => 'IS-1-0---APOW',
+            'BPHI' => 'IS-1-0---BPHI', 'BPHV' => 'IS-1-0---BPHV',
+            'DCI1' => 'IS-1-0---DCI1', 'DCV1' => 'IS-1-0---DCV1',
+            'FREQ' => 'IS-1-0---FREQ', 'LKWH' => 'IS-1-0---LKWH',
+            'POWB' => 'IS-1-0---POWB', 'POWR' => 'IS-1-0---POWR', 'POWY' => 'IS-1-0---POWY',
+            'RPHI' => 'IS-1-0---RPHI', 'RPHV' => 'IS-1-0---RPHV', 'RPOW' => 'IS-1-0---RPOW',
+            'TEMP' => 'IS-1-0---TEMP', 'TKWH' => 'IS-1-0---TKWH',
+            'YPHI' => 'IS-1-0---YPHI', 'YPHV' => 'IS-1-0---YPHV', 'DCKW1' => 'IS-1-0---DCKW1',
+        ];
+
+        $rows = [];
+
+        foreach ($data as $row) {
+            $payload = json_decode($row->payload, true);
+            $label = $xAxis === 'TIMESTAMP'
+                ? ($payload['TIMESTAMP'] ?? Carbon::parse($row->created_at)->format('Y-m-d H:i:s'))
+                : Carbon::parse($row->created_at)->format('Y-m-d H:i:s');
+
+            $paramValues = [];
+            foreach ($parameters as $param) {
+                $payloadKey = $payloadKeyMap[$param] ?? $param;
+                $value = $payload[$payloadKey] ?? null;
+                $paramValues[$param] = is_numeric($value) ? (float) $value : null;
+            }
+
+            $rows[] = [
+                'label'      => $label,
+                'values'     => $paramValues,
+                'sort_key'   => $xAxis === 'TIMESTAMP'
+                    ? (is_numeric($payload['TIMESTAMP'] ?? null) ? (float) $payload['TIMESTAMP'] : $row->created_at)
+                    : $row->created_at,
+            ];
+        }
+
+        // Sort by the chosen X-axis
+        usort($rows, function ($a, $b) {
+            if (is_numeric($a['sort_key']) && is_numeric($b['sort_key'])) {
+                return $a['sort_key'] <=> $b['sort_key'];
+            }
+            return strtotime($a['sort_key']) <=> strtotime($b['sort_key']);
+        });
+
+        $labels = [];
+        $rawData = [];
+        foreach ($parameters as $param) {
+            $rawData[$param] = [];
+        }
+
+        foreach ($rows as $row) {
+            $labels[] = $row['label'];
+            foreach ($parameters as $param) {
+                $rawData[$param][] = $row['values'][$param];
+            }
+        }
+
+        $chartDatasets = [];
+        $colors = [
+            '#0d6efd', '#dc3545', '#198754', '#ffc107', '#0dcaf0',
+            '#6610f2', '#fd7e14', '#20c997', '#e83e8c', '#6f42c1',
+            '#17a2b8', '#28a745', '#dc3545', '#007bff', '#6c757d',
+            '#f8f9fa', '#343a40', '#e9ecef', '#adb5bd', '#212529',
+            '#495057', '#ced4da', '#868e96', '#d63384', '#6f42c1',
+            '#0d6efd', '#6610f2', '#20c997', '#0dcaf0', '#ffc107',
+            '#198754', '#dc3545', '#fd7e14', '#e83e8c', '#6f42c1',
+            '#17a2b8', '#28a745', '#007bff', '#6c757d', '#495057',
+        ];
+
+        $idx = 0;
+        foreach ($rawData as $param => $values) {
+            $plotValues = $values;
+
+            // Normalize each parameter to its own 0-100% scale
+            if ($normalize) {
+                $numericValues = array_filter($values, fn($v) => $v !== null);
+                if (count($numericValues) > 0) {
+                    $min = min($numericValues);
+                    $max = max($numericValues);
+                    $range = $max - $min;
+                    $plotValues = array_map(function ($v) use ($min, $range) {
+                        if ($v === null) return null;
+                        if ($range == 0) return 50.0;
+                        return round((($v - $min) / $range) * 100, 2);
+                    }, $values);
+                }
+            }
+
+            $chartDatasets[] = [
+                'label'           => $param,
+                'data'            => $plotValues,
+                'borderColor'     => $colors[$idx % count($colors)],
+                'backgroundColor'   => $colors[$idx % count($colors)] . '20',
+                'borderWidth'     => 2,
+                'pointRadius'     => 2,
+                'pointHoverRadius'=> 5,
+                'tension'         => 0.1,
+                'fill'            => false,
+            ];
+            $idx++;
+        }
+
+        return $this->sendResponse([
+            'labels'     => $labels,
+            'datasets'   => $chartDatasets,
+            'count'      => count($labels),
+            'normalized' => $normalize,
+        ], 'Chart data fetched successfully');
+    }
+
+    /**
      * Get acknowledgment history (API)
      */
     public function ackHistory(Request $request)

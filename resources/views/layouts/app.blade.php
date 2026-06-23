@@ -80,6 +80,7 @@
                             <li><a class="dropdown-item" href="{{ route('telemetry.history') }}">History</a></li>
                             <li><a class="dropdown-item" href="{{ route('telemetry.history.filtered') }}">History (Date Filter)</a></li>
                             <li><a class="dropdown-item" href="{{ route('telemetry.heartbeat') }}">Heartbeat</a></li>
+                            <li><a class="dropdown-item" href="{{ route('telemetry.chart') }}">Chart</a></li>
                         </ul>
                     </li>
                     <!--<li class="nav-item">
