@@ -1,0 +1,175 @@
+{
+    "info": {
+        "_postman_id": "qbits-api-collection",
+        "name": "Qbits Solar API",
+        "description": "API collection for Qbits Solar Plant Management System",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Plant APIs",
+            "item": [
+                {
+                    "name": "Get All Plants List",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "token",
+                                "value": "{{api_token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/plant/list",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "plant", "list"]
+                        },
+                        "description": "Retrieves a list of all plants for the authenticated user with their current day's power data."
+                    },
+                    "response": [
+                        {
+                            "name": "Success - Plant List",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "token",
+                                        "value": "{{api_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/v1/plant/list"
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "body": "{\n    \"status\": true,\n    \"message\": \"Plant list fetched successfully\",\n    \"data\": {\n        \"plants\": [\n            {\n                \"id\": 689,\n                \"plant_id\": 4629,\n                \"name\": \"RAVINAVEKARIYA A101\",\n                \"country\": \"India\",\n                \"longitude\": \"72.7811642\",\n                \"latitude\": \"21.1935024\",\n                \"peak_power\": [\n                    {\n                        \"recordTime\": \"05:54:23\",\n                        \"irradiation\": \"0\",\n                        \"acMomentaryPower\": \"0.0\"\n                    }\n                ],\n                \"total_energy\": \"11.69\"\n            }\n        ]\n    }\n}"
+                        },
+                        {
+                            "name": "Error - Missing Token",
+                            "status": "Unauthorized",
+                            "code": 401,
+                            "body": "{\n    \"success\": false,\n    \"message\": \"Token is required\"\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Get Plant Details",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "token",
+                                "value": "{{api_token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/plant/list/{{plant_id}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "plant", "list", "{{plant_id}}"]
+                        },
+                        "description": "Retrieves detailed information for a specific plant by its ID."
+                    },
+                    "response": [
+                        {
+                            "name": "Success - Plant Details",
+                            "status": "OK",
+                            "code": 200,
+                            "body": "{\n    \"status\": true,\n    \"message\": \"Plant details fetched successfully\",\n    \"data\": {\n        \"id\": 689,\n        \"plant_id\": 4629,\n        \"name\": \"RAVINAVEKARIYA A101\",\n        \"country\": \"India\",\n        \"longitude\": \"72.7811642\",\n        \"latitude\": \"21.1935024\",\n        \"peak_power\": [\n            {\n                \"recordTime\": \"05:54:23\",\n                \"irradiation\": \"0\",\n                \"acMomentaryPower\": \"0.0\"\n            }\n        ],\n        \"total_energy\": \"11.69\"\n    }\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Get All Plants Info",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "token",
+                                "value": "{{api_token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/plant/info",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "plant", "info"]
+                        },
+                        "description": "Retrieves a list of all plants with basic info and production data."
+                    },
+                    "response": [
+                        {
+                            "name": "Success - Plant Info",
+                            "status": "OK",
+                            "code": 200,
+                            "body": "{\n    \"status\": true,\n    \"message\": \"Plant info fetched successfully\",\n    \"data\": {\n        \"plants\": [\n            {\n                \"id\": 689,\n                \"user_id\": 123,\n                \"plant_id\": 4629,\n                \"name\": \"RAVINAVEKARIYA A101\",\n                \"country\": \"India\",\n                \"longitude\": \"72.7811642\",\n                \"latitude\": \"21.1935024\",\n                \"capacity\": \"5.00\",\n                \"peak_power\": \"2.50\",\n                \"day_production\": \"11.69\",\n                \"total_production\": \"4520.30\",\n                \"month_production\": \"345.80\",\n                \"year_production\": \"2180.50\",\n                \"location\": \"Surat, Gujarat\",\n                \"plant_status\": 1\n            }\n        ]\n    }\n}"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Inverter APIs",
+            "item": [
+                {
+                    "name": "Get Inverter Faults",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "token",
+                                "value": "{{api_token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/inverter-faults?status=1&limit=10",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "inverter-faults"],
+                            "query": [
+                                {
+                                    "key": "status",
+                                    "value": "1",
+                                    "description": "Filter by fault status. Use -1 to skip filter"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10",
+                                    "description": "Number of records per page (default: 20)"
+                                }
+                            ]
+                        },
+                        "description": "Retrieves inverter fault logs filtered by the authenticated user's company code."
+                    },
+                    "response": [
+                        {
+                            "name": "Success - Inverter Faults",
+                            "status": "OK",
+                            "code": 200,
+                            "body": "{\n    \"status\": true,\n    \"message\": \"Inverter fault list fetched successfully\",\n    \"data\": {\n        \"faults\": {\n            \"data\": [\n                {\n                    \"id\": 1,\n                    \"inverter_id\": 101,\n                    \"plant_id\": 4629,\n                    \"status\": 1,\n                    \"itype\": 1,\n                    \"inverter_sn\": \"INV123456\",\n                    \"stime\": \"2024-01-15 08:30:00\",\n                    \"etime\": \"2024-01-15 10:00:00\",\n                    \"message_en\": [\"Grid fault\", \"Overvoltage\"],\n                    \"inverter\": {\n                        \"id\": 101,\n                        \"plant_id\": 4629,\n                        \"inverter_no\": \"INV001\",\n                        \"model\": \"Model X\",\n                        \"state\": 1,\n                        \"plant\": {\n                            \"plant_name\": \"RAVINAVEKARIYA A101\",\n                            \"plant_no\": 4629,\n                            \"country\": \"India\",\n                            \"city\": \"Surat\"\n                        }\n                    }\n                }\n            ],\n            \"current_page\": 1,\n            \"per_page\": 10,\n            \"next_page_url\": null,\n            \"prev_page_url\": null\n        }\n    }\n}"
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://your-domain.com",
+            "type": "string"
+        },
+        {
+            "key": "api_token",
+            "value": "your_api_token_here",
+            "type": "string"
+        },
+        {
+            "key": "plant_id",
+            "value": "4629",
+            "type": "string"
+        }
+    ]
+}
