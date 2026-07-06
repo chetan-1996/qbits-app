@@ -63,7 +63,8 @@ class PlantInfo extends Model
         'atun',
         'atpd',
 
-        'full_response'
+        'full_response',
+        'server_flag'
     ];
 
     protected $casts = [

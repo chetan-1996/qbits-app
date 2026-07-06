@@ -208,60 +208,73 @@ class AuthController extends BaseController
                 '           '                   => 'nullable',
             ]);
 
+            // Check if collector already exists when wifi_serial_number length >= 9
+            if (strlen($validated['wifi_serial_number']) >= 9) {
+                $existing = \DB::table('clients')
+                    ->where('collector', $validated['wifi_serial_number'])
+                    ->first();
+
+                if ($existing) {
+                    return $this->sendError('Collector already registered.', null, 400);
+                }
+            }
+
             // Single HTTP instance → Less CPU & Memory
             $http = Http::withOptions(['verify' => false]);
 
-            $response = $http->asForm()->post('https://www.aotaisolarcloud.com/ATSolarInfo/userRegister.action', [
-                'userName'     => $validated['user_id'],
-                'password'     => $validated['password'],
-                'phone'        => $validated['whatsapp_no'],
-                'collector'    => $validated['wifi_serial_number'],
-                'plantName'    => $validated['home_name'],
-                'invertertype' => $validated['inverter_serial_number'],
-                'cityname'     => $validated['city_name'],
-                'longitude'    => $validated['longitude'],
-                'latitude'     => $validated['latitude'],
-                'gmt'          => $validated['time_zone'],
-                'plantType'    => $validated['station_type'],
-                'iSerial'      => '',
-                'QQ'           => '',
-                'email'        => '',
-                'parent'       => '',
-            ])->json();
+            if (strlen($validated['wifi_serial_number']) <= 9) {
+                $response = $http->asForm()->post('https://www.aotaisolarcloud.com/ATSolarInfo/userRegister.action', [
+                    'userName'     => $validated['user_id'],
+                    'password'     => $validated['password'],
+                    'phone'        => $validated['whatsapp_no'],
+                    'collector'    => $validated['wifi_serial_number'],
+                    'plantName'    => $validated['home_name'],
+                    'invertertype' => $validated['inverter_serial_number'],
+                    'cityname'     => $validated['city_name'],
+                    'longitude'    => $validated['longitude'],
+                    'latitude'     => $validated['latitude'],
+                    'gmt'          => $validated['time_zone'],
+                    'plantType'    => $validated['station_type'],
+                    'iSerial'      => '',
+                    'QQ'           => '',
+                    'email'        => '',
+                    'parent'       => '',
+                ])->json();
 
-            if($response['message']=='Users already exist'){
-                return $this->sendError('Users Or collector already exist.', null, 400);
+                if($response['message']=='Users already exist'){
+                    return $this->sendError('Users Or collector already exist.', null, 400);
+                }
+
+                if($response['message'] != 'success'){
+                    return $this->sendError('Registration failed.', null, 400);
+                }
             }
 
-            if($response['message']=='success'){
+            $webhookUrl = env('APP_URL') . "api/" . config('app.api_version') . "/webhook/individual";
 
-                $webhookUrl = env('APP_URL') . "api/" . config('app.api_version') . "/webhook/individual";
+            $asd = $http->withHeaders([
+                'X-Signature'      => "eyJhbGciOi3nMiGM6H9FNFUROf3wh7SmQ30"
+            ])->withBody(json_encode([
+                "userName"            => $validated['user_id'],
+                "password"            => $validated['password'],
+                "phone"               => $validated['whatsapp_no'],
+                "collector"           => $validated['wifi_serial_number'],
+                "plantName"           => $validated['home_name'],
+                "invertertype"        => $validated['inverter_serial_number'],
+                "cityname"            => $validated['city_name'],
+                "longitude"           => $validated['longitude'],
+                "latitude"            => $validated['latitude'],
+                "gmt"                 => $validated['time_zone'],
+                "plantType"           => $validated['station_type'],
+                "mobile_device_token" => "",
+                "company_code"        => $validated['company_code'],
+                "iSerial"             => "",
+                "QQ"                  => "",
+                "email"               => "",
+                "parent"              => "",
+            ]), 'application/json')->post($webhookUrl);
 
-                $asd = $http->withHeaders([
-                    'X-Signature'      => "eyJhbGciOi3nMiGM6H9FNFUROf3wh7SmQ30"
-                ])->withBody(json_encode([
-                    "userName"            => $validated['user_id'],
-                    "password"            => $validated['password'],
-                    "phone"               => $validated['whatsapp_no'],
-                    "collector"           => $validated['wifi_serial_number'],
-                    "plantName"           => $validated['home_name'],
-                    "invertertype"        => $validated['inverter_serial_number'],
-                    "cityname"            => $validated['city_name'],
-                    "longitude"           => $validated['longitude'],
-                    "latitude"            => $validated['latitude'],
-                    "gmt"                 => $validated['time_zone'],
-                    "plantType"           => $validated['station_type'],
-                    "mobile_device_token" => "",
-                    "company_code"        => $validated['company_code'],
-                    "iSerial"             => "",
-                    "QQ"                  => "",
-                    "email"               => "",
-                    "parent"              => "",
-                ]), 'application/json')->post($webhookUrl);
-
-                return $this->sendResponse([], 'Individual registered successfully.');
-            }
-            return $this->sendError('Registration failed.', null, 400);
+            return $this->sendResponse([], 'Individual registered successfully.');
 
         } catch (ValidationException $e) {
             return $this->sendError('Validation failed.', $e->errors(), 400);

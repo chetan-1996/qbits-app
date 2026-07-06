@@ -17,5 +17,6 @@ class SolarPowerLog extends Model
         'user_id',
         'atun',
         'atpd',
+        'server_flag'
     ];
 }
