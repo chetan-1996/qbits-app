@@ -46,6 +46,7 @@ class InverterFault extends Command
 
         // Process users in batches to reduce memory footprint
         DB::table('clients')
+            ->where('server_flag', 0)
             ->where('phone', '!=', '')
             ->where('inverter_fault_flag', 1)
             // ->whereNull('company_code')

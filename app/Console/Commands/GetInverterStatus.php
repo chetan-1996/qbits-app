@@ -35,6 +35,7 @@ class GetInverterStatus extends Command
 
         DB::table('clients')
             ->select('id', 'username', 'password')
+            ->where('server_flag', 0)
             ->orderBy('id')
             ->chunk(200, function ($users) use ($client, $baseUrl, $date, &$totalProcessed) {
 
