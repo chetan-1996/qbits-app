@@ -26,6 +26,7 @@ class PlantInfo extends Command
             ->withOptions(['verify' => false]);
 
         DB::table('clients')
+            ->where('server_flag', 0)
             ->select('id', 'username', 'password') // reduce memory
             ->orderBy('id')
             ->chunkById(50, function ($users) use ($curTime, $http, $now) {
