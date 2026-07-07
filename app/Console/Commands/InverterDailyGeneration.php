@@ -41,6 +41,7 @@ class InverterDailyGeneration extends Command
 
         DB::table('clients')
             // ->whereIn('id', [32])
+            ->where('server_flag', 0)
             ->where('daily_generation_report_flag', 1)
             ->whereNotNull('phone')
             ->where(function ($q) use ($today) {

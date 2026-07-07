@@ -44,6 +44,7 @@ class InverterWeeklyGeneration extends Command
                 '=',
                 'c.username'
             )
+            ->where('c.server_flag', 0)
             ->where('c.weekly_generation_report_flag', 1)
             ->whereNotNull('c.phone')
             // ->whereIn('c.id', [70, 73])

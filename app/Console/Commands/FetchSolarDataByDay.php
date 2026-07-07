@@ -29,6 +29,7 @@ class FetchSolarDataByDay extends Command
        \DB::table('inverter_details')
     ->select('plantId', 'user_id', 'atun', 'atpd')
     ->whereNotNull('plantId')
+    ->where('server_flag', 0)
     ->chunkById(50, function ($plants) use ($today) {
 
         foreach ($plants as $plant) {

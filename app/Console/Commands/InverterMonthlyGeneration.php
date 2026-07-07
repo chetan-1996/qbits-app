@@ -19,6 +19,7 @@ class InverterMonthlyGeneration extends Command
         $dateParam = $now->copy()->subMonth()->format('Y-m');
 
         DB::table('clients')
+            ->where('server_flag', 0)
             ->where('phone', '!=', '')
             // ->whereIn('id', [12, 20])
             ->where('monthly_generation_report_flag', 1)

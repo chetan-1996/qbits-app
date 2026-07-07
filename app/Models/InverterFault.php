@@ -19,7 +19,8 @@ class InverterFault extends Model
         'message_en',
         'atun',
         'atpd',
-        'user_id'
+        'user_id',
+        'server_flag'
     ];
 
     protected $casts = [

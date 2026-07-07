@@ -34,7 +34,8 @@ class Client extends Authenticatable
         'daily_generation_report_flag',
         'weekly_generation_report_flag',
         'monthly_generation_report_flag',
-        'user_flag'
+        'user_flag',
+        'server_flag'
     ];
 
      protected $hidden = ['password'];
