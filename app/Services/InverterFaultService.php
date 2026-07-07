@@ -13,7 +13,7 @@ class InverterFaultService
     public function sync()
     {
         try {
-            DB::table('inverter_faults')->delete();
+            DB::table('inverter_faults')->where('server_flag', 0)->delete();
             DB::table('plant_infos')
                 ->where('server_flag', 0)
                 ->select('plant_no', 'atun', 'atpd','user_id')
