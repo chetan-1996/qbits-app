@@ -222,10 +222,7 @@ class AuthController extends BaseController
             // Single HTTP instance → Less CPU & Memory
             $http = Http::withOptions(['verify' => false]);
 
-            $server_flag=1;
             if (strlen($validated['wifi_serial_number']) <= 9) {
-                $server_flag=0;
-                
                 $response = $http->asForm()->post('https://www.aotaisolarcloud.com/ATSolarInfo/userRegister.action', [
                     'userName'     => $validated['user_id'],
                     'password'     => $validated['password'],
@@ -258,7 +255,6 @@ class AuthController extends BaseController
             $asd = $http->withHeaders([
                 'X-Signature'      => "eyJhbGciOi3nMiGM6H9FNFUROf3wh7SmQ30"
             ])->withBody(json_encode([
-                "server_flag"         => $server_flag,
                 "userName"            => $validated['user_id'],
                 "password"            => $validated['password'],
                 "phone"               => $validated['whatsapp_no'],
