@@ -225,6 +225,7 @@ class AuthController extends BaseController
             $server_flag=1;
             if (strlen($validated['wifi_serial_number']) <= 9) {
                 $server_flag=0;
+                
                 $response = $http->asForm()->post('https://www.aotaisolarcloud.com/ATSolarInfo/userRegister.action', [
                     'userName'     => $validated['user_id'],
                     'password'     => $validated['password'],
