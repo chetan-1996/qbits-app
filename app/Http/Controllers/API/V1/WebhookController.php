@@ -223,6 +223,7 @@ class WebhookController extends Controller
                     'server_flag' => 1,
                 ];
 
+                Log::info('Plant data prepared for insert', $plandata);
                 $plantInfoId = \DB::table('plant_infos')->insertGetId($plandata);
                 \DB::table('plant_infos')->where('id', $plantInfoId)->update(['plant_no' => $plantInfoId]);
             }
