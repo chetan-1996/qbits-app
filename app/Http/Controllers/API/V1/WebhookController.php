@@ -206,33 +206,31 @@ class WebhookController extends Controller
              * ✅ 4. One fast upsert (no "exists" check)
              * ---------------------------------------------------- */
             $affected = $user->wasRecentlyCreated ? 'inserted' : 'updated';
-            Log::info('Plant data prepared for insert:1');
-            if($data['server_flag']==1){
-                Log::info('Plant data prepared for insert:2');
-                $lastInsertedId = $user->id;
-                $plandata = [
-                    'plant_name' => $data['plantName'] ?? null,
-                    'remark2' =>data['longitude'] ?? null."|".($data['latitude'] ?? null),
-                    'remark1' => $data['cityname'] ?? null,
-                    'plantstate' => 1,
-                    'plant_user' => $username,
-                    'record_time' => date("Y-m-d"),
-                    'time' => now(),
-                    'user_id' => $lastInsertedId,
-                    'date' => date("Y-m"),
-                    'atun' => $username,
-                    'atpd' => $data['password'] ?? null,
-                    'server_flag' => 1,
-                ];
 
-                Log::info('Plant data prepared for insert: ' . json_encode($plandata));
-                $plantInfoId = \DB::table('plant_infos')->insertGetId($plandata);
-                \DB::table('plant_infos')->where('id', $plantInfoId)->update(['plant_no' => $plantInfoId]);
-            }
             /* ----------------------------------------------------
              * ✅ 5. Send WhatsApp only if new insert
              * ---------------------------------------------------- */
             if ($affected=='inserted' && !empty($data['phone'])) {
+                if($data['server_flag']==1){
+                    $lastInsertedId = $user->id;
+                    $plandata = [
+                        'plant_name' => $data['plantName'] ?? null,
+                        'remark2' =>data['longitude'] ?? null."|".($data['latitude'] ?? null),
+                        'remark1' => $data['cityname'] ?? null,
+                        'plantstate' => 1,
+                        'plant_user' => $username,
+                        'record_time' => date("Y-m-d"),
+                        'time' => now(),
+                        'user_id' => $lastInsertedId,
+                        'date' => date("Y-m"),
+                        'atun' => $username,
+                        'atpd' => $data['password'] ?? null,
+                        'server_flag' => 1,
+                    ];
+
+                    $plantInfoId = \DB::table('plant_infos')->insertGetId($plandata);
+                    \DB::table('plant_infos')->where('id', $plantInfoId)->update(['plant_no' => $plantInfoId]);
+                }
                 $this->sendWhatsApp($data);
             }
 
