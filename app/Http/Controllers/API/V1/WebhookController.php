@@ -183,7 +183,6 @@ class WebhookController extends Controller
             $user->qbits_company_code  = $data['company_code'] ?? $user->qbits_company_code;
             $user->user_flag           = 0;
             $user->server_flag         = $data['server_flag'];
-            
 
 
             // Only fill plant-related fields when creating new record
