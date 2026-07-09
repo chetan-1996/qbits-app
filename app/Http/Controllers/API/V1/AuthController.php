@@ -253,28 +253,42 @@ class AuthController extends BaseController
 
             $webhookUrl = env('APP_URL') . "api/" . config('app.api_version') . "/webhook/individual";
 
-            $asd = $http->withHeaders([
-                'X-Signature'      => "eyJhbGciOi3nMiGM6H9FNFUROf3wh7SmQ30"
-            ])->withBody(json_encode([
-                'server_flag'         => $server_flg,
-                "userName"            => $validated['user_id'],
-                "password"            => $validated['password'],
-                "phone"               => $validated['whatsapp_no'],
-                "collector"           => $validated['wifi_serial_number'],
-                "plantName"           => $validated['home_name'],
-                "invertertype"        => $validated['inverter_serial_number'],
-                "cityname"            => $validated['city_name'],
-                "longitude"           => $validated['longitude'],
-                "latitude"            => $validated['latitude'],
-                "gmt"                 => $validated['time_zone'],
-                "plantType"           => $validated['station_type'],
-                "mobile_device_token" => "",
-                "company_code"        => $validated['company_code'],
-                "iSerial"             => "",
-                "QQ"                  => "",
-                "email"               => "",
-                "parent"              => "",
-            ]), 'application/json')->post($webhookUrl);
+            Log::info('About to call webhook', ['url' => $webhookUrl, 'server_flg' => $server_flg]);
+
+            try {
+                $response = $http->timeout(30)->withHeaders([
+                    'X-Signature'      => "eyJhbGciOi3nMiGM6H9FNFUROf3wh7SmQ30"
+                ])->withBody(json_encode([
+                    'server_flag'         => $server_flg,
+                    "userName"            => $validated['user_id'],
+                    "password"            => $validated['password'],
+                    "phone"               => $validated['whatsapp_no'],
+                    "collector"           => $validated['wifi_serial_number'],
+                    "plantName"           => $validated['home_name'],
+                    "invertertype"        => $validated['inverter_serial_number'],
+                    "cityname"            => $validated['city_name'],
+                    "longitude"           => $validated['longitude'],
+                    "latitude"            => $validated['latitude'],
+                    "gmt"                 => $validated['time_zone'],
+                    "plantType"           => $validated['station_type'],
+                    "mobile_device_token" => "",
+                    "company_code"        => $validated['company_code'],
+                    "iSerial"             => "",
+                    "QQ"                  => "",
+                    "email"               => "",
+                    "parent"              => "",
+                ]), 'application/json')->post($webhookUrl);
+
+                Log::info('Webhook response received', [
+                    'status' => $response->status(),
+                    'body'   => $response->body()
+                ]);
+            } catch (\Throwable $e) {
+                Log::error('Webhook call failed', [
+                    'error' => $e->getMessage(),
+                    'url'   => $webhookUrl
+                ]);
+            }
 
             return $this->sendResponse([], 'Individual registered successfully.');
 
