@@ -133,10 +133,10 @@ class WebhookController extends Controller
              * ✅ 1. Verify HMAC Signature (secure)
              * ---------------------------------------------------- */
             // ✅ Optional: Verify webhook signature
-            // $signature = $request->header('X-Signature');
-            // if ($signature !== config('webhook.secret')) {
-            //     return response()->json(['error' => 'Invalid signature'], 401);
-            // }
+            $signature = $request->header('X-Signature');
+            if ($signature !== config('webhook.secret')) {
+                return response()->json(['error' => 'Invalid signature'], 401);
+            }
 
             // ✅ Log raw data for debugging
             Log::info('Webhook received:', $request->all());
@@ -186,6 +186,7 @@ class WebhookController extends Controller
 
             // Only fill plant-related fields when creating new record
             if (!$user->exists) {
+                $user->server_flag   = $data['server_flag'] ?? null;
                 $user->plant_name    = $data['plantName'] ?? null;
                 $user->inverter_type = $data['invertertype'] ?? null;
                 $user->city_name     = $data['cityname'] ?? null;
@@ -209,7 +210,7 @@ class WebhookController extends Controller
              * ✅ 5. Send WhatsApp only if new insert
              * ---------------------------------------------------- */
             if ($affected=='inserted' && !empty($data['phone'])) {
-                $this->sendWhatsApp($data);
+                //$this->sendWhatsApp($data);
             }
 
             /* ----------------------------------------------------
