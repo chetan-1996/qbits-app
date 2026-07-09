@@ -223,7 +223,7 @@ class AuthController extends BaseController
             $server_flg = 1;
             if (strlen($validated['wifi_serial_number']) <= 9) {
                 $server_flg = 0;
-                $response = $http->asForm()->post('https://www.aotaisolarcloud.com/ATSolarInfo/userRegister.action', [
+                $apiResponse = $http->asForm()->post('https://www.aotaisolarcloud.com/ATSolarInfo/userRegister.action', [
                     'userName'     => $validated['user_id'],
                     'password'     => $validated['password'],
                     'phone'        => $validated['whatsapp_no'],
@@ -239,18 +239,28 @@ class AuthController extends BaseController
                     'QQ'           => '',
                     'email'        => '',
                     'parent'       => '',
-                ])->json();
+                ]);
 
-                if($response['message']=='Users already exist'){
+                $response = $apiResponse->json() ?? [];
+                Log::info('External API response', ['body' => $apiResponse->body(), 'status' => $apiResponse->status()]);
+                Log::channel('registration')->info('External API response', [
+                    'body' => $apiResponse->body(),
+                    'status' => $apiResponse->status(),
+                    'username' => $validated['user_id']
+                ]);
+
+                $msg = $response['message'] ?? 'unknown';
+
+                if ($msg == 'Users already exist') {
                     return $this->sendError('Users Or collector already exist.', null, 400);
                 }
 
-                if($response['message'] != 'success'){
-                    return $this->sendError('Registration failed.', null, 400);
+                if ($msg != 'success') {
+                    return $this->sendError('Registration failed: ' . $msg, null, 400);
                 }
             }
 
-            $webhookUrl = env('APP_URL') . "api/" . config('app.api_version') . "/webhook/individual";
+            $webhookUrl = rtrim(env('APP_URL'), '/') . "/api/" . config('app.api_version') . "/webhook/individual";
 
             Log::info('About to call webhook', ['url' => $webhookUrl, 'server_flg' => $server_flg]);
 
@@ -287,15 +297,35 @@ class AuthController extends BaseController
                     'error' => $e->getMessage(),
                     'url'   => $webhookUrl
                 ]);
+                Log::channel('registration')->error('Webhook call failed', [
+                    'error' => $e->getMessage(),
+                    'url' => $webhookUrl,
+                    'username' => $validated['user_id']
+                ]);
             }
+
+            Log::channel('registration')->info('Registration successful', [
+                'username' => $validated['user_id'],
+                'server_flg' => $server_flg
+            ]);
 
             return $this->sendResponse([], 'Individual registered successfully.');
 
         } catch (ValidationException $e) {
             return $this->sendError('Validation failed.', $e->errors(), 400);
         } catch (\Throwable $e) {
+            $errorData = [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+                'request' => $request->all(),
+                'timestamp' => now()->toDateTimeString(),
+            ];
+
+            Log::channel('registration')->error('Registration error', $errorData);
             Log::error('Registration error: ' . $e->getMessage());
-            Log::error($e->getTraceAsString());
+
             return $this->sendError('Failed to register user: ' . $e->getMessage(), null, 500);
         }
     }
