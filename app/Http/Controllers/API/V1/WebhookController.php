@@ -205,18 +205,15 @@ class WebhookController extends Controller
              * ✅ 4. One fast upsert (no "exists" check)
              * ---------------------------------------------------- */
             $affected = $user->wasRecentlyCreated ? 'inserted' : 'updated';
-                Log::info('chetan1',[]);
             /* ----------------------------------------------------
              * ✅ 5. Send WhatsApp only if new insert
              * ---------------------------------------------------- */
             if ($affected=='inserted' && !empty($data['phone'])) {
-                 Log::info('chetan2',['sflag'=>$data['server_flag']]);
                 if ($data['server_flag'] == 1) {
-                     Log::info('chetan3',[]);
                     $lastInsertedId = $user->id;
                     $plandata = [
                         'plant_name' => $data['plantName'] ?? null,
-                        'remark2' =>data['longitude'] ?? null."|".($data['latitude'] ?? null),
+                        'remark2' => ($data['longitude'] ?? null)."|".($data['latitude'] ?? null),
                         'remark1' => $data['cityname'] ?? null,
                         'plantstate' => 1,
                         'plant_user' => $username,
