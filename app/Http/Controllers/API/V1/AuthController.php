@@ -205,7 +205,6 @@ class AuthController extends BaseController
                 'iserial'                  => 'nullable',
                 'qq'                       => 'nullable',
                 'email'                    => 'nullable|email',
-                '           '                   => 'nullable',
             ]);
 
             // Check if collector already exists when wifi_serial_number length >= 9
@@ -295,7 +294,9 @@ class AuthController extends BaseController
         } catch (ValidationException $e) {
             return $this->sendError('Validation failed.', $e->errors(), 400);
         } catch (\Throwable $e) {
-            return $this->handleException($e, 'Failed to register user.');
+            Log::error('Registration error: ' . $e->getMessage());
+            Log::error($e->getTraceAsString());
+            return $this->sendError('Failed to register user: ' . $e->getMessage(), null, 500);
         }
     }
 
