@@ -2,12 +2,19 @@
 
 use App\Services\MqttService;
 use App\Http\Controllers\API\V1\TelemetryController;
+use App\Http\Controllers\API\V1\ChannelPartnerController;
 use App\Http\Controllers\FirmwareController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('/channel-partners/import', function () {
+    return view('channel-partners.import');
+});
+
+Route::post('/channel-partners/import', [ChannelPartnerController::class, 'import']);
 
 Route::get('/mqtt-test', function (MqttService $mqtt) {
     $mqtt->publish('test/topic', 'Hello from Laravel!');

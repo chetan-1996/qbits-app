@@ -139,4 +139,27 @@ class ChannelPartnerController extends BaseController
             'message' => 'Deleted'
         ]);
     }
+
+    public function import(Request $req)
+    {
+        $req->validate([
+            'file' => 'required|file|mimes:xlsx,xls,csv'
+        ]);
+
+        $file = $req->file('file');
+        $import = new \App\Imports\ChannelPartnersImport();
+
+        \Maatwebsite\Excel\Facades\Excel::import($import, $file);
+
+        return response()->json([
+            'status'    => true,
+            'message'   => 'Import completed',
+            'errors'    => count($import->errors()),
+            'failures'  => count($import->failures()),
+            'processed' => $import->processed,
+            'inserted'  => $import->inserted,
+            'duplicates'=> $import->duplicates,
+            'empty_mobile' => $import->emptyMobile,
+        ]);
+    }
 }
