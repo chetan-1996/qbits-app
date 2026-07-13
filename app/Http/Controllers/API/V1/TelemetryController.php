@@ -177,6 +177,15 @@ class TelemetryController extends BaseController
     }
 
     /**
+     * Display modbus write history in view
+     */
+    public function modbusWriteView(Request $request)
+    {
+        $data = $this->getTelemetryData('modbus_write_logs', $request);
+        return view('telemetry.modbus-write', ['telemetry' => $data]);
+    }
+
+    /**
      * Get telemetry history with generic table handling
      */
     private function getTelemetryData(string $tableName, Request $request)
