@@ -182,11 +182,12 @@ class WebhookController extends Controller
             $user->collector           = $data['collector'] ?? $user->collector;
             $user->qbits_company_code  = $data['company_code'] ?? $user->qbits_company_code;
             $user->user_flag           = 0;
+            $user->server_flag         = $user->server_flag;
 
 
             // Only fill plant-related fields when creating new record
             if (!$user->exists) {
-                $user->server_flag   = $data['server_flag'] ?? null;
+                $user->server_flag   = $data['server_flag'] ?? 0;
                 $user->plant_name    = $data['plantName'] ?? null;
                 $user->inverter_type = $data['invertertype'] ?? null;
                 $user->city_name     = $data['cityname'] ?? null;
