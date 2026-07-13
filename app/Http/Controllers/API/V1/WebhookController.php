@@ -146,6 +146,12 @@ class WebhookController extends Controller
              * ---------------------------------------------------- */
             $payload = $request->json()->all();
             $data = is_array($payload) && isset($payload[0]) ? $payload[0] : $payload;
+
+            if (!is_array($data)) {
+                Log::warning('Webhook invalid payload: data is not an array', ['payload' => $payload]);
+                return response()->json(['error' => 'Invalid payload format'], 422);
+            }
+
             $username = $data['userName'] ?? null;
 
             if (empty($username)) {
@@ -186,7 +192,7 @@ class WebhookController extends Controller
 
             // Only fill plant-related fields when creating new record
             if (!$user->exists) {
-                $user->server_flag   = $data['server_flag'] ?? 0;
+                $user->server_flag   = isset($data['server_flag']) ? $data['server_flag'] : 0;
                 $user->plant_name    = $data['plantName'] ?? null;
                 $user->inverter_type = $data['invertertype'] ?? null;
                 $user->city_name     = $data['cityname'] ?? null;
