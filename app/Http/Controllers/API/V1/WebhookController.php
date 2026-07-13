@@ -186,7 +186,7 @@ class WebhookController extends Controller
 
             // Only fill plant-related fields when creating new record
             if (!$user->exists) {
-                $user->server_flag   = $data['server_flag'] ?? null;
+                $user->server_flag   = $data['server_flag'] ?? 0;
                 $user->plant_name    = $data['plantName'] ?? null;
                 $user->inverter_type = $data['invertertype'] ?? null;
                 $user->city_name     = $data['cityname'] ?? null;
