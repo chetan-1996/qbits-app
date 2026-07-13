@@ -163,4 +163,42 @@ class InverterCommandController extends BaseController
 
         return response()->json(['status' => 'INFO_SENT']);
     }
+
+    public function sendModbusDebug(Request $request)
+    {
+        $collector = $request->IMEI;
+
+        $payload = json_encode($request->all());
+
+        $mqtt = new MqttService();
+        $mqtt->connect(
+            config('mqtt.client_id_prefix') . '-modbus-debug-' . $collector . '-' . uniqid()
+        );
+
+        $mqtt->publish(
+            "rtsg-1/Ongridrooftop/{$collector}/modbus_debug/sub",
+            $payload
+        );
+
+        return response()->json(['status' => 'MODBUS_DEBUG_SENT']);
+    }
+
+    public function sendModbusRead(Request $request)
+    {
+        $collector = $request->IMEI;
+
+        $payload = json_encode($request->all());
+
+        $mqtt = new MqttService();
+        $mqtt->connect(
+            config('mqtt.client_id_prefix') . '-modbus-read-' . $collector . '-' . uniqid()
+        );
+
+        $mqtt->publish(
+            "rtsg-1/Ongridrooftop/{$collector}/modbus_read/sub",
+            $payload
+        );
+
+        return response()->json(['status' => 'MODBUS_READ_SENT']);
+    }
 }
