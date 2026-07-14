@@ -3,6 +3,7 @@
 use App\Services\MqttService;
 use App\Http\Controllers\API\V1\TelemetryController;
 use App\Http\Controllers\API\V1\ChannelPartnerController;
+use App\Http\Controllers\API\V1\DongleController;
 use App\Http\Controllers\FirmwareController;
 use Illuminate\Support\Facades\Route;
 
@@ -15,6 +16,12 @@ Route::get('/channel-partners/import', function () {
 });
 
 Route::post('/channel-partners/import', [ChannelPartnerController::class, 'import']);
+
+Route::get('/dongles/import', function () {
+    return view('dongles.import');
+});
+
+Route::post('/dongles/import', [DongleController::class, 'import'])->name('dongles.import');
 
 Route::get('/mqtt-test', function (MqttService $mqtt) {
     $mqtt->publish('test/topic', 'Hello from Laravel!');
