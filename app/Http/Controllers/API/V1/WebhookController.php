@@ -449,9 +449,146 @@ Thank you,
     }
 
 
+public function channelPartenMapList(Request $request)
+{
+    try {
+
+        /*
+        |--------------------------------------------------------------------------
+        | Verify Signature
+        |--------------------------------------------------------------------------
+        */
+
+        $signature = $request->header('X-Signature');
+
+        if ($signature !== config('webhook.secret')) {
+
+            return response()->json([
+                'status'  => false,
+                'message' => 'Invalid signature'
+            ], 401);
+
+        }
 
 
-    public function channelPartenMapList(Request $request)
+        /*
+        |--------------------------------------------------------------------------
+        | Location
+        |--------------------------------------------------------------------------
+        */
+
+        $latitude  = (float) $request->input('latitude');
+
+        $longitude = (float) $request->input('longitude');
+
+        $radius    = (float) $request->input('radius', 50);
+
+
+        if (!$latitude || !$longitude) {
+
+            return response()->json([
+                'status'  => false,
+                'message' => 'Latitude and longitude are required'
+            ], 422);
+
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Nearby Partners
+        |--------------------------------------------------------------------------
+        */
+
+        $partners = ChannelPartner::query()
+
+            ->from('channel_partners as cp')
+
+            ->select([
+                'cp.id',
+                'cp.name',
+                'cp.designation',
+                'cp.company_name',
+                'cp.mobile',
+                'cp.whatsapp_no',
+                'cp.photo',
+                'cp.city',
+                'cp.address',
+                'cp.latitude',
+                'cp.longitude',
+                's.name as state_name',
+                'c.name as city_name'
+            ])
+
+            ->selectRaw(
+                '(
+                    6371 * ACOS(
+                        COS(RADIANS(?))
+                        * COS(RADIANS(cp.latitude))
+                        * COS(RADIANS(cp.longitude) - RADIANS(?))
+                        + SIN(RADIANS(?))
+                        * SIN(RADIANS(cp.latitude))
+                    )
+                ) AS distance',
+                [
+                    $latitude,
+                    $longitude,
+                    $latitude
+                ]
+            )
+
+            ->join(
+                'states as s',
+                's.id',
+                '=',
+                'cp.state'
+            )
+
+            ->join(
+                'cities as c',
+                'c.id',
+                '=',
+                'cp.city'
+            )
+
+            ->whereNotNull('cp.latitude')
+
+            ->whereNotNull('cp.longitude')
+
+            ->having('distance', '<=', $radius)
+
+            ->orderBy('distance')
+
+            ->get();
+
+
+        return response()->json([
+
+            'status'  => true,
+
+            'message' => 'Nearby Partner Map View',
+
+            'data'    => $partners
+
+        ], 200);
+
+
+    } catch (\Exception $e) {
+
+        return response()->json([
+
+            'status'  => false,
+
+            'message' => 'Error processing map data',
+
+            'error'   => $e->getMessage()
+
+        ], 500);
+
+    }
+}
+
+    public function channelPartenMapList1(Request $request)
     {
         try {
             /* ----------------------------------------------------
