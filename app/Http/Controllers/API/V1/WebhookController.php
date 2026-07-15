@@ -449,7 +449,7 @@ Thank you,
     }
 
 
-public function channelPartenMapList(Request $request)
+public function channelPartenMapList1(Request $request)
 {
     try {
 
@@ -588,7 +588,7 @@ public function channelPartenMapList(Request $request)
     }
 }
 
-    public function channelPartenMapList1(Request $request)
+    public function channelPartenMapList(Request $request)
     {
         try {
             /* ----------------------------------------------------
