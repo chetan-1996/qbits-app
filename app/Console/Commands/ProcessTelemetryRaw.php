@@ -30,7 +30,7 @@ class ProcessTelemetryRaw extends Command
                 ->select('id', 'collector', 'company_name', 'username', 'password')
                 ->first();
 
-            ProcessTelemetryRawJob::dispatch($specificCollector, $client, $batchSize);
+            ProcessTelemetryRawJob::dispatch($specificCollector, $client, $batchSize)->onQueue('telemetryraw');
             $this->info('Job dispatched.');
             return Command::SUCCESS;
         }
