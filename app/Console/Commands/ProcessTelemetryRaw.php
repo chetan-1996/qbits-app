@@ -38,7 +38,7 @@ class ProcessTelemetryRaw extends Command
         $clients = DB::table('clients')
             ->where('server_flag', 1)
             ->whereNotNull('collector')
-            ->select('id', 'collector', 'company_name', 'username', 'password')
+            ->select('id', 'collector', 'company_name', 'username', 'password','inverter_type')
             ->orderBy('id')
             ->get();
 

@@ -51,11 +51,18 @@ class ProcessTelemetryRaw implements ShouldQueue
                     $payload = json_decode($record->payload, true);
                     $inverterId = $record->inverter_id ?? $this->collectorId;
 
+                    $inverterType = $this->client?->inverter_type ?? '';
+                    $inverterTypeNumeric = null;
+                    if (preg_match('/(\d+(?:\.\d+)?)/', $inverterType, $matches)) {
+                        $inverterTypeNumeric = $matches[1];
+                    }
+
                     $logRecords[] = [
                         'company_name' => $this->client?->company_name ?? $this->client?->plant_name ?? 'N/A',
                         'username' => $this->client?->username ?? 'N/A',
                         'password' => $this->client?->password ?? 'N/A',
                         'inverter_id' => $inverterId,
+                        'inverter_type_numeric' => $inverterTypeNumeric,
                         'tkwh' => $payload['IS-1-0---TKWH'] ?? null,
                         // 'payload'     => $record->payload,
                         'received_at' => $record->created_at,
@@ -64,8 +71,8 @@ class ProcessTelemetryRaw implements ShouldQueue
                     ];
  
                     $processedIds[] = $record->id;
-                    DB::table('plant_infos')->where('atun', $this->client->username)->update(['eday' => $payload['IS-1-0---TKWH']]);
-                    
+                    DB::table('plant_infos')->where('atun', $this->client->username)->update(['eday' => $payload['IS-1-0---TKWH'],'etot' =>$payload['IS-1-0---LKWH'],'inverter_type' => $inverterTypeNumeric]);
+
                 } catch (\Throwable $e) {
                     $failed++;
                     Log::warning('Telemetry raw parse failed', [
