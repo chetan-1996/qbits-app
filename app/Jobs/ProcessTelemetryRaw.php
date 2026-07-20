@@ -64,7 +64,7 @@ class ProcessTelemetryRaw implements ShouldQueue
                     ];
  
                     $processedIds[] = $record->id;
-                    DB::table('plant_infos')->where('username', $this->client->username)->update(['eday' => $payload['IS-1-0---TKWH']]);
+                    DB::table('plant_infos')->where('atun', $this->client->username)->update(['eday' => $payload['IS-1-0---TKWH']]);
                 } catch (\Throwable $e) {
                     $failed++;
                     Log::warning('Telemetry raw parse failed', [
