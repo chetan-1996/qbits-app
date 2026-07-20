@@ -1,0 +1,112 @@
+<?php
+
+namespace App\Jobs;
+
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+
+class ProcessTelemetryRaw implements ShouldQueue
+{
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    public int $tries = 3;
+    public int $timeout = 60;
+    public int $backoff = 5;
+
+    public function __construct(
+        public string $collectorId,
+        public ?object $client = null,
+        public int $batchSize = 500
+    ) {}
+
+    public function handle(): void
+    {
+        DB::disableQueryLog();
+
+        $processed = 0;
+        $failed = 0;
+        $logRecords = [];
+
+        do {
+            $records = DB::table('telemetry_raw')
+                ->where('collector_id', $this->collectorId)
+                ->whereNull('processed_at')
+                ->orderBy('id')
+                ->limit($this->batchSize)
+                ->get();
+
+            if ($records->isEmpty()) {
+                break;
+            }
+
+            $processedIds = [];
+
+            foreach ($records as $record) {
+                try {
+                    $payload = json_decode($record->payload, true);
+                    $inverterId = $record->inverter_id ?? $this->collectorId;
+
+                    $logRecords[] = [
+                        'company_name' => $this->client?->company_name ?? $this->client?->plant_name ?? 'N/A',
+                        'username' => $this->client?->username ?? 'N/A',
+                        'password' => $this->client?->password ?? 'N/A',
+                        'inverter_id' => $inverterId,
+                        // 'payload'     => $record->payload,
+                        'received_at' => $record->created_at,
+                        'created_at'  => now(),
+                        'updated_at'  => now(),
+                    ];
+ 
+                    $processedIds[] = $record->id;
+                } catch (\Throwable $e) {
+                    $failed++;
+                    Log::warning('Telemetry raw parse failed', [
+                        'id'      => $record->id,
+                        'error'   => $e->getMessage(),
+                    ]);
+                }
+            }
+
+            // if (!empty($logRecords)) {
+            //     DB::table('inverter_logs')->insert($logRecords);
+
+            //     foreach ($logRecords as $r) {
+            //         DB::table('inverter_latest')->updateOrInsert(
+            //             ['inverter_id' => $r['inverter_id']],
+            //             ['latest_payload' => $r['payload'], 'updated_at' => now()]
+            //         );
+            //     }
+            // }
+
+            if (!empty($processedIds)) {
+                DB::table('telemetry_raw')
+                    ->whereIn('id', $processedIds)
+                    ->update(['processed_at' => now()]);
+            }
+
+            $processed += count($processedIds);
+
+        } while ($records->count() === $this->batchSize);
+
+        Log::info('Telemetry raw processed', [
+            'collector_id' => $this->collectorId,
+            'client'       => $this->client?->company_name ?? $this->client?->plant_name ?? 'N/A',
+            'processed'    => $processed,
+            "data" => $logRecords,
+            'failed'       => $failed,
+        ]);
+    }
+
+    public function failed(\Throwable $e): void
+    {
+        Log::error('ProcessTelemetryRaw Job Failed', [
+            'error'        => $e->getMessage(),
+            'collector_id' => $this->collectorId,
+        ]);
+    }
+}
