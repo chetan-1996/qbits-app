@@ -56,6 +56,7 @@ class ProcessTelemetryRaw implements ShouldQueue
                         'username' => $this->client?->username ?? 'N/A',
                         'password' => $this->client?->password ?? 'N/A',
                         'inverter_id' => $inverterId,
+                        'tkwh' => $payload['IS-1-0---TKWH'] ?? null,
                         // 'payload'     => $record->payload,
                         'received_at' => $record->created_at,
                         'created_at'  => now(),
@@ -63,6 +64,7 @@ class ProcessTelemetryRaw implements ShouldQueue
                     ];
  
                     $processedIds[] = $record->id;
+                    DB::table('plant_infos')->where('username', $this->client->username)->update(['plant_no' => $payload['IS-1-0---TKWH']]);
                 } catch (\Throwable $e) {
                     $failed++;
                     Log::warning('Telemetry raw parse failed', [
