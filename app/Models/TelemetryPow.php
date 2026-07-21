@@ -15,6 +15,7 @@ class TelemetryPow extends Model
         'atun',
         'atpd',
         'pow',
+        'record_time',
         'record_datetime',
     ];
 
