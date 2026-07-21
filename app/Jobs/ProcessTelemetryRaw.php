@@ -32,6 +32,10 @@ class ProcessTelemetryRaw implements ShouldQueue
         $failed = 0;
         $logRecords = [];
 
+        $plantId = DB::table('plant_infos')
+            ->where('atun', $this->client?->username ?? '')
+            ->value('id');
+
         do {
             $records = DB::table('telemetry_raw')
                 ->where('collector_id', $this->collectorId)
@@ -45,6 +49,7 @@ class ProcessTelemetryRaw implements ShouldQueue
             }
 
             $processedIds = [];
+            $powRecords = [];
 
             foreach ($records as $record) {
                 try {
@@ -71,7 +76,31 @@ class ProcessTelemetryRaw implements ShouldQueue
                     ];
  
                     $processedIds[] = $record->id;
-                    DB::table('plant_infos')->where('atun', $this->client->username)->update(['eday' => $payload['IS-1-0---TKWH'],'etot' =>$payload['IS-1-0---LKWH'],'capacity' => $inverterTypeNumeric,'acpower' => $payload['IS-1-0---POW']]);
+
+                    $powRaw = $payload['IS-1-0---POW'] ?? null;
+                    $powClean = $powRaw !== null ? round((float) $powRaw, 4) : null;
+
+                    $powRecords[] = [
+                        'plant_id'        => $plantId,
+                        'collector_id'    => $this->collectorId,
+                        'user_id'         => $this->client?->id ?? 0,
+                        'atun'            => $this->client?->username ?? '',
+                        'atpd'            => $this->client?->password ?? '',
+                        'pow'             => $powClean,
+                        'record_datetime' => $payload['TIMESTAMP'] ?? null,
+                        'created_at'      => now(),
+                        'updated_at'      => now(),
+                    ];
+
+                    $tkwh = isset($payload['IS-1-0---TKWH']) ? round((float) $payload['IS-1-0---TKWH'], 4) : null;
+                    $lkwh = isset($payload['IS-1-0---LKWH']) ? round((float) $payload['IS-1-0---LKWH'], 4) : null;
+
+                    DB::table('plant_infos')->where('atun', $this->client->username)->update([
+                        'eday' => $tkwh,
+                        'etot' => $lkwh,
+                        'capacity' => $inverterTypeNumeric,
+                        'acpower' => $powClean,
+                    ]);
 
                 } catch (\Throwable $e) {
                     $failed++;
@@ -80,6 +109,10 @@ class ProcessTelemetryRaw implements ShouldQueue
                         'error'   => $e->getMessage(),
                     ]);
                 }
+            }
+
+            if (!empty($powRecords)) {
+                DB::table('telemetry_pow')->insert($powRecords);
             }
 
             // if (!empty($logRecords)) {
