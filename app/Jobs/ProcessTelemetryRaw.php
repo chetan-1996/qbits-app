@@ -71,7 +71,7 @@ class ProcessTelemetryRaw implements ShouldQueue
                     ];
  
                     $processedIds[] = $record->id;
-                    DB::table('plant_infos')->where('atun', $this->client->username)->update(['eday' => $payload['IS-1-0---TKWH'],'etot' =>$payload['IS-1-0---LKWH'],'capacity' => $inverterTypeNumeric]);
+                    DB::table('plant_infos')->where('atun', $this->client->username)->update(['eday' => $payload['IS-1-0---TKWH'],'etot' =>$payload['IS-1-0---LKWH'],'capacity' => $inverterTypeNumeric,'acpower' => $payload['IS-1-0---POW']]);
 
                 } catch (\Throwable $e) {
                     $failed++;
