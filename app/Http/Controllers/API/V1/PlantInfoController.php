@@ -424,7 +424,7 @@ class PlantInfoController extends BaseController
                 return $this->sendResponse([
                     'byday' => [
                         'catisticsDataByDayList' => $catisticsDataByDayList,
-                        'eday'                   => $dailyRecords->eday ?? 0,
+                        'eday'                   => (float) ($dailyRecords->tkwh ?? 0),
                     ],
                 ], 'Plant fetched successfully');
             }
