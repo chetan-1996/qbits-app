@@ -99,6 +99,7 @@ class ProcessTelemetryRaw implements ShouldQueue
 
                     if (!empty($payload['TIMESTAMP']) && $tkwh !== null) {
                         $tkwhRecords[] = [
+                            'plant_id'     => $plantId,
                             'collector_id' => $this->collectorId,
                             'record_date'  => substr($payload['TIMESTAMP'], 0, 10),
                             'user_id'      => $this->client?->id ?? 0,

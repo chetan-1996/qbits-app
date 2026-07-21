@@ -10,6 +10,7 @@ return new class extends Migration
     {
         Schema::create('telemetry_daily_tkwh', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('plant_id')->nullable()->index();
             $table->string('collector_id')->index();
             $table->date('record_date')->index();
             $table->decimal('tkwh', 10, 4)->nullable();

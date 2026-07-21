@@ -9,6 +9,7 @@ class TelemetryDailyTkwh extends Model
     protected $table = 'telemetry_daily_tkwh';
 
     protected $fillable = [
+        'plant_id',
         'collector_id',
         'record_date',
         'tkwh',
