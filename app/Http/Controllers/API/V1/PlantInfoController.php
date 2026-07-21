@@ -399,7 +399,7 @@ class PlantInfoController extends BaseController
                     ->get()
                     ->keyBy('year');
 
-                $startYear = 2025;
+                $startYear = 2014;
                 $currentYear = (int) date('Y');
                 $plantEnergyList = [];
 
@@ -801,7 +801,7 @@ class PlantInfoController extends BaseController
                     ->get()
                     ->keyBy('year');
 
-                $startYear = 2025;
+                $startYear = 2014;
                 $currentYear = (int) date('Y');
                 $plantEnergyList = [];
 
