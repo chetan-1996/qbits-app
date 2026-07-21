@@ -406,7 +406,7 @@ class PlantInfoController extends BaseController
                 $dailyRecords = TelemetryDailyTkwh::where('plant_id', $plant->id)
                     ->whereDate('record_date', $request->startTime)
                     ->orderBy('record_date')
-                    ->get();
+                    ->first();
 
                 $catisticsDataByDayList = $records->map(function ($record) {
                     return [
