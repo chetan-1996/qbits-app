@@ -87,6 +87,7 @@ class ProcessTelemetryRaw implements ShouldQueue
                         'atun'            => $this->client?->username ?? '',
                         'atpd'            => $this->client?->password ?? '',
                         'pow'             => $powClean,
+                        'record_time'      => isset($payload['TIMESTAMP']) ? substr($payload['TIMESTAMP'], 11, 8) : null,
                         'record_datetime' => $payload['TIMESTAMP'] ?? null,
                         'created_at'      => now(),
                         'updated_at'      => now(),

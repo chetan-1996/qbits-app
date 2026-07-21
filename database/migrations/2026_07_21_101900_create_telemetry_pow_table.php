@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('atun');
             $table->string('atpd');
             $table->decimal('pow', 10, 4)->nullable();
+            $table->string('record_time')->nullable()->index();
             $table->dateTime('record_datetime')->nullable()->index();
             $table->timestamps();
 
