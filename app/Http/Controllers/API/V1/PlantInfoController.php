@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\API\V1;
 
 use App\Http\Controllers\Controller;
+use App\Models\Client;
 use App\Models\PlantInfo;
+use App\Models\TelemetryPow;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Validator;
@@ -96,29 +98,70 @@ class PlantInfoController extends BaseController
             'atpd'      => 'required|string',
         ]);
 
-        try {
-            $response = Http::withOptions([
-                'verify' => false,
-            ])
-            ->timeout(20)
-            ->get(
-                'https://www.aotaisolarcloud.com/ATSolarInfo/appcanPlantStatisticsByDay.action',
-                [
-                    'startTime' => $request->startTime,
-                    'plantId'   => $request->plantId,
-                    'atun'      => $request->atun,
-                    'atpd'      => $request->atpd,
-                ]
-            );
+        $client = Client::where('username', $request->atun)
+            ->where('password', $request->atpd)
+            ->first();
 
-            if (!$response->successful()) {
-                return $this->sendError('Aotai API failed', [], 400);
+        if (!$client) {
+            return $this->sendError('Client not found', [], 400);
+        }
+
+        $plant = PlantInfo::where('user_id', $client->id)
+            ->where('plant_no', $request->plantId)
+            ->first();
+
+        if (!$plant || empty($plant->atun) || empty($plant->atpd)) {
+            return $this->sendError('Plant credentials not found for this user', [], 400);
+        }
+
+        try {
+            if ($client->server_flag == 0) {
+                $response = Http::withOptions([
+                    'verify' => false,
+                ])
+                ->timeout(20)
+                ->get(
+                    'https://www.aotaisolarcloud.com/ATSolarInfo/appcanPlantStatisticsByDay.action',
+                    [
+                        'startTime' => $request->startTime,
+                        'plantId'   => $request->plantId,
+                        'atun'      => $request->atun,
+                        'atpd'      => $request->atpd,
+                    ]
+                );
+
+                if (!$response->successful()) {
+                    return $this->sendError('Aotai API failed', [], 400);
+                }
+
+                return $this->sendResponse([
+                    'byday' => $response->json(),
+                ], 'Plant fetched successfully');
             }
 
-            return $this->sendResponse([
-                'byday' => $response->json(),
-            ], 'Plant fetched successfully');
+            if ($client->server_flag == 1) {
+                $records = TelemetryPow::where('plant_id', $plant->id)
+                    ->whereDate('record_datetime', $request->startTime)
+                    ->orderBy('record_datetime')
+                    ->get();
 
+                $catisticsDataByDayList = $records->map(function ($record) {
+                    return [
+                        'acMomentaryPower' => (string) ($record->pow ?? '0.0'),
+                        'irradiation'      => '0',
+                        'recordTime'       => $record->record_time ?? substr($record->record_datetime, 11, 8),
+                    ];
+                });
+
+                return $this->sendResponse([
+                    'byday' => [
+                        'catisticsDataByDayList' => $catisticsDataByDayList,
+                        'eday'                   => $plant->eday ?? 0,
+                    ],
+                ], 'Plant fetched successfully');
+            }
+
+            return $this->sendError('Invalid server flag', [], 400);
 
         } catch (\Throwable $e) {
             return $this->sendError('Plant not found', [$e->getMessage()], 400);
