@@ -50,6 +50,7 @@ class ProcessTelemetryRaw implements ShouldQueue
 
             $processedIds = [];
             $powRecords = [];
+            $tkwhRecords = [];
 
             foreach ($records as $record) {
                 try {
@@ -96,6 +97,19 @@ class ProcessTelemetryRaw implements ShouldQueue
                     $tkwh = isset($payload['IS-1-0---TKWH']) ? round((float) $payload['IS-1-0---TKWH'], 4) : null;
                     $lkwh = isset($payload['IS-1-0---LKWH']) ? round((float) $payload['IS-1-0---LKWH'], 4) : null;
 
+                    if (!empty($payload['TIMESTAMP']) && $tkwh !== null) {
+                        $tkwhRecords[] = [
+                            'collector_id' => $this->collectorId,
+                            'record_date'  => substr($payload['TIMESTAMP'], 0, 10),
+                            'user_id'      => $this->client?->id ?? 0,
+                            'atun'         => $this->client?->username ?? '',
+                            'atpd'         => $this->client?->password ?? '',
+                            'tkwh'         => $tkwh,
+                            'created_at'   => now(),
+                            'updated_at'   => now(),
+                        ];
+                    }
+
                     DB::table('plant_infos')->where('atun', $this->client->username)->update([
                         'eday' => $tkwh,
                         'etot' => $lkwh,
@@ -114,6 +128,14 @@ class ProcessTelemetryRaw implements ShouldQueue
 
             if (!empty($powRecords)) {
                 DB::table('telemetry_pow')->insert($powRecords);
+            }
+
+            if (!empty($tkwhRecords)) {
+                DB::table('telemetry_daily_tkwh')->upsert(
+                    $tkwhRecords,
+                    ['collector_id', 'record_date'],
+                    ['tkwh', 'updated_at']
+                );
             }
 
             // if (!empty($logRecords)) {
