@@ -183,29 +183,76 @@ class PlantInfoController extends BaseController
             'atpd'      => 'required|string',
         ]);
 
-        try {
-            $response = Http::withOptions([
-                'verify' => false,
-            ])
-            ->timeout(20)
-            ->get(
-                'https://www.aotaisolarcloud.com/ATSolarInfo/appcanPlantStatisticsByMonth.action',
-                [
-                    'startTime' => $request->startTime,
-                    'plantId'   => $request->plantId,
-                    'atun'      => $request->atun,
-                    'atpd'      => $request->atpd,
-                ]
-            );
+        $client = Client::where('username', $request->atun)
+            ->where('password', $request->atpd)
+            ->first();
 
-            if (!$response->successful()) {
-                return $this->sendError('Aotai API failed', [], 400);
+        if (!$client) {
+            return $this->sendError('Client not found', [], 400);
+        }
+
+        $plant = PlantInfo::where('user_id', $client->id)
+            ->where('plant_no', $request->plantId)
+            ->first();
+
+        if (!$plant || empty($plant->atun) || empty($plant->atpd)) {
+            return $this->sendError('Plant credentials not found for this user', [], 400);
+        }
+
+        try {
+            if ($client->server_flag == 0) {
+                $response = Http::withOptions([
+                    'verify' => false,
+                ])
+                ->timeout(20)
+                ->get(
+                    'https://www.aotaisolarcloud.com/ATSolarInfo/appcanPlantStatisticsByMonth.action',
+                    [
+                        'startTime' => $request->startTime,
+                        'plantId'   => $request->plantId,
+                        'atun'      => $request->atun,
+                        'atpd'      => $request->atpd,
+                    ]
+                );
+
+                if (!$response->successful()) {
+                    return $this->sendError('Aotai API failed', [], 400);
+                }
+
+                return $this->sendResponse([
+                    'bymonth' => $response->json(),
+                ], 'Plant fetched successfully');
             }
 
-            return $this->sendResponse([
-                'bymonth' => $response->json(),
-            ], 'Plant fetched successfully');
+            if ($client->server_flag == 1) {
+                $month = \Carbon\Carbon::parse($request->startTime);
+                $daysInMonth = $month->daysInMonth;
 
+                $dailyRecords = TelemetryDailyTkwh::where('plant_id', $plant->id)
+                    ->whereYear('record_date', $month->year)
+                    ->whereMonth('record_date', $month->month)
+                    ->orderBy('record_date')
+                    ->get()
+                    ->keyBy(function ($item) {
+                        return (int) $item->record_date->format('d');
+                    });
+
+                $catisticsDataByMonthList = [];
+                for ($day = 1; $day <= $daysInMonth; $day++) {
+                    $catisticsDataByMonthList[] = [
+                        'power'      => (string) ($dailyRecords[$day]->tkwh ?? '0.0'),
+                        'recordTime' => (string) $day,
+                    ];
+                }
+
+                return $this->sendResponse([
+                    'bymonth' => [
+                        'catisticsDataByMonthList' => $catisticsDataByMonthList,
+                    ],
+                ], 'Plant fetched successfully');
+            }
+
+            return $this->sendError('Invalid server flag', [], 400);
 
         } catch (\Throwable $e) {
             return $this->sendError('Plant not found', [$e->getMessage()], 400);
@@ -214,7 +261,6 @@ class PlantInfoController extends BaseController
 
     public function byYear(Request $request)
     {
-
         $request->validate([
             'startTime' => 'required',
             'plantId'   => 'required|integer',
@@ -222,29 +268,74 @@ class PlantInfoController extends BaseController
             'atpd'      => 'required|string',
         ]);
 
-        try {
-            $response = Http::withOptions([
-                'verify' => false,
-            ])
-            ->timeout(20)
-            ->get(
-                'https://www.aotaisolarcloud.com/ATSolarInfo/appcanPlantStatisticsByYear.action',
-                [
-                    'startTime' => $request->startTime,
-                    'plantId'   => $request->plantId,
-                    'atun'      => $request->atun,
-                    'atpd'      => $request->atpd,
-                ]
-            );
+        $client = Client::where('username', $request->atun)
+            ->where('password', $request->atpd)
+            ->first();
 
-            if (!$response->successful()) {
-                return $this->sendError('Aotai API failed', [], 400);
+        if (!$client) {
+            return $this->sendError('Client not found', [], 400);
+        }
+
+        $plant = PlantInfo::where('user_id', $client->id)
+            ->where('plant_no', $request->plantId)
+            ->first();
+
+        if (!$plant || empty($plant->atun) || empty($plant->atpd)) {
+            return $this->sendError('Plant credentials not found for this user', [], 400);
+        }
+
+        try {
+            if ($client->server_flag == 0) {
+                $response = Http::withOptions([
+                    'verify' => false,
+                ])
+                ->timeout(20)
+                ->get(
+                    'https://www.aotaisolarcloud.com/ATSolarInfo/appcanPlantStatisticsByYear.action',
+                    [
+                        'startTime' => $request->startTime,
+                        'plantId'   => $request->plantId,
+                        'atun'      => $request->atun,
+                        'atpd'      => $request->atpd,
+                    ]
+                );
+
+                if (!$response->successful()) {
+                    return $this->sendError('Aotai API failed', [], 400);
+                }
+
+                return $this->sendResponse([
+                    'byyear' => $response->json(),
+                ], 'Plant fetched successfully');
             }
 
-            return $this->sendResponse([
-                'byyear' => $response->json(),
-            ], 'Plant fetched successfully');
+            if ($client->server_flag == 1) {
+                $year = (int) $request->startTime;
 
+                $monthlyRecords = TelemetryDailyTkwh::where('plant_id', $plant->id)
+                    ->whereYear('record_date', $year)
+                    ->selectRaw('MONTH(record_date) as month, SUM(tkwh) as total_tkwh')
+                    ->groupBy('month')
+                    ->orderBy('month')
+                    ->get()
+                    ->keyBy('month');
+
+                $catisticsDataByYearList = [];
+                for ($month = 1; $month <= 12; $month++) {
+                    $catisticsDataByYearList[] = [
+                        'power'      => (string) ($monthlyRecords[$month]->total_tkwh ?? '0.0'),
+                        'recordTime' => (string) $month,
+                    ];
+                }
+
+                return $this->sendResponse([
+                    'byyear' => [
+                        'catisticsDataByYearList' => $catisticsDataByYearList,
+                    ],
+                ], 'Plant fetched successfully');
+            }
+
+            return $this->sendError('Invalid server flag', [], 400);
 
         } catch (\Throwable $e) {
             return $this->sendError('Plant not found', [$e->getMessage()], 400);
@@ -253,7 +344,6 @@ class PlantInfoController extends BaseController
 
     public function byTotal(Request $request)
     {
-
         $request->validate([
             'startTime' => 'required',
             'plantId'   => 'required|integer',
@@ -261,28 +351,69 @@ class PlantInfoController extends BaseController
             'atpd'      => 'required|string',
         ]);
 
-        try {
-            $response = Http::withOptions([
-                'verify' => false,
-            ])
-            ->timeout(20)
-            ->get(
-                'https://www.aotaisolarcloud.com/ATSolarInfo/requestPlantEnergyList.action',
-                [
-                    'plantId'   => $request->plantId,
-                    'atun'      => $request->atun,
-                    'atpd'      => $request->atpd,
-                ]
-            );
+        $client = Client::where('username', $request->atun)
+            ->where('password', $request->atpd)
+            ->first();
 
-            if (!$response->successful()) {
-                return $this->sendError('Aotai API failed', [], 400);
+        if (!$client) {
+            return $this->sendError('Client not found', [], 400);
+        }
+
+        $plant = PlantInfo::where('user_id', $client->id)
+            ->where('plant_no', $request->plantId)
+            ->first();
+
+        if (!$plant || empty($plant->atun) || empty($plant->atpd)) {
+            return $this->sendError('Plant credentials not found for this user', [], 400);
+        }
+
+        try {
+            if ($client->server_flag == 0) {
+                $response = Http::withOptions([
+                    'verify' => false,
+                ])
+                ->timeout(20)
+                ->get(
+                    'https://www.aotaisolarcloud.com/ATSolarInfo/requestPlantEnergyList.action',
+                    [
+                        'plantId'   => $request->plantId,
+                        'atun'      => $request->atun,
+                        'atpd'      => $request->atpd,
+                    ]
+                );
+
+                if (!$response->successful()) {
+                    return $this->sendError('Aotai API failed', [], 400);
+                }
+
+                return $this->sendResponse([
+                    'bytotal' => $response->json(),
+                ], 'Plant fetched successfully');
             }
 
-            return $this->sendResponse([
-                'bytotal' => $response->json(),
-            ], 'Plant fetched successfully');
+            if ($client->server_flag == 1) {
+                $yearlyRecords = TelemetryDailyTkwh::where('plant_id', $plant->id)
+                    ->selectRaw('YEAR(record_date) as year, SUM(tkwh) as total_tkwh')
+                    ->groupBy('year')
+                    ->orderBy('year')
+                    ->get()
+                    ->keyBy('year');
 
+                $energyList = $yearlyRecords->map(function ($record) {
+                    return [
+                        'power'      => (string) $record->total_tkwh,
+                        'recordTime' => (string) $record->year,
+                    ];
+                })->values();
+
+                return $this->sendResponse([
+                    'bytotal' => [
+                        'energyList' => $energyList,
+                    ],
+                ], 'Plant fetched successfully');
+            }
+
+            return $this->sendError('Invalid server flag', [], 400);
 
         } catch (\Throwable $e) {
             return $this->sendError('Plant not found', [$e->getMessage()], 400);
@@ -445,29 +576,76 @@ class PlantInfoController extends BaseController
             'atpd'      => 'required|string',
         ]);
 
-        try {
-            $response = Http::withOptions([
-                'verify' => false,
-            ])
-            ->timeout(20)
-            ->get(
-                'https://www.aotaisolarcloud.com/ATSolarInfo/appcanPlantStatisticsByMonth.action',
-                [
-                    'startTime' => $request->startTime,
-                    'plantId'   => $request->plantId,
-                    'atun'      => $request->atun,
-                    'atpd'      => $request->atpd,
-                ]
-            );
+        $client = Client::where('username', $request->atun)
+            ->where('password', $request->atpd)
+            ->first();
 
-            if (!$response->successful()) {
-                return $this->sendError('Aotai API failed', [], 400);
+        if (!$client) {
+            return $this->sendError('Client not found', [], 400);
+        }
+
+        $plant = PlantInfo::where('user_id', $client->id)
+            ->where('plant_no', $request->plantId)
+            ->first();
+
+        if (!$plant || empty($plant->atun) || empty($plant->atpd)) {
+            return $this->sendError('Plant credentials not found for this user', [], 400);
+        }
+
+        try {
+            if ($client->server_flag == 0) {
+                $response = Http::withOptions([
+                    'verify' => false,
+                ])
+                ->timeout(20)
+                ->get(
+                    'https://www.aotaisolarcloud.com/ATSolarInfo/appcanPlantStatisticsByMonth.action',
+                    [
+                        'startTime' => $request->startTime,
+                        'plantId'   => $request->plantId,
+                        'atun'      => $request->atun,
+                        'atpd'      => $request->atpd,
+                    ]
+                );
+
+                if (!$response->successful()) {
+                    return $this->sendError('Aotai API failed', [], 400);
+                }
+
+                return $this->sendResponse([
+                    'bymonth' => $response->json(),
+                ], 'Plant fetched successfully');
             }
 
-            return $this->sendResponse([
-                'bymonth' => $response->json(),
-            ], 'Plant fetched successfully');
+            if ($client->server_flag == 1) {
+                $month = \Carbon\Carbon::parse($request->startTime);
+                $daysInMonth = $month->daysInMonth;
 
+                $dailyRecords = TelemetryDailyTkwh::where('plant_id', $plant->id)
+                    ->whereYear('record_date', $month->year)
+                    ->whereMonth('record_date', $month->month)
+                    ->orderBy('record_date')
+                    ->get()
+                    ->keyBy(function ($item) {
+                        return (int) $item->record_date->format('d');
+                    });
+
+                $catisticsDataByMonthList = [];
+                for ($day = 1; $day <= $daysInMonth; $day++) {
+                    $catisticsDataByMonthList[] = [
+                        'power'      => (string) ($dailyRecords[$day]->tkwh ?? '0.0'),
+                        'recordTime' => (string) $day,
+                    ];
+                }
+
+                return $this->sendResponse([
+                    'bymonth' => [
+                        'catisticsDataByMonthList' => $catisticsDataByMonthList,
+                    ],
+                ], 'Plant fetched successfully');
+            }
+
+            return $this->sendError('Invalid server flag', [], 400);
 
         } catch (\Throwable $e) {
             return $this->sendError('Plant not found', [$e->getMessage()], 400);
@@ -476,7 +654,6 @@ class PlantInfoController extends BaseController
 
     public function frontendByYear(Request $request)
     {
-
         $request->validate([
             'startTime' => 'required',
             'plantId'   => 'required|integer',
@@ -484,29 +661,74 @@ class PlantInfoController extends BaseController
             'atpd'      => 'required|string',
         ]);
 
-        try {
-            $response = Http::withOptions([
-                'verify' => false,
-            ])
-            ->timeout(20)
-            ->get(
-                'https://www.aotaisolarcloud.com/ATSolarInfo/appcanPlantStatisticsByYear.action',
-                [
-                    'startTime' => $request->startTime,
-                    'plantId'   => $request->plantId,
-                    'atun'      => $request->atun,
-                    'atpd'      => $request->atpd,
-                ]
-            );
+        $client = Client::where('username', $request->atun)
+            ->where('password', $request->atpd)
+            ->first();
 
-            if (!$response->successful()) {
-                return $this->sendError('Aotai API failed', [], 400);
+        if (!$client) {
+            return $this->sendError('Client not found', [], 400);
+        }
+
+        $plant = PlantInfo::where('user_id', $client->id)
+            ->where('plant_no', $request->plantId)
+            ->first();
+
+        if (!$plant || empty($plant->atun) || empty($plant->atpd)) {
+            return $this->sendError('Plant credentials not found for this user', [], 400);
+        }
+
+        try {
+            if ($client->server_flag == 0) {
+                $response = Http::withOptions([
+                    'verify' => false,
+                ])
+                ->timeout(20)
+                ->get(
+                    'https://www.aotaisolarcloud.com/ATSolarInfo/appcanPlantStatisticsByYear.action',
+                    [
+                        'startTime' => $request->startTime,
+                        'plantId'   => $request->plantId,
+                        'atun'      => $request->atun,
+                        'atpd'      => $request->atpd,
+                    ]
+                );
+
+                if (!$response->successful()) {
+                    return $this->sendError('Aotai API failed', [], 400);
+                }
+
+                return $this->sendResponse([
+                    'byyear' => $response->json(),
+                ], 'Plant fetched successfully');
             }
 
-            return $this->sendResponse([
-                'byyear' => $response->json(),
-            ], 'Plant fetched successfully');
+            if ($client->server_flag == 1) {
+                $year = (int) $request->startTime;
 
+                $monthlyRecords = TelemetryDailyTkwh::where('plant_id', $plant->id)
+                    ->whereYear('record_date', $year)
+                    ->selectRaw('MONTH(record_date) as month, SUM(tkwh) as total_tkwh')
+                    ->groupBy('month')
+                    ->orderBy('month')
+                    ->get()
+                    ->keyBy('month');
+
+                $catisticsDataByYearList = [];
+                for ($month = 1; $month <= 12; $month++) {
+                    $catisticsDataByYearList[] = [
+                        'power'      => (string) ($monthlyRecords[$month]->total_tkwh ?? '0.0'),
+                        'recordTime' => (string) $month,
+                    ];
+                }
+
+                return $this->sendResponse([
+                    'byyear' => [
+                        'catisticsDataByYearList' => $catisticsDataByYearList,
+                    ],
+                ], 'Plant fetched successfully');
+            }
+
+            return $this->sendError('Invalid server flag', [], 400);
 
         } catch (\Throwable $e) {
             return $this->sendError('Plant not found', [$e->getMessage()], 400);
@@ -515,7 +737,6 @@ class PlantInfoController extends BaseController
 
     public function frontendByTotal(Request $request)
     {
-
         $request->validate([
             'startTime' => 'required',
             'plantId'   => 'required|integer',
@@ -523,28 +744,69 @@ class PlantInfoController extends BaseController
             'atpd'      => 'required|string',
         ]);
 
-        try {
-            $response = Http::withOptions([
-                'verify' => false,
-            ])
-            ->timeout(20)
-            ->get(
-                'https://www.aotaisolarcloud.com/ATSolarInfo/requestPlantEnergyList.action',
-                [
-                    'plantId'   => $request->plantId,
-                    'atun'      => $request->atun,
-                    'atpd'      => $request->atpd,
-                ]
-            );
+        $client = Client::where('username', $request->atun)
+            ->where('password', $request->atpd)
+            ->first();
 
-            if (!$response->successful()) {
-                return $this->sendError('Aotai API failed', [], 400);
+        if (!$client) {
+            return $this->sendError('Client not found', [], 400);
+        }
+
+        $plant = PlantInfo::where('user_id', $client->id)
+            ->where('plant_no', $request->plantId)
+            ->first();
+
+        if (!$plant || empty($plant->atun) || empty($plant->atpd)) {
+            return $this->sendError('Plant credentials not found for this user', [], 400);
+        }
+
+        try {
+            if ($client->server_flag == 0) {
+                $response = Http::withOptions([
+                    'verify' => false,
+                ])
+                ->timeout(20)
+                ->get(
+                    'https://www.aotaisolarcloud.com/ATSolarInfo/requestPlantEnergyList.action',
+                    [
+                        'plantId'   => $request->plantId,
+                        'atun'      => $request->atun,
+                        'atpd'      => $request->atpd,
+                    ]
+                );
+
+                if (!$response->successful()) {
+                    return $this->sendError('Aotai API failed', [], 400);
+                }
+
+                return $this->sendResponse([
+                    'bytotal' => $response->json(),
+                ], 'Plant fetched successfully');
             }
 
-            return $this->sendResponse([
-                'bytotal' => $response->json(),
-            ], 'Plant fetched successfully');
+            if ($client->server_flag == 1) {
+                $yearlyRecords = TelemetryDailyTkwh::where('plant_id', $plant->id)
+                    ->selectRaw('YEAR(record_date) as year, SUM(tkwh) as total_tkwh')
+                    ->groupBy('year')
+                    ->orderBy('year')
+                    ->get()
+                    ->keyBy('year');
 
+                $energyList = $yearlyRecords->map(function ($record) {
+                    return [
+                        'power'      => (string) $record->total_tkwh,
+                        'recordTime' => (string) $record->year,
+                    ];
+                })->values();
+
+                return $this->sendResponse([
+                    'bytotal' => [
+                        'energyList' => $energyList,
+                    ],
+                ], 'Plant fetched successfully');
+            }
+
+            return $this->sendError('Invalid server flag', [], 400);
 
         } catch (\Throwable $e) {
             return $this->sendError('Plant not found', [$e->getMessage()], 400);
