@@ -399,16 +399,25 @@ class PlantInfoController extends BaseController
                     ->get()
                     ->keyBy('year');
 
-                $energyList = $yearlyRecords->map(function ($record) {
-                    return [
-                        'power'      => (string) $record->total_tkwh,
-                        'recordTime' => (string) $record->year,
+                $startYear = 2025;
+                $currentYear = (int) date('Y');
+                $plantEnergyList = [];
+
+                for ($year = $startYear; $year <= $currentYear; $year++) {
+                    $plantEnergyList[] = [
+                        'power'      => (string) ($yearlyRecords[$year]->total_tkwh ?? '0.0'),
+                        'recordTime' => (string) $year,
                     ];
-                })->values();
+                }
 
                 return $this->sendResponse([
                     'bytotal' => [
-                        'energyList' => $energyList,
+                        'aotaipd'          => null,
+                        'aotaiun'          => null,
+                        'message'          => 'Get success',
+                        'plantEnergyList'  => $plantEnergyList,
+                        'rc'               => 0,
+                        'yearCount'        => count($plantEnergyList),
                     ],
                 ], 'Plant fetched successfully');
             }
@@ -792,16 +801,25 @@ class PlantInfoController extends BaseController
                     ->get()
                     ->keyBy('year');
 
-                $energyList = $yearlyRecords->map(function ($record) {
-                    return [
-                        'power'      => (string) $record->total_tkwh,
-                        'recordTime' => (string) $record->year,
+                $startYear = 2025;
+                $currentYear = (int) date('Y');
+                $plantEnergyList = [];
+
+                for ($year = $startYear; $year <= $currentYear; $year++) {
+                    $plantEnergyList[] = [
+                        'power'      => (string) ($yearlyRecords[$year]->total_tkwh ?? '0.0'),
+                        'recordTime' => (string) $year,
                     ];
-                })->values();
+                }
 
                 return $this->sendResponse([
                     'bytotal' => [
-                        'energyList' => $energyList,
+                        'aotaipd'          => null,
+                        'aotaiun'          => null,
+                        'message'          => 'Get success',
+                        'plantEnergyList'  => $plantEnergyList,
+                        'rc'               => 0,
+                        'yearCount'        => count($plantEnergyList),
                     ],
                 ], 'Plant fetched successfully');
             }
