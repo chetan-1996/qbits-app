@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Client;
 use App\Models\PlantInfo;
 use App\Models\TelemetryPow;
+use App\Models\TelemetryDailyTkwh;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Validator;
@@ -402,6 +403,11 @@ class PlantInfoController extends BaseController
                     ->orderBy('record_datetime')
                     ->get();
 
+                $dailyRecords = TelemetryDailyTkwh::where('plant_id', $plant->id)
+                    ->whereDate('record_date', $request->startTime)
+                    ->orderBy('record_date')
+                    ->first();
+
                 $catisticsDataByDayList = $records->map(function ($record) {
                     return [
                         'acMomentaryPower' => (string) ($record->pow ?? '0.0'),
@@ -413,7 +419,7 @@ class PlantInfoController extends BaseController
                 return $this->sendResponse([
                     'byday' => [
                         'catisticsDataByDayList' => $catisticsDataByDayList,
-                        'eday'                   => $plant->eday ?? 0,
+                        'eday'                   => $dailyRecords->eday ?? 0,
                     ],
                 ], 'Plant fetched successfully');
             }
