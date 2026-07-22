@@ -122,7 +122,7 @@ class ProcessTelemetryRaw implements ShouldQueue
                         'acpower' => $powClean,
                     ]);
 
-                    DB::table('inverter_details')->updateOrInsert(
+                    $a = DB::table('inverter_details')->updateOrInsert(
                         [
                             'inverterId' => $inverterIds
                         ],
@@ -144,6 +144,7 @@ class ProcessTelemetryRaw implements ShouldQueue
                             'created_at'        => now(), // Only used on insert
                         ]
                     );
+                    Log::info('inverter_details', ['result' => $a]);
 
                 } catch (\Throwable $e) {
                     $failed++;
