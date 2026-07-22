@@ -234,6 +234,21 @@ class WebhookController extends Controller
 
                     try {
                         $plantInfoId = \DB::table('plant_infos')->insertGetId($plandata);
+                         $inverterdata = [
+                            'inverter_no' => 1,
+                            'inverter_address' => 1,
+                            'collector_address' => $data['collector'] ?? $user->collector,
+                            'model' => $data['invertertype'] ?? null,
+                            'plant_id' => $plantInfoId,
+                            'timezone' => $data['gmt'] ?? null,
+                            'record_time' => date("Y-m-d"),
+                            'load' => 1,
+                            'user_id' => $lastInsertedId,
+                            'atun' => $username,
+                            'atpd' => $data['password'] ?? null,
+                            'server_flag' => 1,
+                        ];
+                        \DB::table('plant_infos')->insertGetId($inverterdata);
                         \DB::table('plant_infos')->where('id', $plantInfoId)->update(['plant_no' => $plantInfoId]);
                         Log::info('plant_infos inserted', ['id' => $plantInfoId]);
                     } catch (\Throwable $e) {
@@ -483,6 +498,7 @@ public function channelPartenMapList1(Request $request)
 
         $radius    = (float) $request->input('radius', 50);
 
+        $zoom      = $request->filled('zoom') ? (int) $request->input('zoom') : null;
 
         if (!$latitude || !$longitude) {
 
@@ -493,6 +509,31 @@ public function channelPartenMapList1(Request $request)
 
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | Zoom-based radius
+        |--------------------------------------------------------------------------
+        |
+        | When zoom is provided, calculate the radius dynamically so that
+        | the visible area matches the map viewport.  Higher zoom = smaller
+        | radius (fewer points).  When zoomed out we also cap the number
+        | of returned points so the map does not get cluttered.
+        |
+        */
+
+        $limit = null;
+
+        if ($zoom !== null) {
+            $zoom = max(1, min(22, $zoom));
+
+            $radius = min(5000, max(0.1, 40000 / pow(2, $zoom)));
+
+            if ($zoom <= 5) {
+                $limit = 50;
+            } elseif ($zoom <= 8) {
+                $limit = 100;
+            }
+        }
 
         /*
         |--------------------------------------------------------------------------
@@ -557,9 +598,13 @@ public function channelPartenMapList1(Request $request)
 
             ->having('distance', '<=', $radius)
 
-            ->orderBy('distance')
+            ->orderBy('distance');
 
-            ->get();
+        if ($limit) {
+            $partners = $partners->limit($limit);
+        }
+
+        $partners = $partners->get();
 
 
         return response()->json([
@@ -567,6 +612,15 @@ public function channelPartenMapList1(Request $request)
             'status'  => true,
 
             'message' => 'Nearby Partner Map View',
+
+            'meta'    => [
+                'latitude'  => $latitude,
+                'longitude' => $longitude,
+                'zoom'      => $zoom,
+                'radius'    => round($radius, 2),
+                'limit'     => $limit,
+                'count'     => $partners->count(),
+            ],
 
             'data'    => $partners
 
