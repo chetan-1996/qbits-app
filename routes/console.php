@@ -24,6 +24,7 @@ Schedule::command('getInverterStatus:cron')->cron('0,30 8-19 * * *')->runInBackg
 Schedule::command('plantInfo:cron')->cron('5,35 8-19 * * *')->runInBackground()->withoutOverlapping();
 Schedule::command('inverterListSync:cron')->cron('7,37 8-19 * * *')->runInBackground()->withoutOverlapping();
 Schedule::command('faults:sync')->cron('10,40 8-19 * * *')->runInBackground()->withoutOverlapping();
+Schedule::command('telemetry:process-raw')->everyFiveMinutes()->runInBackground()->withoutOverlapping();
 // Schedule::command('plantInfo:cron')->cron('10,40 8-19 * * *')->runInBackground()->withoutOverlapping();
 // Schedule::command('faults:sync')->cron('20,50 8-19 * * *')->runInBackground()->withoutOverlapping();
 //Schedule::command('test:cron')->everyMinute();
