@@ -128,7 +128,7 @@ class ProcessTelemetryRaw implements ShouldQueue
                         ],
                         [
                             'recordTime'        => $payload['TIMESTAMP'],
-                            'recordDate'        => isset($payload['TIMESTAMP']) ? substr($payload['TIMESTAMP'], 11, 8) : null,
+                            'recordDate' => isset($payload['TIMESTAMP'])? date('Y-m-d', strtotime($payload['TIMESTAMP'])): null,
                             'inverterState'     => 1,
                             'acVoltage'       => $payload['IS-1-0---RPHV'],
                             'acFrequency'     => $payload['IS-1-0---FREQ'],
