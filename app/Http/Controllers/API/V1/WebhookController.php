@@ -248,7 +248,7 @@ class WebhookController extends Controller
                             'atpd' => $data['password'] ?? null,
                             'server_flag' => 1,
                         ];
-                        \DB::table('plant_infos')->insertGetId($inverterdata);
+                        \DB::table('inverters')->insertGetId($inverterdata);
                         \DB::table('plant_infos')->where('id', $plantInfoId)->update(['plant_no' => $plantInfoId]);
                         Log::info('plant_infos inserted', ['id' => $plantInfoId]);
                     } catch (\Throwable $e) {
