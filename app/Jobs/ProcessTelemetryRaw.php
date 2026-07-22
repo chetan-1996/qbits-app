@@ -38,7 +38,7 @@ class ProcessTelemetryRaw implements ShouldQueue
 
         $inverterIds = DB::table('inverters')
             ->where('plant_id', $plantId)
-            ->pluck('id');
+            ->value('id');
 
         do {
             $records = DB::table('telemetry_raw')
