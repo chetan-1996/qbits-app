@@ -135,6 +135,7 @@ class ProcessTelemetryRaw implements ShouldQueue
                             'acMomentaryPower'     => $powClean,
                             'dayPowerLower'     => $tkwh,
                             'totalPowerLower'  => $lkwh,
+                            'plantId' => $plantId,
                             'temperature'       => $payload['IS-1-0---TEMP'],
                             'user_id'       => $this->client?->id ?? 0,
                             'atun'       => $this->client?->username ?? '',
