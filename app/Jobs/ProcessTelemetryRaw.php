@@ -36,6 +36,10 @@ class ProcessTelemetryRaw implements ShouldQueue
             ->where('atun', $this->client?->username ?? '')
             ->value('id');
 
+        $inverterIds = DB::table('inverters')
+            ->where('plant_id', $plantId)
+            ->pluck('id');
+
         do {
             $records = DB::table('telemetry_raw')
                 ->where('collector_id', $this->collectorId)
@@ -117,6 +121,29 @@ class ProcessTelemetryRaw implements ShouldQueue
                         'capacity' => $inverterTypeNumeric,
                         'acpower' => $powClean,
                     ]);
+
+                    DB::table('inverter_details')->updateOrInsert(
+                        [
+                            'inverterId' => $inverterIds
+                        ],
+                        [
+                            'recordTime'        => $payload['TIMESTAMP'],
+                            'recordDate'        => $payload['TIMESTAMP'],
+                            'inverterState'     => 1,
+                            'acVoltage'       => $payload['IS-1-0---RPHV'],
+                            'acFrequency'     => $payload['IS-1-0---FREQ'],
+                            'acMomentaryPower'     => $powClean,
+                            'dayPowerLower'     => $tkwh,
+                            'totalPowerLower'  => $lkwh,
+                            'temperature'       => $payload['IS-1-0---TEMP'],
+                            'user_id'       => $this->client?->id ?? 0,
+                            'atun'       => $this->client?->username ?? '',
+                            'atpd'       => $this->client?->password ?? '',
+                            'server_flag'       => 1,
+                            'updated_at'        => now(),
+                            'created_at'        => now(), // Only used on insert
+                        ]
+                    );
 
                 } catch (\Throwable $e) {
                     $failed++;
