@@ -53,6 +53,8 @@ class PlantInfo extends Model
 
         'month_power',
         'year_power',
+        'current_month',
+        'current_year',
         'power_rate',
         'kpi',
         'date',
@@ -81,6 +83,8 @@ class PlantInfo extends Model
 
         'month_power'    => 'decimal:2',
         'year_power'     => 'decimal:2',
+        'current_month'  => 'string',
+        'current_year'   => 'string',
         'power_rate'     => 'decimal:2',
         'kpi'            => 'decimal:2',
 
