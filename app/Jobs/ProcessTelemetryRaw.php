@@ -40,6 +40,17 @@ class ProcessTelemetryRaw implements ShouldQueue
             ->where('plant_id', $plantId)
             ->value('id');
 
+        // Fetch current month/year tracking values once per batch run
+        $plantInfo = DB::table('plant_infos')
+            ->where('atun', $this->client?->username ?? '')
+            ->select('month_power', 'year_power', 'current_month', 'current_year')
+            ->first();
+
+        $monthPower = $plantInfo->month_power ?? 0;
+        $yearPower = $plantInfo->year_power ?? 0;
+        $currentMonth = $plantInfo->current_month ?? null;
+        $currentYear = $plantInfo->current_year ?? null;
+
         do {
             $records = DB::table('telemetry_raw')
                 ->where('collector_id', $this->collectorId)
@@ -115,11 +126,35 @@ class ProcessTelemetryRaw implements ShouldQueue
                         ];
                     }
 
-                    DB::table('plant_infos')->where('atun', $this->client->username)->update([
+                    // --- month/year reset & accumulation ---
+                    $recordTimestamp = $payload['TIMESTAMP'] ?? null;
+                    $recordMonth = $recordTimestamp ? date('Y-m', strtotime($recordTimestamp)) : null;
+                    $recordYear  = $recordTimestamp ? date('Y',  strtotime($recordTimestamp)) : null;
+
+                    if ($recordMonth && $currentMonth !== $recordMonth) {
+                        $monthPower = 0;
+                        $currentMonth = $recordMonth;
+                    }
+                    if ($recordYear && $currentYear !== $recordYear) {
+                        $yearPower = 0;
+                        $currentYear = $recordYear;
+                    }
+
+                    if ($powClean !== null) {
+                        $monthPower += $powClean;
+                        $yearPower  += $powClean;
+                    }
+                    // ----------------------------------------
+
+                    DB::table('plant_infos')->where('atun', $this->client?->username ?? '')->update([
                         'eday' => $tkwh,
                         'etot' => $lkwh,
                         'capacity' => $inverterTypeNumeric,
                         'acpower' => $powClean,
+                        'month_power' => $monthPower,
+                        'year_power'  => $yearPower,
+                        'current_month' => $currentMonth,
+                        'current_year'  => $currentYear,
                     ]);
 
                     $a = DB::table('inverter_details')->updateOrInsert(
