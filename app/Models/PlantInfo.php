@@ -55,6 +55,7 @@ class PlantInfo extends Model
         'year_power',
         'current_month',
         'current_year',
+        'last_tkwh',
         'power_rate',
         'kpi',
         'date',
@@ -85,6 +86,7 @@ class PlantInfo extends Model
         'year_power'     => 'decimal:2',
         'current_month'  => 'string',
         'current_year'   => 'string',
+        'last_tkwh'      => 'decimal:2',
         'power_rate'     => 'decimal:2',
         'kpi'            => 'decimal:2',
 
