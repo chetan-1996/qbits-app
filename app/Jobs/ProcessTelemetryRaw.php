@@ -43,13 +43,14 @@ class ProcessTelemetryRaw implements ShouldQueue
         // Fetch current month/year tracking values once per batch run
         $plantInfo = DB::table('plant_infos')
             ->where('atun', $this->client?->username ?? '')
-            ->select('month_power', 'year_power', 'current_month', 'current_year')
+            ->select('month_power', 'year_power', 'current_month', 'current_year', 'last_tkwh')
             ->first();
 
         $monthPower = $plantInfo->month_power ?? 0;
         $yearPower = $plantInfo->year_power ?? 0;
         $currentMonth = $plantInfo->current_month ?? null;
         $currentYear = $plantInfo->current_year ?? null;
+        $lastTkwh = $plantInfo->last_tkwh ?? null;
 
         do {
             $records = DB::table('telemetry_raw')
@@ -140,9 +141,17 @@ class ProcessTelemetryRaw implements ShouldQueue
                         $currentYear = $recordYear;
                     }
 
-                    if ($powClean !== null) {
-                        $monthPower += $powClean;
-                        $yearPower  += $powClean;
+                    if ($tkwh !== null) {
+                        if ($lastTkwh !== null) {
+                            $increment = $tkwh - $lastTkwh;
+                            if ($increment < 0) {
+                                // Meter reset or rollover: treat full current value as increment
+                                $increment = $tkwh;
+                            }
+                            $monthPower += $increment;
+                            $yearPower  += $increment;
+                        }
+                        $lastTkwh = $tkwh;
                     }
                     // ----------------------------------------
 
@@ -155,6 +164,7 @@ class ProcessTelemetryRaw implements ShouldQueue
                         'year_power'  => $yearPower,
                         'current_month' => $currentMonth,
                         'current_year'  => $currentYear,
+                        'last_tkwh'     => $lastTkwh,
                     ]);
 
                     $a = DB::table('inverter_details')->updateOrInsert(
