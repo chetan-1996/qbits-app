@@ -142,6 +142,18 @@ class ProcessTelemetryRaw implements ShouldQueue
                     }
 
                     if ($tkwh !== null) {
+                        Log::info('Telemetry accumulation debug', [
+                            'collector_id' => $this->collectorId,
+                            'tkwh' => $tkwh,
+                            'last_tkwh' => $lastTkwh,
+                            'record_month' => $recordMonth,
+                            'record_year' => $recordYear,
+                            'current_month' => $currentMonth,
+                            'current_year' => $currentYear,
+                            'month_power_before' => $monthPower,
+                            'year_power_before' => $yearPower,
+                        ]);
+
                         if ($lastTkwh !== null) {
                             $increment = $tkwh - $lastTkwh;
                             if ($increment < 0) {
@@ -150,8 +162,18 @@ class ProcessTelemetryRaw implements ShouldQueue
                             }
                             $monthPower += $increment;
                             $yearPower  += $increment;
+
+                            Log::info('Telemetry increment applied', [
+                                'increment' => $increment,
+                                'month_power_after' => $monthPower,
+                                'year_power_after' => $yearPower,
+                            ]);
+                        } else {
+                            Log::info('Telemetry first baseline: last_tkwh is null, skipping accumulation');
                         }
                         $lastTkwh = $tkwh;
+                    } else {
+                        Log::info('Telemetry tkwh is null, skipping accumulation');
                     }
                     // ----------------------------------------
 
