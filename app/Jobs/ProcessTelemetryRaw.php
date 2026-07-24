@@ -140,22 +140,9 @@ class ProcessTelemetryRaw implements ShouldQueue
                         $yearPower = 0;
                         $currentYear = $recordYear;
                     }
-                    Log::info('chetan Telemetry increment applied', [
-                        'tkwh'=>$tkwh
-                    ]);
+                    
                     if ($tkwh !== null) {
-                        Log::info('Telemetry accumulation debug', [
-                            'collector_id' => $this->collectorId,
-                            'tkwh' => $tkwh,
-                            'last_tkwh' => $lastTkwh,
-                            'record_month' => $recordMonth,
-                            'record_year' => $recordYear,
-                            'current_month' => $currentMonth,
-                            'current_year' => $currentYear,
-                            'month_power_before' => $monthPower,
-                            'year_power_before' => $yearPower,
-                        ]);
-
+                    
                         if ($lastTkwh !== null) {
                             $increment = $tkwh - $lastTkwh;
                             if ($increment < 0) {
@@ -165,18 +152,11 @@ class ProcessTelemetryRaw implements ShouldQueue
                             $monthPower += $increment;
                             $yearPower  += $increment;
 
-                            Log::info('Telemetry increment applied', [
-                                'increment' => $increment,
-                                'month_power_after' => $monthPower,
-                                'year_power_after' => $yearPower,
-                            ]);
                         } else {
                             Log::info('Telemetry first baseline: last_tkwh is null, skipping accumulation');
                         }
                         $lastTkwh = $tkwh;
-                    } else {
-                        Log::info('Telemetry tkwh is null, skipping accumulation');
-                    }
+                    } 
                     // ----------------------------------------
 
                     DB::table('plant_infos')->where('atun', $this->client?->username ?? '')->update([
@@ -215,6 +195,30 @@ class ProcessTelemetryRaw implements ShouldQueue
                         ]
                     );
                     Log::info('inverter_details', ['result' => $a]);
+
+                    $b = DB::table('inverter_status')->updateOrInsert(
+                        [
+                            'user_id' => $this->client?->id ?? 0
+                        ],
+                        [
+                            'all_plant'        => 1,
+                            'normal_plant' => 1,
+                            'alarm_plant' => 0,
+                            'offline_plant' => 0,
+                            'atun'       => $this->client?->username ?? '',
+                            'atpd'       => $this->client?->password ?? '',
+                            'updated_at'        => now(),
+                            'created_at'        => now(),
+                            'power'     => $powClean,
+                            'capacity'     => $inverterTypeNumeric,
+                            'day_power'     => $tkwh,
+                            'month_power'     => $monthPower,
+                            'total_power'     => $lkwh,
+                            'server_flag'       => 1,
+                            'user_id'       => $this->client?->id ?? 0,
+                        ]
+                    );
+                    Log::info('inverter_status', ['result' => $b]);
 
                 } catch (\Throwable $e) {
                     $failed++;
