@@ -171,14 +171,14 @@ class ProcessTelemetryRaw implements ShouldQueue
                         'last_tkwh'     => $lastTkwh,
                     ]);
 
-                    if(!inverterIds){
+                    if(!$inverterIds){
                         $inverterdata = [
                             'inverter_no' => 1,
                             'inverter_address' => 1,
                             'collector_address' => $this->collectorId,
-                            'model' => $data['invertertype'] ?? null,
+                            'model' => $this->client?->inverter_type ?? null,
                             'plant_id' => $plantId,
-                            'timezone' => $data['gmt'] ?? null,
+                            'timezone' => $this->client?->gmt ?? null,
                             'record_time' => date("Y-m-d"),
                             'load' => 1,
                             'user_id' => $this->client?->id ?? 0,
