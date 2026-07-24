@@ -140,12 +140,9 @@ class ProcessTelemetryRaw implements ShouldQueue
                         $yearPower = 0;
                         $currentYear = $recordYear;
                     }
-Log::info('chetan Telemetry increment applied', [
-                                'increment' => $increment,
-                                'month_power_after' => $monthPower,
-                                'year_power_after' => $yearPower,
-                                'tkwh'=>$tkwh
-                            ]);
+                    Log::info('chetan Telemetry increment applied', [
+                        'tkwh'=>$tkwh
+                    ]);
                     if ($tkwh !== null) {
                         Log::info('Telemetry accumulation debug', [
                             'collector_id' => $this->collectorId,
