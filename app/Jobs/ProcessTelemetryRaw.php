@@ -171,6 +171,25 @@ class ProcessTelemetryRaw implements ShouldQueue
                         'last_tkwh'     => $lastTkwh,
                     ]);
 
+                    if(!inverterIds){
+                        $inverterdata = [
+                            'inverter_no' => 1,
+                            'inverter_address' => 1,
+                            'collector_address' => $this->collectorId,
+                            'model' => $data['invertertype'] ?? null,
+                            'plant_id' => $plantId,
+                            'timezone' => $data['gmt'] ?? null,
+                            'record_time' => date("Y-m-d"),
+                            'load' => 1,
+                            'user_id' => $this->client?->id ?? 0,
+                            'atun' => $this->client?->username ?? '',
+                            'atpd' => $this->client?->password ?? '',
+                            'server_flag' => 1,
+                        ];
+                        $inverterIds = \DB::table('inverters')->insertGetId($inverterdata);
+                        Log::info('inverters_chetan', ['result' => $inverterdata]);
+
+                    }
                     $a = DB::table('inverter_details')->updateOrInsert(
                         [
                             'inverterId' => $inverterIds

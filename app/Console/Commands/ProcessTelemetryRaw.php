@@ -27,7 +27,7 @@ class ProcessTelemetryRaw extends Command
 
             $client = DB::table('clients')
                 ->where('collector', $specificCollector)
-                ->select('id', 'collector', 'company_name', 'username', 'password', 'inverter_type', 'plant_name')
+                ->select('id', 'collector', 'company_name', 'username', 'password', 'inverter_type', 'plant_name','gmt')
                 ->first();
 
             ProcessTelemetryRawJob::dispatch($specificCollector, $client, $batchSize)->onQueue('telemetryraw');
@@ -38,7 +38,7 @@ class ProcessTelemetryRaw extends Command
         $clients = DB::table('clients')
             ->where('server_flag', 1)
             ->whereNotNull('collector')
-            ->select('id', 'collector', 'company_name', 'username', 'password','inverter_type')
+            ->select('id', 'collector', 'company_name', 'username', 'password','inverter_type','gmt')
             ->orderBy('id')
             ->get();
 
