@@ -14,16 +14,16 @@
             background-color: #f5f5f5;
         }
 
-        nav {
+        nav.navbar {
             background-color: #2c3e50;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
-        nav a {
+        nav.navbar a {
             color: white !important;
         }
 
-        nav a:hover {
+        nav.navbar a:hover {
             color: #ecf0f1 !important;
         }
 

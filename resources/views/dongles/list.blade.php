@@ -192,15 +192,8 @@
     </div>
 
     <!-- Pagination -->
-    <div class="pagination-container mt-3">
-        <div class="d-flex justify-content-between align-items-center">
-            <div class="text-muted">
-                Showing {{ $dongles->firstItem() ?? 0 }} to {{ $dongles->lastItem() ?? 0 }} of {{ $dongles->total() }} results
-            </div>
-            <div>
-                {{ $dongles->appends(request()->query())->links() }}
-            </div>
-        </div>
+    <div class="mt-3">
+        {{ $dongles->appends(request()->query())->links() }}
     </div>
 </div>
 @endsection
