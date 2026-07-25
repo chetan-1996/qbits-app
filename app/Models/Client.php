@@ -15,6 +15,7 @@ class Client extends Authenticatable
         'company_name',
         'company_code',
         'username',
+        'dongle_no',
         'password',
         'phone',
         'qq',
