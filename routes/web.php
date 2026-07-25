@@ -22,8 +22,25 @@ Route::get('/channel-partners/map', function () {
 });
 
 Route::get('/dongles', function () {
-    $dongles = \App\Models\Dongle::orderBy('id', 'desc')->paginate(20);
-    return view('dongles.list', compact('dongles'));
+    $query = \App\Models\Dongle::query();
+
+    if ($search = request('dongle_id')) {
+        $query->where('dongle_id', 'like', '%' . $search . '%');
+    }
+    if ($search = request('imei')) {
+        $query->where('imei', 'like', '%' . $search . '%');
+    }
+    if ($search = request('sim_num')) {
+        $query->where('sim_num', 'like', '%' . $search . '%');
+    }
+
+    $totalCount = \App\Models\Dongle::count();
+    $activeCount = \App\Models\Dongle::where('status', 1)->count();
+    $inactiveCount = \App\Models\Dongle::where('status', '!=', 1)->orWhereNull('status')->count();
+
+    $dongles = $query->orderBy('id', 'desc')->paginate(20)->appends(request()->query());
+
+    return view('dongles.list', compact('dongles', 'totalCount', 'activeCount', 'inactiveCount'));
 })->name('dongles.list');
 
 Route::get('/dongles/import', function () {
