@@ -25,6 +25,7 @@ Route::prefix('v1')->group(function () {
     Route::post('/webhook/company', [WebhookController::class, 'companyReceive']);
     Route::get('/webhook/channel-partner/list-view', [WebhookController::class, 'channelPartenList']);
     Route::get('/webhook/channel-partner/map-view', [WebhookController::class, 'channelPartenMapList']);
+    Route::get('/webhook/channel-partner/nearby-map', [WebhookController::class, 'channelPartenMapList1']);
     Route::get('/webhook/state', [WebhookController::class, 'stateList']);
     Route::get('/webhook/states/{id}/cities', [WebhookController::class, 'cityList']);
     Route::post('/webhook/whatsapp-notification/update', [WebhookController::class, 'postWhatsAppNotification']);

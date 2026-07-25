@@ -17,6 +17,15 @@ Route::get('/channel-partners/import', function () {
 
 Route::post('/channel-partners/import', [ChannelPartnerController::class, 'import']);
 
+Route::get('/channel-partners/map', function () {
+    return view('channel-partners.map');
+});
+
+Route::get('/dongles', function () {
+    $dongles = \App\Models\Dongle::orderBy('id', 'desc')->paginate(20);
+    return view('dongles.list', compact('dongles'));
+})->name('dongles.list');
+
 Route::get('/dongles/import', function () {
     return view('dongles.import');
 });

@@ -72,6 +72,15 @@
                     <!--<li class="nav-item">
                         <a class="nav-link" href="{{ url('/') }}">Home</a>
                     </li> -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('dongles.list') }}">Dongle List</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url('/dongles/import') }}">Import Dongles</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url('/channel-partners/map') }}">Partner Map</a>
+                    </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="telemetryDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             Telemetry
