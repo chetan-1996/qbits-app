@@ -206,9 +206,19 @@ class AuthController extends BaseController
                 'qq'                       => 'nullable',
                 'email'                    => 'nullable|email',
             ]);
+            $dongle_no = null;
 
             // Check if collector already exists when wifi_serial_number length >= 9
             if (strlen($validated['wifi_serial_number']) >= 9) {
+                $dongle = \DB::table('dongles')
+                    ->where('dongle_id', $validated['wifi_serial_number'])
+                    ->first();
+                if (!$dongle) {
+                    return $this->sendError('Dongle not found.', null, 400);
+                }
+                $dongle_no = $validated['wifi_serial_number'];
+                $validated['wifi_serial_number'] = $dongle->imei;
+
                 $existing = \DB::table('clients')
                     ->where('collector', $validated['wifi_serial_number'])
                     ->first();
@@ -273,6 +283,7 @@ class AuthController extends BaseController
                     "password"            => $validated['password'],
                     "phone"               => $validated['whatsapp_no'],
                     "collector"           => $validated['wifi_serial_number'],
+                    "dongle_no"           => $dongle_no,
                     "plantName"           => $validated['home_name'],
                     "invertertype"        => $validated['inverter_serial_number'],
                     "cityname"            => $validated['city_name'],
