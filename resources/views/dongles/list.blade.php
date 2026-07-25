@@ -53,15 +53,6 @@
         border-radius: 20px;
         font-weight: 500;
     }
-    .pagination-container .page-item.active .page-link {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-color: #667eea;
-        color: white;
-    }
-    .pagination-container .page-link {
-        color: #667eea;
-        font-weight: 500;
-    }
     .stats-card {
         border-radius: 12px;
         border: none;
