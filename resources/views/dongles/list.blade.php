@@ -5,8 +5,8 @@
 @section('styles')
 <style>
     .search-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border: none;
+        background: #ffffff;
+        border: 1px solid #e0e0e0;
         border-radius: 12px;
     }
     .search-card .card-body {
@@ -14,7 +14,7 @@
     }
     .search-input {
         border-radius: 8px;
-        border: none;
+        border: 1px solid #ced4da;
         padding: 0.75rem 1rem;
     }
     .search-btn {
@@ -28,7 +28,7 @@
         box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
     .dongle-table thead th {
-        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        background: #2c3e50;
         color: white;
         font-weight: 600;
         padding: 1rem;
@@ -42,13 +42,13 @@
         background-color: #f8f9ff;
     }
     .badge-active {
-        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        background: #28a745;
         padding: 0.5em 1em;
         border-radius: 20px;
         font-weight: 500;
     }
     .badge-inactive {
-        background: linear-gradient(135deg, #6c757d 0%, #adb5bd 100%);
+        background: #6c757d;
         padding: 0.5em 1em;
         border-radius: 20px;
         font-weight: 500;
@@ -61,7 +61,7 @@
     .stats-number {
         font-size: 1.75rem;
         font-weight: 700;
-        color: #667eea;
+        color: #2c3e50;
     }
 </style>
 @endsection
@@ -96,10 +96,10 @@
                                value="{{ request('sim_num') }}">
                     </div>
                     <div class="col-md-3 d-flex gap-2">
-                        <button type="submit" class="btn btn-light search-btn flex-fill">
+                        <button type="submit" class="btn btn-primary search-btn flex-fill">
                             <i class="bi bi-search"></i> Search
                         </button>
-                        <a href="{{ route('dongles.list') }}" class="btn btn-outline-light search-btn">
+                        <a href="{{ route('dongles.list') }}" class="btn btn-outline-secondary search-btn">
                             <i class="bi bi-x-lg"></i> Reset
                         </a>
                     </div>
