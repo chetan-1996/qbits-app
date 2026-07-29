@@ -201,4 +201,23 @@ class InverterCommandController extends BaseController
 
         return response()->json(['status' => 'MODBUS_READ_SENT']);
     }
+
+    public function sendModbusWriteReg(Request $request)
+    {
+        $collector = $request->IMEI;
+
+        $payload = json_encode($request->all());
+
+        $mqtt = new MqttService();
+        $mqtt->connect(
+            config('mqtt.client_id_prefix') . '-modbus-write-reg-' . $collector . '-' . uniqid()
+        );
+
+        $mqtt->publish(
+            "rtsg-1/Ongridrooftop/{$collector}/modbus_write_reg/sub",
+            $payload
+        );
+
+        return response()->json(['status' => 'MODBUS_WRITE_REG_SENT']);
+    }
 }
