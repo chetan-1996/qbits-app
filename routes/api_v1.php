@@ -79,6 +79,7 @@ Route::controller(InverterCommandController::class)->group(function () {
     Route::post('/inverter/command/info', 'sendInfo');
     Route::post('/inverter/command/modbus_debug', 'sendModbusDebug');
     Route::post('/inverter/command/modbus_read', 'sendModbusRead');
+    Route::post('/inverter/command/modbus_write_reg', 'sendModbusWriteReg');
     // Route::post('/inverters/{id}/command', 'sendCommand');
 });
 
