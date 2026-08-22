@@ -639,20 +639,26 @@ class PlantInfoController extends BaseController
                 $dailyRecords = TelemetryDailyTkwh::whereIn('user_id', $companyId)
                     ->where('record_date', $request->startTime)
                     ->orderBy('record_date')
-                    ->first();
+                    ->get();
 
-                $catisticsDataByDayList = $records->map(function ($record) {
+                $catisticsDataByDayList = $records->groupBy(function ($record) {
+                    return $record->record_time ?? substr($record->record_datetime, 11, 8);
+                })->map(function ($groupedRecords) {
+                    $totalPower = $groupedRecords->sum('pow');
+                    $firstRecord = $groupedRecords->first();
                     return [
-                        'acMomentaryPower' => (string) ($record->pow ?? '0.0'),
+                        'acMomentaryPower' => (string) ($totalPower ?? '0.0'),
                         'irradiation'      => '0',
-                        'recordTime'       => $record->record_time ?? substr($record->record_datetime, 11, 8),
+                        'recordTime'       => $firstRecord->record_time ?? substr($firstRecord->record_datetime, 11, 8),
                     ];
-                });
+                })->values();
+
+                $totalEday = $dailyRecords->sum('tkwh');
 
                 return $this->sendResponse([
                     'byday' => [
                         'catisticsDataByDayList' => $catisticsDataByDayList,
-                        'eday'                   => (float) ($dailyRecords->tkwh ?? 0),
+                        'eday'                   => (float) ($totalEday ?? 0),
                     ],
                 ], 'Plant fetched successfully');
             // }
