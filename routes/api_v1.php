@@ -43,6 +43,8 @@ Route::middleware('auth:client_api')->group(function () {
         Route::get('frontend/plants/show/{id}', 'frontendShow');
         Route::post('frontend/create-plant', 'createPlant');
         Route::post('frontend/add-collector', 'addCollector');
+        Route::put('frontend/plants/update/{id}', 'updatePlantInfo');
+        Route::get('frontend/plants/statistics-by-day-company', 'frontendByDayCompany');
     });
 
     Route::controller(InverterController::class)->group(function () {
@@ -69,6 +71,8 @@ Route::controller(AuthController::class)->group(function () {
     Route::post('company/register', 'companyRegister');
     Route::post('individual', 'companyIndividual');
     Route::post('company/generate/code', 'generateCode');
+    Route::post('forgot-password', 'forgotPassword');
+    Route::post('change-password', 'changePassword');
 });
 
 Route::controller(InverterCommandController::class)->group(function () {

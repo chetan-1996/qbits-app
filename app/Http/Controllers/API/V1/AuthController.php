@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API\V1;
 
 use App\Models\User;
+use App\Models\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -546,6 +547,168 @@ class AuthController extends BaseController
             ], 500);
         } finally {
             gc_collect_cycles(); // memory cleanup
+        }
+    }
+
+    public function forgotPassword(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'contact' => 'required|string|max:255',
+            ]);
+
+            $contact = $validated['contact'];
+            $http = Http::withOptions(['verify' => false]);
+
+            // Auto-detect if contact is email or mobile
+            $isEmail = filter_var($contact, FILTER_VALIDATE_EMAIL);
+
+            // Check if contact exists in clients table
+            $clientExists = Client::where('username', $contact)->first();
+
+            if (!$clientExists) {
+                return $this->sendError('This contact is not registered in our system.', null, 404);
+            }
+
+            if($clientExists->server_flag == 0) {
+                return $this->sendError('This contact is registered in our system but not available for password reset.', null, 404);
+            }
+            
+            if ($isEmail) {
+                // Send verification code to email
+                $response = $http->get(
+                    'https://www.aotaisolarcloud.com/solarweb/auth/sendMailCode',
+                    [
+                        'email'    => $contact,
+                        'language' => 'en-us',
+                        'atun'     => $clientExists->username,
+                        'atpd'     => $clientExists->password,
+                    ]
+                );
+            } 
+            if (!$isEmail) {
+                // Send verification code to mobile via SMS
+                $otp = rand(100000, 999999);
+                $message = "Use OTP {$otp} to verify your mobile. Do not share this code with anyone. — Heaven Customer App HEAVEN SOFTTECH PRIVATE LIMITED";
+                
+                $smsResponse = $http->get(
+                    'http://dnd.saakshisoftware.in/api/mt/SendSMS',
+                    [
+                        'user'         => 'HEAVENDESIGNS',
+                        'password'     => 'Heav@1234',
+                        'senderid'     => 'HEVNSO',
+                        'channel'      => 'trans',
+                        'DCS'          => '0',
+                        'flashsms'     => '0',
+                        'number'       => '91' . ltrim($contact, '0'),
+                        'text'         => $message,
+                        'route'        => '15',
+                        'DLTTemplateId'=> '1707177666839743183',
+                        'PEID'         => '1701177614672995223',
+                    ]
+                );
+
+                $smsResult = $smsResponse->json();
+
+                // Store OTP in session or database for verification (optional)
+                // For now, we'll just log it
+                Log::info('SMS OTP sent', [
+                    'mobile' => $contact,
+                    'otp' => $otp,
+                    'response' => $smsResult
+                ]);
+
+                $response = $smsResponse;
+            }
+
+            $result = $response->json();
+
+            if ($isEmail) {
+                // Handle email API response
+                if (!isset($result['code'])) {
+                    return $this->sendError('Invalid external response.', null, 500);
+                }
+
+                if ($result['code'] == -10) {
+                    return $this->sendError('This contact is already linked to an account.', null, 400);
+                }
+
+                if ($result['code'] == 0) {
+                    return $this->sendResponse([], 'Verification code sent to email successfully.');
+                }
+
+                return $this->sendError('Failed to send verification code.', $result, 400);
+            } else {
+                // Handle SMS API response
+                if (isset($smsResult['ErrorCode']) && $smsResult['ErrorCode'] == '000') {
+                    return $this->sendResponse([], 'Verification code sent to mobile successfully.');
+                }
+
+                return $this->sendError('Failed to send SMS verification code.', $smsResult, 400);
+            }
+
+        } catch (ValidationException $e) {
+            return $this->sendError('Validation failed.', $e->errors(), 400);
+        } catch (\Throwable $e) {
+            return $this->handleException($e, 'Failed to send forgot password verification.');
+        }
+    }
+
+    public function changePassword(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'userName'    => 'required|string|max:255',
+                'password'    => 'required|string',
+                'newPassword' => 'required|string',
+                'server_flag' => 'required|integer|in:0,1',
+            ]);
+
+            $http = Http::withOptions(['verify' => false]);
+
+            if($validated['userName']==0){
+                $response = $http->asForm()->post(
+                    'https://www.aotaisolarcloud.com/ATSolarInfo/changePassword.action',
+                    [
+                        'userName'    => $validated['userName'],
+                        'password'    => $validated['password'],
+                        'newPassword' => $validated['newPassword'],
+                    ]
+                );
+
+                $result = $response->json();
+                if (!isset($result['message'])) {
+                    return $this->sendError('Invalid external response.', null, 500);
+                }
+            }
+            
+            Client::where('username', $validated['userName'])->update(['password' => $validated['newPassword']]);
+            \DB::table('inverters')->where('atun', $validated['userName'])->update(['atpd' => $validated['newPassword']]);
+            \DB::table('inverter_details')->where('atun', $validated['userName'])->update(['atpd' => $validated['newPassword']]);
+            \DB::table('inverter_faults')->where('atun', $validated['userName'])->update(['atpd' => $validated['newPassword']]);
+            \DB::table('inverter_status')->where('atun', $validated['userName'])->update(['atpd' => $validated['newPassword']]);
+            \DB::table('plant_infos')->where('atun', $validated['userName'])->update(['atpd' => $validated['newPassword']]);
+            \DB::table('solar_power_logs')->where('atun', $validated['userName'])->update(['atpd' => $validated['newPassword']]);
+            \DB::table('telemetry_daily_tkwh')->where('atun', $validated['userName'])->update(['atpd' => $validated['newPassword']]);
+            \DB::table('telemetry_pow')->where('atun', $validated['userName'])->update(['atpd' => $validated['newPassword']]);
+
+            
+
+            // if ($result['message'] == 'success') {
+            //     // Update server_flag in clients table if needed
+            //     if ($validated['server_flag'] == 1) {
+            //         Client::where('username', $validated['userName'])->update(['server_flag' => 1]);
+            //     }
+
+            //     return $this->sendResponse([], 'Password changed successfully.');
+            // }
+
+            return $this->sendError('Failed to change password.', $result, 400);
+
+        } catch (ValidationException $e) {
+            return $this->sendError('Validation failed.', $e->errors(), 400);
+        } catch (\Throwable $e) {
+            return $this->handleException($e, 'Failed to change password.');
         }
     }
 

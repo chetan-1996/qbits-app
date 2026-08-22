@@ -433,33 +433,40 @@ class PlantInfoController extends BaseController
     {
         $limit = request('limit', 20);
         $page  = max((int) request('page', 1), 1);
-        // $search = request('search');
+        $search = request('search');
 
         // 1. FETCH CURSOR FOR PAGE
         $cursorKey = "pi_cursor_map:{$id}:p{$page}";
         $cursor = Cache::get($cursorKey, 0);
 
         // 2. FETCH DATA FOR THIS PAGE (KEYSET)
-        $rows = DB::table('plant_infos')
+        $query = DB::table('plant_infos')
             ->select([
                 'id','plant_no','plant_name','capacity','acpower',
                 'eday','etot','kpi','month_power','year_power',
-                'remark1','date','watch','time','plantstate'
+                'remark1','date','watch','time','plantstate',
+                'azimuth','tilt','on_grid_date','owner_phone',
+                'admin_phone','installer_phone'
             ])
             ->where('user_id', $id)
+            ->when($search, fn($q) => $q->where('plant_name', 'like', "%{$search}%"))
             ->when($cursor > 0, fn($q) => $q->where('id', '>', $cursor))
             ->orderBy('id')
-            ->limit($limit)
-            ->get()
-            ->map(fn($r) => (array) $r);
+            ->limit($limit);
+
+        $rows = $query->get()->map(fn($r) => (array) $r);
 
         // 3. STORE CURSOR FOR NEXT PAGE
         $nextCursor = $rows->last()['id'] ?? null;
         Cache::put("pi_cursor_map:{$id}:p" . ($page + 1), $nextCursor, 3600);
 
         // 4. TOTAL COUNT (CACHED)
-        $totalRows = Cache::remember("pi_total_{$id}", 300, function () use ($id) {
-            return DB::table('plant_infos')->where('user_id', $id)->count();
+        $totalRows = Cache::remember("pi_total_{$id}" . ($search ? "_search_{$search}" : ''), 300, function () use ($id, $search) {
+            $query = DB::table('plant_infos')->where('user_id', $id);
+            if ($search) {
+                $query->where('plant_name', 'like', "%{$search}%");
+            }
+            return $query->count();
         });
 
         $totalPages = ceil($totalRows / $limit);
@@ -490,6 +497,37 @@ class PlantInfoController extends BaseController
         return $this->sendResponse([
             'plants' => $plant,
         ], 'Plant fetched successfully');
+    }
+
+    public function updatePlantInfo(Request $request, $id)
+    {
+        try {
+            $validated = $request->validate([
+                'azimuth'        => 'nullable|string|max:255',
+                'tilt'           => 'nullable|string|max:255',
+                'on_grid_date'   => 'nullable|date',
+                'owner_phone'    => 'nullable|string|max:20',
+                'admin_phone'    => 'nullable|string|max:20',
+                'installer_phone'=> 'nullable|string|max:20',
+            ]);
+
+            $plant = PlantInfo::where('plant_no', $id)->first();
+
+            if (!$plant) {
+                return $this->sendError('Plant not found', [], 404);
+            }
+
+            $plant->update($validated);
+
+            return $this->sendResponse([
+                'plant' => $plant,
+            ], 'Plant information updated successfully');
+
+        } catch (ValidationException $e) {
+            return $this->sendError('Validation failed', $e->errors(), 400);
+        } catch (\Throwable $e) {
+            return $this->sendError('Failed to update plant information', [$e->getMessage()], 500);
+        }
     }
 
     public function frontendByDay(Request $request)
@@ -549,6 +587,74 @@ class PlantInfoController extends BaseController
                     ->get();
 
                 $dailyRecords = TelemetryDailyTkwh::where('plant_id', $plant->id)
+                    ->where('record_date', $request->startTime)
+                    ->orderBy('record_date')
+                    ->first();
+
+                $catisticsDataByDayList = $records->map(function ($record) {
+                    return [
+                        'acMomentaryPower' => (string) ($record->pow ?? '0.0'),
+                        'irradiation'      => '0',
+                        'recordTime'       => $record->record_time ?? substr($record->record_datetime, 11, 8),
+                    ];
+                });
+
+                return $this->sendResponse([
+                    'byday' => [
+                        'catisticsDataByDayList' => $catisticsDataByDayList,
+                        'eday'                   => (float) ($dailyRecords->tkwh ?? 0),
+                    ],
+                ], 'Plant fetched successfully');
+            }
+
+            return $this->sendError('Invalid server flag', [], 400);
+
+        } catch (\Throwable $e) {
+            return $this->sendError('Plant not found', [$e->getMessage()], 400);
+        }
+    }
+
+    public function frontendByDayCompany(Request $request)
+    {
+        $request->validate([
+            'startTime' => 'required|date',
+            'plantId'   => 'required|integer',
+            'atun'      => 'required|string',
+            'atpd'      => 'required|string',
+        ]);
+      
+        $client = Client::where('username', $request->atun)
+            ->where('password', $request->atpd)
+            ->first();
+
+        if (!$client) {
+            return $this->sendError('Client not found', [], 400);
+        }
+
+        $plant = PlantInfo::where('user_id', $client->id)
+            ->where('plant_no', $request->plantId)
+            ->first();
+
+        if (!$plant || empty($plant->atun) || empty($plant->atpd)) {
+            return $this->sendError('Plant credentials not found for this user', [], 400);
+        }
+
+        try {
+            if ($client->server_flag == 1) {
+                $user = Auth::user();
+
+                $companyId = [$user->id];
+                if ($user->user_flag == 1 && !is_null($user->qbits_company_code) && $user->qbits_company_code !== '') {
+                    $companyId = Client::where('qbits_company_code', $user->qbits_company_code)
+                        ->pluck('id')
+                        ->all();
+                }
+                $records = TelemetryPow::whereIn('user_id', $companyId)
+                    ->whereDate('record_datetime', $request->startTime)
+                    ->orderBy('record_datetime')
+                    ->get();
+
+                $dailyRecords = TelemetryDailyTkwh::whereIn('user_id', $companyId)
                     ->where('record_date', $request->startTime)
                     ->orderBy('record_date')
                     ->first();
