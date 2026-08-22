@@ -643,13 +643,11 @@ class PlantInfoController extends BaseController
 
                 $catisticsDataByDayList = $records->groupBy(function ($record) {
                     return $record->record_time ?? substr($record->record_datetime, 11, 8);
-                })->map(function ($groupedRecords) {
-                    $totalPower = $groupedRecords->sum('pow');
-                    $firstRecord = $groupedRecords->first();
+                })->map(function ($group) {
                     return [
-                        'acMomentaryPower' => (string) ($totalPower ?? '0.0'),
+                        'acMomentaryPower' => (string) ($group->sum('pow') ?? '0.0'),
                         'irradiation'      => '0',
-                        'recordTime'       => $firstRecord->record_time ?? substr($firstRecord->record_datetime, 11, 8),
+                        'recordTime'       => $group->first()->record_time ?? substr($group->first()->record_datetime, 11, 8),
                     ];
                 })->values();
 
