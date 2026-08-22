@@ -9,6 +9,7 @@ use App\Models\TelemetryPow;
 use App\Models\TelemetryDailyTkwh;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
