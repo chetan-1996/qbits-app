@@ -621,7 +621,7 @@ class PlantInfoController extends BaseController
         ]);
 
         try {
-            if ($client->server_flag == 1) {
+            // if ($client->server_flag == 1) {
                 $user = Auth::user();
 
                 $companyId = [$user->id];
@@ -654,7 +654,7 @@ class PlantInfoController extends BaseController
                         'eday'                   => (float) ($dailyRecords->tkwh ?? 0),
                     ],
                 ], 'Plant fetched successfully');
-            }
+            // }
 
             return $this->sendError('Invalid server flag', [], 400);
 
