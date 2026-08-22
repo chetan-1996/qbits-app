@@ -618,9 +618,6 @@ class PlantInfoController extends BaseController
     {
         $request->validate([
             'startTime' => 'required|date',
-            'plantId'   => 'required|integer',
-            'atun'      => 'required|string',
-            'atpd'      => 'required|string',
         ]);
 
         $client = Client::where('username', $request->atun)
