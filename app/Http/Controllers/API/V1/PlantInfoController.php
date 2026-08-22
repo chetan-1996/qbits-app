@@ -620,22 +620,6 @@ class PlantInfoController extends BaseController
             'startTime' => 'required|date',
         ]);
 
-        $client = Client::where('username', $request->atun)
-            ->where('password', $request->atpd)
-            ->first();
-
-        if (!$client) {
-            return $this->sendError('Client not found', [], 400);
-        }
-
-        $plant = PlantInfo::where('user_id', $client->id)
-            ->where('plant_no', $request->plantId)
-            ->first();
-
-        if (!$plant || empty($plant->atun) || empty($plant->atpd)) {
-            return $this->sendError('Plant credentials not found for this user', [], 400);
-        }
-
         try {
             if ($client->server_flag == 1) {
                 $user = Auth::user();
