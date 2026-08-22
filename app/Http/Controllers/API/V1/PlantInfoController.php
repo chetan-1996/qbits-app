@@ -668,6 +668,141 @@ class PlantInfoController extends BaseController
         }
     }
 
+    public function frontendByMonthCompany(Request $request)
+    {
+        $request->validate([
+            'startTime' => 'required|date',
+        ]);
+
+        try {
+            $user = Auth::user();
+
+            $companyId = [$user->id];
+            if ($user->user_flag == 1 && !is_null($user->qbits_company_code) && $user->qbits_company_code !== '') {
+                $companyId = Client::where('qbits_company_code', $user->qbits_company_code)
+                    ->pluck('id')
+                    ->all();
+            }
+
+            $month = \Carbon\Carbon::parse($request->startTime);
+            $daysInMonth = $month->daysInMonth;
+
+            $dailyRecords = TelemetryDailyTkwh::whereIn('user_id', $companyId)
+                ->whereYear('record_date', $month->year)
+                ->whereMonth('record_date', $month->month)
+                ->orderBy('record_date')
+                ->get();
+
+            $groupedRecords = $dailyRecords->groupBy(function ($item) {
+                return (int) $item->record_date->format('d');
+            });
+
+            $catisticsDataByMonthList = [];
+            for ($day = 1; $day <= $daysInMonth; $day++) {
+                $dayRecords = $groupedRecords->get($day, collect());
+                $catisticsDataByMonthList[] = [
+                    'power'      => (string) ($dayRecords->sum('tkwh') ?? '0.0'),
+                    'recordTime' => (string) $day,
+                ];
+            }
+
+            return $this->sendResponse([
+                'bymonth' => [
+                    'catisticsDataByMonthList' => $catisticsDataByMonthList,
+                ],
+            ], 'Plant fetched successfully');
+
+        } catch (\Throwable $e) {
+            return $this->sendError('Plant not found', [$e->getMessage()], 400);
+        }
+    }
+
+    public function frontendByYearCompany(Request $request)
+    {
+        $request->validate([
+            'startTime' => 'required',
+        ]);
+
+        try {
+            $user = Auth::user();
+
+            $companyId = [$user->id];
+            if ($user->user_flag == 1 && !is_null($user->qbits_company_code) && $user->qbits_company_code !== '') {
+                $companyId = Client::where('qbits_company_code', $user->qbits_company_code)
+                    ->pluck('id')
+                    ->all();
+            }
+
+            $year = (int) $request->startTime;
+
+            $monthlyRecords = TelemetryDailyTkwh::whereIn('user_id', $companyId)
+                ->whereYear('record_date', $year)
+                ->selectRaw('MONTH(record_date) as month, SUM(tkwh) as total_tkwh')
+                ->groupBy('month')
+                ->orderBy('month')
+                ->get()
+                ->keyBy('month');
+
+            $catisticsDataByYearList = [];
+            for ($month = 1; $month <= 12; $month++) {
+                $catisticsDataByYearList[] = [
+                    'power'      => (string) ($monthlyRecords[$month]->total_tkwh ?? '0.0'),
+                    'recordTime' => (string) $month,
+                ];
+            }
+
+            return $this->sendResponse([
+                'byyear' => [
+                    'catisticsDataByYearList' => $catisticsDataByYearList,
+                ],
+            ], 'Plant fetched successfully');
+
+        } catch (\Throwable $e) {
+            return $this->sendError('Plant not found', [$e->getMessage()], 400);
+        }
+    }
+
+    public function frontendByTotalCompany(Request $request)
+    {
+        try {
+            $user = Auth::user();
+
+            $companyId = [$user->id];
+            if ($user->user_flag == 1 && !is_null($user->qbits_company_code) && $user->qbits_company_code !== '') {
+                $companyId = Client::where('qbits_company_code', $user->qbits_company_code)
+                    ->pluck('id')
+                    ->all();
+            }
+
+            $yearlyRecords = TelemetryDailyTkwh::whereIn('user_id', $companyId)
+                ->selectRaw('YEAR(record_date) as year, SUM(tkwh) as total_tkwh')
+                ->groupBy('year')
+                ->orderBy('year')
+                ->get()
+                ->keyBy('year');
+
+            $startYear = 2014;
+            $currentYear = (int) date('Y');
+            $plantEnergyList = [];
+
+            for ($year = $startYear; $year <= $currentYear; $year++) {
+                $plantEnergyList[] = [
+                    'power'      => (string) ($yearlyRecords[$year]->total_tkwh ?? '0.0'),
+                    'recordTime' => (string) $year,
+                ];
+            }
+
+            return $this->sendResponse([
+                'bytotal' => [
+                    'plantEnergyList' => $plantEnergyList,
+                ],
+            ], 'Plant fetched successfully');
+
+        } catch (\Throwable $e) {
+            return $this->sendError('Plant not found', [$e->getMessage()], 400);
+        }
+    }
+
     public function frontendByMonth(Request $request)
     {
         $request->validate([
