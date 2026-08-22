@@ -622,6 +622,8 @@ class PlantInfoController extends BaseController
             'atun'      => 'required|string',
             'atpd'      => 'required|string',
         ]);
+
+        dd($request->all());
       
         $client = Client::where('username', $request->atun)
             ->where('password', $request->atpd)
