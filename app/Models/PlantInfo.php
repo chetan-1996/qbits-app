@@ -67,7 +67,14 @@ class PlantInfo extends Model
         'atpd',
 
         'full_response',
-        'server_flag'
+        'server_flag',
+
+        'azimuth',
+        'tilt',
+        'on_grid_date',
+        'owner_phone',
+        'admin_phone',
+        'installer_phone'
     ];
 
     protected $casts = [
@@ -94,6 +101,7 @@ class PlantInfo extends Model
         'time'           => 'datetime',
 
         'full_response'  => 'array', // auto decode JSON
+        'on_grid_date'   => 'date',
     ];
 
     // Relationship with User (if needed)
