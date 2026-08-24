@@ -74,7 +74,9 @@ class PlantInfo extends Model
         'on_grid_date',
         'owner_phone',
         'admin_phone',
-        'installer_phone'
+        'installer_phone',
+        'no_of_panel',
+        'panel_watt_peak'
     ];
 
     protected $casts = [

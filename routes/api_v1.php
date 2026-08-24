@@ -40,6 +40,9 @@ Route::middleware('auth:client_api')->group(function () {
         Route::get('frontend/plants/statistics-by-year', 'frontendByYear');
         Route::get('frontend/plants/statistics-by-total', 'frontendByTotal');
         Route::get('frontend/plants/statistics-by-day-company', 'frontendByDayCompany');
+        Route::get('frontend/plants/statistics-by-month-company', 'frontendByMonthCompany');
+        Route::get('frontend/plants/statistics-by-year-company', 'frontendByYearCompany');
+        Route::get('frontend/plants/statistics-by-total-company', 'frontendByTotalCompany');
         Route::get('frontend/plants/{id}', 'frontendIndex');
         Route::get('frontend/plants/show/{id}', 'frontendShow');
         Route::post('frontend/create-plant', 'createPlant');
