@@ -76,7 +76,8 @@ class PlantInfo extends Model
         'admin_phone',
         'installer_phone',
         'no_of_panel',
-        'panel_watt_peak'
+        'panel_watt_peak',
+        'watchlist_flag'
     ];
 
     protected $casts = [
@@ -104,6 +105,7 @@ class PlantInfo extends Model
 
         'full_response'  => 'array', // auto decode JSON
         'on_grid_date'   => 'date',
+        'watchlist_flag' => 'boolean',
     ];
 
     // Relationship with User (if needed)

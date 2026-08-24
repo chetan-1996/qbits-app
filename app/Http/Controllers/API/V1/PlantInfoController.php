@@ -435,6 +435,7 @@ class PlantInfoController extends BaseController
         $limit = request('limit', 20);
         $page  = max((int) request('page', 1), 1);
         $search = request('search');
+        $watchlistFlag = request('watchlist_flag');
 
         // 1. FETCH CURSOR FOR PAGE
         $cursorKey = "pi_cursor_map:{$id}:p{$page}";
@@ -448,10 +449,11 @@ class PlantInfoController extends BaseController
                 'remark1','date','watch','time','plantstate',
                 'azimuth','tilt','on_grid_date','owner_phone',
                 'admin_phone','installer_phone','no_of_panel',
-                'panel_watt_peak'
+                'panel_watt_peak','watchlist_flag'
             ])
             ->where('user_id', $id)
             ->when($search, fn($q) => $q->where('plant_name', 'like', "%{$search}%"))
+            ->when($watchlistFlag !== null, fn($q) => $q->where('watchlist_flag', $watchlistFlag))
             ->when($cursor > 0, fn($q) => $q->where('id', '>', $cursor))
             ->orderBy('id')
             ->limit($limit);
@@ -463,10 +465,13 @@ class PlantInfoController extends BaseController
         Cache::put("pi_cursor_map:{$id}:p" . ($page + 1), $nextCursor, 3600);
 
         // 4. TOTAL COUNT (CACHED)
-        $totalRows = Cache::remember("pi_total_{$id}" . ($search ? "_search_{$search}" : ''), 300, function () use ($id, $search) {
+        $totalRows = Cache::remember("pi_total_{$id}" . ($search ? "_search_{$search}" : '') . ($watchlistFlag !== null ? "_watchlist_{$watchlistFlag}" : ''), 300, function () use ($id, $search, $watchlistFlag) {
             $query = DB::table('plant_infos')->where('user_id', $id);
             if ($search) {
                 $query->where('plant_name', 'like', "%{$search}%");
+            }
+            if ($watchlistFlag !== null) {
+                $query->where('watchlist_flag', $watchlistFlag);
             }
             return $query->count();
         });
@@ -513,6 +518,7 @@ class PlantInfoController extends BaseController
                 'installer_phone'=> 'nullable|string|max:20',
                 'no_of_panel'    => 'nullable|integer',
                 'panel_watt_peak'=> 'nullable|integer',
+                'watchlist_flag' => 'nullable|boolean',
             ]);
 
             $plant = PlantInfo::where('plant_no', $id)->first();
