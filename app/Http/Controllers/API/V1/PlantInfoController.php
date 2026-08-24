@@ -447,7 +447,8 @@ class PlantInfoController extends BaseController
                 'eday','etot','kpi','month_power','year_power',
                 'remark1','date','watch','time','plantstate',
                 'azimuth','tilt','on_grid_date','owner_phone',
-                'admin_phone','installer_phone'
+                'admin_phone','installer_phone','no_of_panel',
+                'panel_watt_peak'
             ])
             ->where('user_id', $id)
             ->when($search, fn($q) => $q->where('plant_name', 'like', "%{$search}%"))
@@ -510,6 +511,8 @@ class PlantInfoController extends BaseController
                 'owner_phone'    => 'nullable|string|max:20',
                 'admin_phone'    => 'nullable|string|max:20',
                 'installer_phone'=> 'nullable|string|max:20',
+                'no_of_panel'    => 'nullable|integer',
+                'panel_watt_peak'=> 'nullable|integer',
             ]);
 
             $plant = PlantInfo::where('plant_no', $id)->first();
