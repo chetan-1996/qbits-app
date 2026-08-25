@@ -206,6 +206,10 @@ class AuthController extends BaseController
                 'iserial'                  => 'nullable',
                 'qq'                       => 'nullable',
                 'email'                    => 'nullable|email',
+                // 'azimuth'                  => 'nullable|string',
+                // 'tilt'                     => 'nullable|string',
+                // 'no_of_panel'              => 'nullable|integer',
+                // 'panel_watt_peak'          => 'nullable|integer',
             ]);
             $dongle_no = null;
 
@@ -298,6 +302,10 @@ class AuthController extends BaseController
                     "QQ"                  => "",
                     "email"               => "",
                     "parent"              => "",
+                    // "azimuth"             => $validated['azimuth'] ?? null,
+                    // "tilt"                => $validated['tilt'] ?? null,
+                    // "no_of_panel"         => $validated['no_of_panel'] ?? null,
+                    // "panel_watt_peak"     => $validated['panel_watt_peak'] ?? null,
                 ]), 'application/json')->post($webhookUrl);
 
                 Log::info('Webhook response received', [
@@ -666,7 +674,7 @@ class AuthController extends BaseController
 
             $http = Http::withOptions(['verify' => false]);
 
-            if($validated['userName']==0){
+            if($validated['server_flag']==0){
                 $response = $http->asForm()->post(
                     'https://www.aotaisolarcloud.com/ATSolarInfo/changePassword.action',
                     [
@@ -692,7 +700,7 @@ class AuthController extends BaseController
             \DB::table('telemetry_daily_tkwh')->where('atun', $validated['userName'])->update(['atpd' => $validated['newPassword']]);
             \DB::table('telemetry_pow')->where('atun', $validated['userName'])->update(['atpd' => $validated['newPassword']]);
 
-            
+            return $this->sendResponse([], 'Password changed successfully.');
 
             // if ($result['message'] == 'success') {
             //     // Update server_flag in clients table if needed
@@ -703,7 +711,7 @@ class AuthController extends BaseController
             //     return $this->sendResponse([], 'Password changed successfully.');
             // }
 
-            return $this->sendError('Failed to change password.', $result, 400);
+            // return $this->sendError('Failed to change password.', $result, 400);
 
         } catch (ValidationException $e) {
             return $this->sendError('Validation failed.', $e->errors(), 400);
