@@ -214,7 +214,7 @@ class AuthController extends BaseController
             $dongle_no = null;
 
             // Check if collector already exists when wifi_serial_number length >= 9
-            if (strlen($validated['wifi_serial_number']) >= 9) {
+            if (strlen($validated['wifi_serial_number']) >= 10) {
                 $dongle = \DB::table('dongles')
                     ->where('dongle_id', $validated['wifi_serial_number'])
                     ->first();
@@ -236,7 +236,7 @@ class AuthController extends BaseController
             // Single HTTP instance → Less CPU & Memory
             $http = Http::withOptions(['verify' => false]);
             $server_flg = 1;
-            if (strlen($validated['wifi_serial_number']) <= 9) {
+            if (strlen($validated['wifi_serial_number']) <= 10) {
                 $server_flg = 0;
                 $apiResponse = $http->asForm()->post('https://www.aotaisolarcloud.com/ATSolarInfo/userRegister.action', [
                     'userName'     => $validated['user_id'],
