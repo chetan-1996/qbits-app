@@ -441,6 +441,15 @@ class PlantInfoController extends BaseController
         $cursorKey = "pi_cursor_map:{$id}:p{$page}";
         $cursor = Cache::get($cursorKey, 0);
 
+        $user = Auth::user();
+
+        $companyId = [$id];
+        if ($user->user_flag == 1 && !is_null($user->qbits_company_code) && $user->qbits_company_code !== '') {
+            $companyId = Client::where('qbits_company_code', $user->qbits_company_code)
+                ->pluck('id')
+                ->all();
+        }
+
         // 2. FETCH DATA FOR THIS PAGE (KEYSET)
         $query = DB::table('plant_infos')
             ->select([
@@ -451,7 +460,7 @@ class PlantInfoController extends BaseController
                 'admin_phone','installer_phone','no_of_panel',
                 'panel_watt_peak','watchlist_flag'
             ])
-            ->where('user_id', $id)
+            ->whereIn('user_id', $companyId)
             ->when($search, fn($q) => $q->where('plant_name', 'like', "%{$search}%"))
             ->when($watchlistFlag !== null, fn($q) => $q->where('watchlist_flag', $watchlistFlag))
             ->when($cursor > 0, fn($q) => $q->where('id', '>', $cursor))
