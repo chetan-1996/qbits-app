@@ -69,7 +69,7 @@ Route::middleware('auth:client_api')->group(function () {
 
     // Telemetry Dashboard Routes
     Route::controller(TelemetryController::class)->group(function () {
-        Route::post('/frontend/telemetry/chart/data', 'chartData')->name('telemetry.chart.data');
+        Route::post('/frontend/telemetry/chart/data', 'chartData');
     });
 });
 // Public routes
