@@ -66,6 +66,11 @@ Route::middleware('auth:client_api')->group(function () {
     Route::get('client/profile', function () {
         return auth()->guard('client_api')->user();
     });
+
+    // Telemetry Dashboard Routes
+    Route::controller(TelemetryController::class)->group(function () {
+        Route::post('/frontend/telemetry/chart/data', 'chartData')->name('telemetry.chart.data');
+    });
 });
 // Public routes
 Route::controller(AuthController::class)->group(function () {
