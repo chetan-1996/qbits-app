@@ -601,7 +601,7 @@ class PlantInfoController extends BaseController
 
             if ($client->server_flag == 1) {
                 $records = TelemetryPow::where('plant_id', $plant->id)
-                    ->where('record_datetime', $request->startTime)
+                    ->whereDate('record_datetime', $request->startTime)
                     ->orderBy('record_datetime')
                     ->get();
 
