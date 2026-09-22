@@ -286,6 +286,74 @@ class WebhookController extends Controller
         }
     }
 
+    public function getClientLocation(Request $request)
+    {
+        try {
+            $signature = $request->header('X-Signature');
+            if ($signature !== config('webhook.secret')) {
+                return response()->json(['error' => 'Invalid signature'], 401);
+            }
+
+            $search = trim((string) $request->query('search', ''));
+            if ($search === '') {
+                return response()->json([
+                    'status'  => false,
+                    'message' => 'search parameter is required',
+                ], 422);
+            }
+
+            $clients = Client::select(
+                    'id', 'username', 'phone', 'collector',
+                    'longitude', 'latitude', 'plant_name', 'city_name'
+                )
+                ->where(function ($q) use ($search) {
+                    $q->where('phone', $search)
+                      ->orWhere('collector', $search);
+                })
+                ->whereNotNull('longitude')
+                ->whereNotNull('latitude')
+                ->where('longitude', '!=', '')
+                ->where('latitude', '!=', '')
+                ->get();
+
+            if ($clients->isEmpty()) {
+                return response()->json([
+                    'status'  => false,
+                    'message' => 'Client not found or location not available',
+                ], 404);
+            }
+
+            return response()->json([
+                'status'  => true,
+                'message' => 'Location fetched successfully',
+                'count'   => $clients->count(),
+                'data'    => $clients->map(function ($client) {
+                    return [
+                        'username'   => $client->username,
+                        'phone'      => $client->phone,
+                        'collector'  => $client->collector,
+                        'longitude'  => $client->longitude,
+                        'latitude'   => $client->latitude,
+                        'plant_name' => $client->plant_name,
+                        'city_name'  => $client->city_name,
+                    ];
+                }),
+            ], 200);
+
+        } catch (Exception $e) {
+            Log::error('getClientLocation error', ['error' => $e->getMessage()]);
+
+            return response()->json([
+                'status'  => false,
+                'message' => 'Error fetching location',
+                'error'   => $e->getMessage(),
+            ], 500);
+        } finally {
+            DB::disconnect();
+            gc_collect_cycles();
+        }
+    }
+
     /* ------------------------------------------------------------
      * 📲 Send WhatsApp notification (fast, 2 s timeout)
      * ------------------------------------------------------------ */
