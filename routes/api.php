@@ -31,6 +31,7 @@ Route::prefix('v1')->group(function () {
     Route::post('/webhook/whatsapp-notification/update', [WebhookController::class, 'postWhatsAppNotification']);
     Route::get('/webhook/whatsapp-notification/{userId}', [WebhookController::class, 'getWhatsAppNotification']);
     Route::post('/webhook/validate-company-code', [WebhookController::class, 'validateCompanyCode']);
+    Route::get('/webhook/client/location', [WebhookController::class, 'getClientLocation']);
     Route::get('/plant/list', [WebhookController::class, 'getAllPlanList']);
     Route::get('/plant/list/{id}', [WebhookController::class, 'getPlantDetails']);
     Route::get('/plant/info', [WebhookController::class, 'getAllPlanInfo']);
