@@ -299,7 +299,7 @@ class WebhookController extends Controller
                 return response()->json([
                     'status'  => false,
                     'message' => 'search parameter is required',
-                ], 422);
+                ], 404);
             }
 
             $clients = Client::select(
@@ -347,7 +347,7 @@ class WebhookController extends Controller
                 'status'  => false,
                 'message' => 'Error fetching location',
                 'error'   => $e->getMessage(),
-            ], 500);
+            ], 404);
         } finally {
             DB::disconnect();
             gc_collect_cycles();
