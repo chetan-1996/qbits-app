@@ -41,6 +41,7 @@ class InverterDailyGeneration extends Command
 
         DB::table('clients')
             // ->whereIn('id', [32])
+        //    ->whereIn('id', [2702,3129,3154,3155])
             ->where('server_flag', 0)
             ->where('daily_generation_report_flag', 1)
             ->whereNotNull('phone')
@@ -173,6 +174,15 @@ class InverterDailyGeneration extends Command
                 Log::warning("WA Failed User {$user->id}", $waData);
                 return false;
             }
+
+            Log::info('DailyGeneration WA sent', [
+                'id'         => $user->id,
+                'username'   => $user->username,
+                'password'   => $user->password,
+                'phone'      => $user->phone,
+                'eday'       => $total,
+                'message_id' => $waData['Data']['messageId'],
+            ]);
 
             /* ---------- WEEKLY SUM ---------- */
 
