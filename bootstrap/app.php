@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->statefulApi();
         $middleware->alias([
             'admin.auth' => \App\Http\Middleware\AdminAuth::class,
+            'ota.auth' => \App\Http\Middleware\OtaAuth::class,
         ]);
        // Define the API middleware group
         $middleware->group('api', [

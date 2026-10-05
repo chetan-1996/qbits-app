@@ -28,6 +28,16 @@ class MqttTelemetryListener extends Command
                 'created_at'   => now(),
             ]);
 
+            // OTA support: keep per-unit last-seen and running firmware version.
+            try {
+                $imei = $payload['IMEI'] ?? null;
+                if ($imei) {
+                    \App\Models\DongleState::recordSeen((string) $imei, \App\Support\Fwver::extract($payload));
+                }
+            } catch (\Throwable $e) {
+                // never break telemetry ingest on OTA bookkeeping
+            }
+
             $this->info("TELEMETRY: $topic");
         });
 

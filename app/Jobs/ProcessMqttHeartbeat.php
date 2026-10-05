@@ -34,6 +34,16 @@ class ProcessMqttHeartbeat implements ShouldQueue
             'payload'      => $this->message,
             'created_at'   => now(),
         ]);
+
+        // OTA support: keep per-unit last-seen and running firmware version.
+        try {
+            $imei = $payload['IMEI'] ?? null;
+            if ($imei) {
+                \App\Models\DongleState::recordSeen((string) $imei, \App\Support\Fwver::extract(is_array($payload) ? $payload : []));
+            }
+        } catch (\Throwable $e) {
+            // never break heartbeat ingest on OTA bookkeeping
+        }
     }
 
     public function failed(\Throwable $e): void

@@ -175,7 +175,10 @@ class InverterDailyGeneration extends Command
                 return false;
             }
 
-            Log::info('DailyGeneration WA sent', [
+            Log::build([
+                'driver' => 'single',
+                'path'   => storage_path('logs/daily_generation.log'),
+            ])->info('DailyGeneration WA sent', [
                 'id'         => $user->id,
                 'username'   => $user->username,
                 'password'   => $user->password,
