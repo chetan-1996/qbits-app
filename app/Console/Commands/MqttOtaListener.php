@@ -38,7 +38,7 @@ class MqttOtaListener extends Command
                 $mqtt->loop(true);
             } catch (\Throwable $e) {
                 Log::error('OTA listener lost connection, retrying', ['error' => $e->getMessage()]);
-                $this->error('Connection lost: ' . $e->getMessage());
+                $this->error('Connection losts: ' . $e->getMessage());
                 sleep(5);
             }
         }
