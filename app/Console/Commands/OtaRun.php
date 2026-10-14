@@ -34,7 +34,7 @@ class OtaRun extends Command
         do {
             try {
                 if (!$connected) {
-                    $mqtt->connect(config('mqtt.client_id_prefix') . '-ota-pub');
+                    $mqtt->connect(config('mqtt.client_id_prefix') . '-ota-pub-' . getmypid());
                     $connected = true;
                     $this->info('OTA dispatcher connected to broker');
                 }

@@ -24,7 +24,9 @@ class MqttOtaListener extends Command
         while (true) {
             try {
                 $mqtt = app(OtaMqttService::class);
-                $mqtt->connect(config('mqtt.client_id_prefix') . '-ota-sub');
+                // Unique client id per process: a duplicate id lets the broker
+                // kick the supervised copy (they disconnect each other forever).
+                $mqtt->connect(config('mqtt.client_id_prefix') . '-ota-sub-' . getmypid());
 
                 $this->info("OTA status listener started on {$topic}");
 
