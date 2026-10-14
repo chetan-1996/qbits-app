@@ -6,7 +6,7 @@ use App\Models\DongleState;
 use App\Models\OtaJob;
 use App\Models\OtaJobEvent;
 use App\Models\OtaJobUnit;
-use App\Services\OtaMqttService;
+use App\Services\MqttService;
 use App\Support\SemVer;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
@@ -28,27 +28,14 @@ class OtaRun extends Command
 
     public function handle()
     {
-        $mqtt = app(OtaMqttService::class);
-        $connected = false;
+        $clientId = config('mqtt.client_id_prefix') . '-ota-pub-' . getmypid();
 
         do {
             try {
-                if (!$connected) {
-                    $mqtt->connect(config('mqtt.client_id_prefix') . '-ota-pub-' . getmypid());
-                    $connected = true;
-                    $this->info('OTA dispatcher connected to broker');
-                }
-
-                $this->tick($mqtt);
+                $this->tick($clientId);
             } catch (\Throwable $e) {
                 Log::error('ota:run tick failed', ['error' => $e->getMessage()]);
-                $connected = false;
-                try {
-                    $mqtt->reconnect();
-                    $connected = true;
-                } catch (\Throwable $re) {
-                    Log::error('ota:run reconnect failed', ['error' => $re->getMessage()]);
-                }
+                $this->error('Tick failed: ' . $e->getMessage());
             }
 
             if ($this->option('once')) {
@@ -58,14 +45,12 @@ class OtaRun extends Command
             usleep(1_000_000);
         } while (true);
 
-        $mqtt->disconnect();
-
         return Command::SUCCESS;
     }
 
-    private function tick(OtaMqttService $mqtt): void
+    private function tick(string $clientId): void
     {
-        $this->sendDue($mqtt);
+        $this->sendDue($clientId);
         $this->applyTimeouts();
         $this->telemetryBackstop();
         $this->closeFinishedJobs();
@@ -75,7 +60,7 @@ class OtaRun extends Command
      * MO-14/15: one command per unit, QoS 0 retain off, paced by the job's
      * send gap and capped by units still in flight (SENT until final/timeout).
      */
-    private function sendDue(OtaMqttService $mqtt): void
+    private function sendDue(string $clientId): void
     {
         $jobs = OtaJob::where('status', OtaJob::STATUS_SENDING)->get();
 
@@ -111,7 +96,12 @@ class OtaRun extends Command
             ]);
 
             $topic = config('ota.topic_prefix') . '/' . $unit->imei . '/ota/sub';
-            $mqtt->publishCommand($topic, $payload);
+
+            // MqttService::publish() disconnects after sending; connect per
+            // command. QoS 0, retain off (MO-14).
+            $mqtt = app(MqttService::class);
+            $mqtt->connect($clientId);
+            $mqtt->publish($topic, $payload, 0);
 
             // Refresh "version before" from the freshest telemetry if we have it.
             $versionBefore = $unit->version_before
