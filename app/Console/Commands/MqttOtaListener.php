@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Jobs\ProcessOtaStatus;
-use App\Services\OtaMqttService;
+use App\Services\MqttService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -23,22 +23,22 @@ class MqttOtaListener extends Command
 
         while (true) {
             try {
-                $mqtt = app(OtaMqttService::class);
+                $mqtt = app(MqttService::class);
                 // Unique client id per process: a duplicate id lets the broker
                 // kick the supervised copy (they disconnect each other forever).
                 $mqtt->connect(config('mqtt.client_id_prefix') . '-ota-sub-' . getmypid());
 
                 $this->info("OTA status listener started on {$topic}");
 
+                // MqttService::subscribe() blocks in loop() internally — it
+                // returns only if the connection drops, so retry from scratch.
                 $mqtt->subscribe($topic, function ($t, $message) {
                     ProcessOtaStatus::dispatch($t, $message, now()->toDateTimeString())
                         ->onQueue('ota');
-                });
-
-                $mqtt->loop(true);
+                }, 0);
             } catch (\Throwable $e) {
                 Log::error('OTA listener lost connection, retrying', ['error' => $e->getMessage()]);
-                $this->error('Connection losts: ' . $e->getMessage());
+                $this->error('Connection lost: ' . $e->getMessage());
                 sleep(5);
             }
         }
