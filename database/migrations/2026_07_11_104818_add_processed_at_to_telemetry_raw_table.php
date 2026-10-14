@@ -11,9 +11,24 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('telemetry_raw', function (Blueprint $table) {
-            $table->timestamp('processed_at')->nullable()->index()->after('created_at');
-        });
+        // telemetry_raw was created outside migrations on production;
+        // create it here when missing so a fresh schema migrates cleanly.
+        if (!Schema::hasTable('telemetry_raw')) {
+            Schema::create('telemetry_raw', function (Blueprint $table) {
+                $table->id();
+                $table->string('collector_id', 64);
+                $table->string('inverter_id', 64);
+                $table->json('payload');
+                $table->timestamp('created_at')->useCurrent();
+                $table->index(['collector_id', 'created_at'], 'idx_raw_collector_time');
+            });
+        }
+
+        if (!Schema::hasColumn('telemetry_raw', 'processed_at')) {
+            Schema::table('telemetry_raw', function (Blueprint $table) {
+                $table->timestamp('processed_at')->nullable()->index()->after('created_at');
+            });
+        }
     }
 
     /**

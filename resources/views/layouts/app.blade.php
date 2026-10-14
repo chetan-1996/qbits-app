@@ -81,6 +81,15 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url('/channel-partners/map') }}">Partner Map</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('ota.jobs.index') }}">OTA Jobs</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('ota.devices') }}">OTA Devices</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('firmware.index') }}">Firmware</a>
+                    </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="telemetryDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             Telemetry

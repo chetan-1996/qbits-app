@@ -5,6 +5,7 @@ use App\Http\Controllers\API\V1\TelemetryController;
 use App\Http\Controllers\API\V1\ChannelPartnerController;
 use App\Http\Controllers\API\V1\DongleController;
 use App\Http\Controllers\FirmwareController;
+use App\Http\Controllers\OtaJobController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -70,6 +71,28 @@ Route::middleware(['web', 'admin.auth'])->prefix('admin')->group(function () {
     Route::get('firmware', [FirmwareController::class, 'index'])->name('firmware.index');
     Route::post('firmware', [FirmwareController::class, 'store'])->name('firmware.store');
     Route::delete('firmware', [FirmwareController::class, 'destroy'])->name('firmware.destroy');
+});
+
+// Mass OTA portal (operators + admins; force/backup are admin-only server-side)
+Route::middleware(['ota.auth'])->prefix('ota')->name('ota.')->group(function () {
+    Route::match(['GET', 'POST'], 'login', function () {
+        // Reached only when already authenticated — the middleware otherwise
+        // renders the login form or handles the password POST itself.
+        return redirect()->route('ota.jobs.index');
+    })->name('login');
+    Route::get('jobs', [OtaJobController::class, 'index'])->name('jobs.index');
+    Route::get('devices', [OtaJobController::class, 'devices'])->name('devices');
+    Route::get('jobs/create', [OtaJobController::class, 'create'])->name('jobs.create');
+    Route::get('template', [OtaJobController::class, 'template'])->name('template');
+    Route::post('jobs/preview', [OtaJobController::class, 'preview'])->name('jobs.preview');
+    Route::get('jobs/{job}', [OtaJobController::class, 'show'])->name('jobs.show');
+    Route::get('jobs/{job}/rows', [OtaJobController::class, 'rows'])->name('jobs.rows');
+    Route::post('jobs/{job}/send', [OtaJobController::class, 'send'])->name('jobs.send');
+    Route::post('jobs/{job}/pause', [OtaJobController::class, 'pause'])->name('jobs.pause');
+    Route::post('jobs/{job}/resume', [OtaJobController::class, 'resume'])->name('jobs.resume');
+    Route::post('jobs/{job}/stop', [OtaJobController::class, 'stop'])->name('jobs.stop');
+    Route::post('jobs/{job}/retry', [OtaJobController::class, 'retry'])->name('jobs.retry');
+    Route::get('jobs/{job}/export', [OtaJobController::class, 'export'])->name('jobs.export');
 });
 
 // Public Firmware Download (serves static .bin files directly)

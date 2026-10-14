@@ -58,6 +58,22 @@
                 <div class="card-body p-4">
                     <form method="POST" action="{{ route('firmware.store') }}" enctype="multipart/form-data" id="uploadForm">
                         @csrf
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <label for="version" class="form-label fw-semibold">Version <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control font-monospace" id="version" name="version"
+                                       placeholder="x.y.z" pattern="\d+\.\d+\.\d+" value="{{ old('version') }}" required>
+                                <div class="form-text">Must match the version stored in the image itself.</div>
+                            </div>
+                            <div class="col-md-8">
+                                <label for="notes" class="form-label fw-semibold">Release notes</label>
+                                <input type="text" class="form-control" id="notes" name="notes"
+                                       value="{{ old('notes') }}" maxlength="2000" placeholder="Optional">
+                            </div>
+                        </div>
+                        @error('version')
+                            <div class="alert alert-danger py-2">{{ $message }}</div>
+                        @enderror
                         <div class="upload-zone p-4 rounded-3 border-2 border-dashed text-center mb-3" id="dropZone">
                             <div class="text-muted mb-2" style="font-size: 2.5rem;">&#128230;</div>
                             <p class="fw-medium text-dark mb-1">Drag & drop your .bin file here</p>
@@ -102,8 +118,11 @@
                                 <thead class="table-light">
                                     <tr>
                                         <th class="ps-4" style="min-width: 240px;">File Name</th>
+                                        <th style="width: 100px;">Version</th>
                                         <th style="width: 110px;">Size</th>
-                                        <th style="width: 190px;">Uploaded</th>
+                                        <th style="width: 130px;">SHA-256</th>
+                                        <th>Notes</th>
+                                        <th style="width: 150px;">Uploaded</th>
                                         <th class="pe-4 text-end" style="width: 300px;">Actions</th>
                                     </tr>
                                 </thead>
@@ -116,12 +135,18 @@
                                                         <span style="font-size: 1.1rem;">&#128190;</span>
                                                     </div>
                                                     <span class="fw-medium">{{ $file['name'] }}</span>
+                                                    @if ($file['is_backup'])
+                                                        <span class="badge bg-warning text-dark">backup</span>
+                                                    @endif
                                                 </div>
                                             </td>
+                                            <td class="font-monospace">{{ $file['version'] }}</td>
                                             <td>
                                                 <span class="badge bg-secondary bg-opacity-10 text-dark border-0 fw-normal" style="font-size: 0.85rem;">{{ $file['size'] }}</span>
                                             </td>
-                                            <td class="text-muted">{{ $file['updated'] }}</td>
+                                            <td class="font-monospace small text-muted" title="{{ $file['sha256'] }}">{{ substr($file['sha256'], 0, 12) }}…</td>
+                                            <td class="small text-muted">{{ \Illuminate\Support\Str::limit($file['notes'], 60) }}</td>
+                                            <td class="text-muted small">{{ $file['updated'] }}</td>
                                             <td class="pe-4 text-end">
                                                 <div class="d-flex gap-2 justify-content-end">
                                                     <a href="{{ $file['url'] }}" class="btn btn-success btn-sm" target="_blank">
