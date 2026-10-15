@@ -30,6 +30,7 @@ Route::middleware('auth:client_api')->group(function () {
     });
     Route::controller(ClientController::class)->group(function () {
         Route::post('client/logout', 'logout');
+        Route::post('client/profile/update', 'updateProfile');
         Route::get('frontend/grouped-clients', 'frontendGroupedClients');
         Route::get('frontend/inverter/totals', 'frontendTotals');
     });

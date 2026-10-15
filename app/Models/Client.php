@@ -15,6 +15,8 @@ class Client extends Authenticatable
         'company_name',
         'company_code',
         'username',
+        'name',
+        'photo',
         'dongle_no',
         'password',
         'phone',
@@ -40,4 +42,11 @@ class Client extends Authenticatable
     ];
 
      protected $hidden = ['password'];
+
+     protected $appends = ['photo_url'];
+
+     public function getPhotoUrlAttribute()
+     {
+        return $this->photo ? asset('storage/' . $this->photo) : null;
+     }
 }

@@ -7,6 +7,7 @@ use App\Models\Client;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -72,6 +73,49 @@ class ClientController extends BaseController
             return $this->sendResponse([], 'Logged out successfully.');
         } catch (\Throwable $e) {
             return $this->handleException($e, 'Logout failed');
+        }
+    }
+
+    public function updateProfile(Request $request): JsonResponse
+    {
+        try {
+            $client = $request->user();
+
+            $validated = $request->validate([
+                'name'     => 'sometimes|nullable|string|max:255',
+                'email'    => 'sometimes|email|max:255|unique:clients,email,' . $client->id,
+                'email_id' => 'sometimes|email|max:255|unique:clients,email,' . $client->id,
+                'photo'    => 'sometimes|image|mimes:jpg,jpeg,png,webp|max:2048',
+            ]);
+
+            $email = $request->input('email_id', $request->input('email'));
+
+            if (!array_key_exists('name', $validated) && is_null($email) && !$request->hasFile('photo')) {
+                return $this->sendError('Nothing to update.', [], 400);
+            }
+
+            if (array_key_exists('name', $validated)) {
+                $client->name = $validated['name'];
+            }
+
+            if (!is_null($email)) {
+                $client->email = $email;
+            }
+
+            if ($request->hasFile('photo')) {
+                if ($client->photo) {
+                    Storage::disk('public')->delete($client->photo);
+                }
+                $client->photo = $request->file('photo')->store('clients', 'public');
+            }
+
+            $client->save();
+
+            return $this->sendResponse($client->fresh(), 'Profile updated successfully.');
+        } catch (ValidationException $e) {
+            return $this->sendError('Validation failed.', $e->errors(), 400);
+        } catch (\Throwable $e) {
+            return $this->handleException($e, 'Failed to update profile.');
         }
     }
     // public function clientLogin(Request $request)
