@@ -85,12 +85,15 @@ class ClientController extends BaseController
                 'name'     => 'sometimes|nullable|string|max:255',
                 'email'    => 'sometimes|email|max:255|unique:clients,email,' . $client->id,
                 'email_id' => 'sometimes|email|max:255|unique:clients,email,' . $client->id,
+                'phone'    => 'sometimes|nullable|string|max:20',
+                'phone_no' => 'sometimes|nullable|string|max:20',
                 'photo'    => 'sometimes|image|mimes:jpg,jpeg,png,webp|max:2048',
             ]);
 
             $email = $request->input('email_id', $request->input('email'));
+            $phone = $request->input('phone_no', $request->input('phone'));
 
-            if (!array_key_exists('name', $validated) && is_null($email) && !$request->hasFile('photo')) {
+            if (!array_key_exists('name', $validated) && is_null($email) && is_null($phone) && !$request->hasFile('photo')) {
                 return $this->sendError('Nothing to update.', [], 400);
             }
 
@@ -100,6 +103,10 @@ class ClientController extends BaseController
 
             if (!is_null($email)) {
                 $client->email = $email;
+            }
+
+            if (!is_null($phone)) {
+                $client->phone = $phone;
             }
 
             if ($request->hasFile('photo')) {
@@ -116,6 +123,15 @@ class ClientController extends BaseController
             return $this->sendError('Validation failed.', $e->errors(), 400);
         } catch (\Throwable $e) {
             return $this->handleException($e, 'Failed to update profile.');
+        }
+    }
+
+    public function getProfile(Request $request): JsonResponse
+    {
+        try {
+            return $this->sendResponse($request->user(), 'Profile fetched successfully.');
+        } catch (\Throwable $e) {
+            return $this->handleException($e, 'Failed to fetch profile.');
         }
     }
     // public function clientLogin(Request $request)

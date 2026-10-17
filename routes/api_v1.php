@@ -30,6 +30,7 @@ Route::middleware('auth:client_api')->group(function () {
     });
     Route::controller(ClientController::class)->group(function () {
         Route::post('client/logout', 'logout');
+        Route::get('client/profile', 'getProfile');
         Route::post('client/profile/update', 'updateProfile');
         Route::get('frontend/grouped-clients', 'frontendGroupedClients');
         Route::get('frontend/inverter/totals', 'frontendTotals');
@@ -64,9 +65,6 @@ Route::middleware('auth:client_api')->group(function () {
     });
 
     // Route::get('client/grouped-clients', 'groupedClients');
-    Route::get('client/profile', function () {
-        return auth()->guard('client_api')->user();
-    });
 
     // Telemetry Dashboard Routes
     Route::controller(TelemetryController::class)->group(function () {
