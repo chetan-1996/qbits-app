@@ -227,6 +227,9 @@ class AuthController extends BaseController
 
             // TP-Link (ShineMonitor) registration
             if ($isTpLink) {
+                $timezonesArr = [0 => 0, 1 => 3600, 2 => 7200, 3 => 10800, 4 => 14400, 5 => 18000, 55 => 19800, 6 => 21600, 7 => 25200, 8 => 28800, 9 => 32400, 10 => 36000, 11 => 39600, 12 => 43200, -1 => -3600, -2 => -7200, -3 => -10800, -4 => -14400,-5  => -18000,-6  => -21600, -7  => -25200, -8  => -28800, -9  => -32400, -10 => -36000, -11 => -39600, -12 => -43200];
+                $validated['time_zone'] = $timezonesArr[$validated['time_zone']] ?? 0;
+
                 if (\DB::table('clients')->where('username', $validated['user_id'])->exists()) {
                     return $this->sendError('Username already registered.', null, 400);
                 }
@@ -250,6 +253,8 @@ class AuthController extends BaseController
                 if ($shineResponse['err'] != 0) {
                     return $this->sendError($this->shineMonitorError($shineResponse), null, 400);
                 }
+
+                $this->updateShinePlant($validated, $shineResponse);
 
                 $dongle_no = $validated['wifi_serial_number'];
             }
@@ -388,6 +393,64 @@ class AuthController extends BaseController
             Log::error('Registration error: ' . $e->getMessage());
 
             return $this->sendError('Failed to register user: ' . $e->getMessage(), null, 500);
+        }
+    }
+
+    /**
+     * After TP-Link registration, update the auto-created default plant
+     * on ShineMonitor with the registration form fields (editPlant).
+     * Failures are logged but never block registration.
+     */
+    private function updateShinePlant(array $validated, array $shine): void
+    {
+        try {
+            $shineService = app(ShineMonitorService::class);
+
+            $token  = $shine['dat']['token'] ?? null;
+            $secret = $shine['dat']['secret'] ?? null;
+
+            if (!$token || !$secret) {
+                $auth = $shineService->auth($validated['user_id'], $validated['password']);
+                if (($auth['err'] ?? -1) !== 0) {
+                    return;
+                }
+                $token  = $auth['dat']['token'] ?? null;
+                $secret = $auth['dat']['secret'] ?? null;
+            }
+
+            if (!$token || !$secret) {
+                return;
+            }
+
+            $plants = $shineService->call('queryPlants', ['pagesize' => 50], $token, $secret);
+            $pid = $plants['dat']['plant'][0]['pid'] ?? null;
+
+            if (!$pid) {
+                Log::channel('registration')->warning('ShineMonitor editPlant skipped: no plant found', [
+                    'usr'      => $validated['user_id'],
+                    'response' => $plants,
+                ]);
+                return;
+            }
+
+            $edit = $shineService->call('editPlant', [
+                'plantid'          => $pid,
+                'name'             => $validated['home_name'],
+                'address.city'     => $validated['city_name'],
+                'address.lon'      => $validated['longitude'] ?? null,
+                'address.lat'      => $validated['latitude'] ?? null,
+                'address.timezone' => $validated['time_zone'],
+            ], $token, $secret);
+
+            Log::channel('registration')->info('ShineMonitor editPlant response', [
+                'usr'      => $validated['user_id'],
+                'pid'      => $pid,
+                'response' => $edit,
+            ]);
+        } catch (\Throwable $e) {
+            Log::channel('registration')->error('ShineMonitor editPlant failed: ' . $e->getMessage(), [
+                'usr' => $validated['user_id'],
+            ]);
         }
     }
 
@@ -728,7 +791,7 @@ class AuthController extends BaseController
                 'userName'    => 'required|string|max:255',
                 'password'    => 'required|string',
                 'newPassword' => 'required|string',
-                'server_flag' => 'required|integer|in:0,1',
+                'server_flag' => 'required|integer|in:0,1,2',
             ]);
 
             $http = Http::withOptions(['verify' => false]);
