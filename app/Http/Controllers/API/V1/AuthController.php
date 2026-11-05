@@ -12,9 +12,18 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Http;
+use App\Services\ShineMonitorService;
 
 class AuthController extends BaseController
 {
+    /**
+     * TP-Link (ShineMonitor) datalogger serial numbers.
+     * Registration uses the ShineMonitor path (server_flag=2)
+     * when wifi_serial_number matches one of these.
+     */
+    private const TP_LINK_SERIALS = [
+        'I30000231157698389',
+    ];
 
     public function generateCode()
     {
@@ -213,8 +222,40 @@ class AuthController extends BaseController
             ]);
             $dongle_no = null;
 
+            // TP-Link (ShineMonitor): wifi_serial_number must exist in the static serial list
+            $isTpLink = in_array($validated['wifi_serial_number'], self::TP_LINK_SERIALS, true);
+
+            // TP-Link (ShineMonitor) registration
+            if ($isTpLink) {
+                if (\DB::table('clients')->where('username', $validated['user_id'])->exists()) {
+                    return $this->sendError('Username already registered.', null, 400);
+                }
+
+                if (\DB::table('clients')->where('collector', $validated['wifi_serial_number'])->exists()) {
+                    return $this->sendError('Collector already registered.', null, 400);
+                }
+
+                $shineResponse = app(ShineMonitorService::class)->registerOwner(
+                    $validated['user_id'],
+                    $validated['password'],
+                    $validated['wifi_serial_number'],
+                    $validated['whatsapp_no'],
+                    $validated['email'] ?? null
+                );
+
+                if (!isset($shineResponse['err'])) {
+                    return $this->sendError('Invalid external response.', null, 500);
+                }
+
+                if ($shineResponse['err'] != 0) {
+                    return $this->sendError($this->shineMonitorError($shineResponse), null, 400);
+                }
+
+                $dongle_no = $validated['wifi_serial_number'];
+            }
+
             // Check if collector already exists when wifi_serial_number length >= 9
-            if (strlen($validated['wifi_serial_number']) >= 10) {
+            if (!$isTpLink && strlen($validated['wifi_serial_number']) >= 10) {
                 $dongle = \DB::table('dongles')
                     ->where('dongle_id', $validated['wifi_serial_number'])
                     ->first();
@@ -235,8 +276,8 @@ class AuthController extends BaseController
 
             // Single HTTP instance → Less CPU & Memory
             $http = Http::withOptions(['verify' => false]);
-            $server_flg = 1;
-            if (strlen($validated['wifi_serial_number']) <= 10) {
+            $server_flg = $isTpLink ? 2 : 1;
+            if (!$isTpLink && strlen($validated['wifi_serial_number']) <= 10) {
                 $server_flg = 0;
                 $apiResponse = $http->asForm()->post('https://www.aotaisolarcloud.com/ATSolarInfo/userRegister.action', [
                     'userName'     => $validated['user_id'],
@@ -300,7 +341,7 @@ class AuthController extends BaseController
                     "company_code"        => $validated['company_code'],
                     "iSerial"             => "",
                     "QQ"                  => "",
-                    "email"               => "",
+                    "email"               => $isTpLink ? ($validated['email'] ?? "") : "",
                     "parent"              => "",
                     // "azimuth"             => $validated['azimuth'] ?? null,
                     // "tilt"                => $validated['tilt'] ?? null,
@@ -348,6 +389,24 @@ class AuthController extends BaseController
 
             return $this->sendError('Failed to register user: ' . $e->getMessage(), null, 500);
         }
+    }
+
+    private function shineMonitorError(array $res): string
+    {
+        $map = [
+            6   => 'Parameter error.',
+            7   => 'Missing required parameter.',
+            15  => 'Invalid company key.',
+            16  => 'Password verification failed.',
+            19  => 'Mobile number format error.',
+            20  => 'Email format error.',
+            21  => 'Username format error.',
+            259 => 'Invalid datalogger number.',
+            519 => 'Username already exists.',
+            520 => 'Datalogger already registered.',
+        ];
+
+        return $map[$res['err']] ?? ('Registration failed: ' . ($res['desc'] ?? 'unknown error'));
     }
 
     // public function companyRegister(Request $request): JsonResponse
