@@ -216,7 +216,7 @@ class WebhookController extends Controller
              * ✅ 5. Send WhatsApp only if new insert
              * ---------------------------------------------------- */
             if ($affected=='inserted' && !empty($data['phone'])) {
-                if ($data['server_flag'] == 1) {
+                if (in_array($data['server_flag'] ?? 0, [1, 2])) {
                     $lastInsertedId = $user->id;
                     $plandata = [
                         'plant_name' => $data['plantName'] ?? null,
@@ -230,7 +230,7 @@ class WebhookController extends Controller
                         'date' => date("Y-m"),
                         'atun' => $username,
                         'atpd' => $data['password'] ?? null,
-                        'server_flag' => 1,
+                        'server_flag' => $data['server_flag'],
                     ];
 
                     try {
@@ -247,7 +247,7 @@ class WebhookController extends Controller
                             'user_id' => $lastInsertedId,
                             'atun' => $username,
                             'atpd' => $data['password'] ?? null,
-                            'server_flag' => 1,
+                            'server_flag' => $data['server_flag'],
                         ];
                         \DB::table('inverters')->insertGetId($inverterdata);
                         \DB::table('plant_infos')->where('id', $plantInfoId)->update(['plant_no' => $plantInfoId]);
