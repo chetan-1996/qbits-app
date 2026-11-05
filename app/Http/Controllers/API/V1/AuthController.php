@@ -254,6 +254,8 @@ class AuthController extends BaseController
                     return $this->sendError($this->shineMonitorError($shineResponse), null, 400);
                 }
 
+                $this->updateShinePlant($validated, $shineResponse);
+
                 $dongle_no = $validated['wifi_serial_number'];
             }
 
@@ -391,6 +393,64 @@ class AuthController extends BaseController
             Log::error('Registration error: ' . $e->getMessage());
 
             return $this->sendError('Failed to register user: ' . $e->getMessage(), null, 500);
+        }
+    }
+
+    /**
+     * After TP-Link registration, update the auto-created default plant
+     * on ShineMonitor with the registration form fields (editPlant).
+     * Failures are logged but never block registration.
+     */
+    private function updateShinePlant(array $validated, array $shine): void
+    {
+        try {
+            $shineService = app(ShineMonitorService::class);
+
+            $token  = $shine['dat']['token'] ?? null;
+            $secret = $shine['dat']['secret'] ?? null;
+
+            if (!$token || !$secret) {
+                $auth = $shineService->auth($validated['user_id'], $validated['password']);
+                if (($auth['err'] ?? -1) !== 0) {
+                    return;
+                }
+                $token  = $auth['dat']['token'] ?? null;
+                $secret = $auth['dat']['secret'] ?? null;
+            }
+
+            if (!$token || !$secret) {
+                return;
+            }
+
+            $plants = $shineService->call('queryPlants', ['pagesize' => 50], $token, $secret);
+            $pid = $plants['dat']['plant'][0]['pid'] ?? null;
+
+            if (!$pid) {
+                Log::channel('registration')->warning('ShineMonitor editPlant skipped: no plant found', [
+                    'usr'      => $validated['user_id'],
+                    'response' => $plants,
+                ]);
+                return;
+            }
+
+            $edit = $shineService->call('editPlant', [
+                'plantid'          => $pid,
+                'name'             => $validated['home_name'],
+                'address.city'     => $validated['city_name'],
+                'address.lon'      => $validated['longitude'] ?? null,
+                'address.lat'      => $validated['latitude'] ?? null,
+                'address.timezone' => $validated['time_zone'],
+            ], $token, $secret);
+
+            Log::channel('registration')->info('ShineMonitor editPlant response', [
+                'usr'      => $validated['user_id'],
+                'pid'      => $pid,
+                'response' => $edit,
+            ]);
+        } catch (\Throwable $e) {
+            Log::channel('registration')->error('ShineMonitor editPlant failed: ' . $e->getMessage(), [
+                'usr' => $validated['user_id'],
+            ]);
         }
     }
 

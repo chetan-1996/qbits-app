@@ -95,6 +95,45 @@ class ShineMonitorService
         return $response->json() ?? [];
     }
 
+    /**
+     * Call an authenticated business API action (e.g. queryPlantsEnergyDay).
+     * $token/$secret come from auth(). sign = SHA1(salt + secret + token + actionPart).
+     * $params are appended after &action= in array order, before the app params.
+     */
+    public function call(string $actionName, array $params, string $token, string $secret): array
+    {
+        $response = Http::withOptions(['verify' => false])
+            ->timeout(30)
+            ->get($this->buildCallUrl($actionName, $params, $token, $secret));
+
+        return $response->json() ?? [];
+    }
+
+    /**
+     * Build the signed URL for a business API call:
+     * ?sign={sign}&salt={salt}&token={token}{actionPart}
+     * Note: business calls do NOT send company-key.
+     */
+    public function buildCallUrl(string $actionName, array $params, string $token, string $secret): string
+    {
+        $action = '&action=' . rawurlencode($actionName);
+        foreach ($params as $key => $value) {
+            if ($value === null || $value === '') {
+                continue;
+            }
+            $action .= '&' . $key . '=' . rawurlencode((string) $value);
+        }
+        $action .= '&source=' . self::SOURCE
+            . '&_app_client_=' . self::APP_CLIENT
+            . '&_app_id_=' . self::APP_ID
+            . '&_app_version_=' . self::APP_VERSION;
+
+        $salt = $this->salt();
+        $sign = sha1($salt . $secret . $token . $action);
+
+        return self::BASE_URL . '?sign=' . $sign . '&salt=' . $salt . '&token=' . rawurlencode($token) . $action;
+    }
+
     protected function appParams(): string
     {
         return '&company-key=' . self::COMPANY_KEY
