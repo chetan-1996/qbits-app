@@ -227,6 +227,9 @@ class AuthController extends BaseController
 
             // TP-Link (ShineMonitor) registration
             if ($isTpLink) {
+                $timezonesArr = [0 => 0, 1 => 3600, 2 => 7200, 3 => 10800, 4 => 14400, 5 => 18000, 55 => 19800, 6 => 21600, 7 => 25200, 8 => 28800, 9 => 32400, 10 => 36000, 11 => 39600, 12 => 43200, -1 => -3600, -2 => -7200, -3 => -10800, -4 => -14400,-5  => -18000,-6  => -21600, -7  => -25200, -8  => -28800, -9  => -32400, -10 => -36000, -11 => -39600, -12 => -43200];
+                $validated['time_zone'] = $timezonesArr[$validated['time_zone']] ?? 0;
+
                 if (\DB::table('clients')->where('username', $validated['user_id'])->exists()) {
                     return $this->sendError('Username already registered.', null, 400);
                 }
@@ -728,7 +731,7 @@ class AuthController extends BaseController
                 'userName'    => 'required|string|max:255',
                 'password'    => 'required|string',
                 'newPassword' => 'required|string',
-                'server_flag' => 'required|integer|in:0,1',
+                'server_flag' => 'required|integer|in:0,1,2',
             ]);
 
             $http = Http::withOptions(['verify' => false]);
