@@ -12,6 +12,7 @@ use App\Http\Controllers\API\V1\DashboardController;
 use App\Http\Controllers\API\V1\StateController;
 use App\Http\Controllers\API\V1\ChannelPartnerController;
 use App\Http\Controllers\API\V1\TelemetryController;
+use App\Http\Controllers\API\V1\OtpController;
 
 Route::post('client/login', [ClientController::class, 'clientLogin']);
 Route::get('/states', [StateController::class, 'index']);
@@ -80,6 +81,11 @@ Route::controller(AuthController::class)->group(function () {
     Route::post('company/generate/code', 'generateCode');
     Route::post('forgot-password', 'forgotPassword');
     Route::post('change-password', 'changePassword');
+});
+
+Route::controller(OtpController::class)->group(function () {
+    Route::post('otp/send', 'sendOtp');
+    Route::post('otp/verify', 'verifyOtp');
 });
 
 Route::controller(InverterCommandController::class)->group(function () {
