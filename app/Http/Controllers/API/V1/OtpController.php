@@ -22,7 +22,7 @@ class OtpController extends BaseController
         try {
             $validated = $request->validate([
                 'user_id'  => 'required|string|max:255',
-                'otp_type' => 'required|in:mobile_no,email',
+                'otp_type' => 'required|in:mobile_no,email,username',
             ]);
 
             $client = $this->resolveClient($validated['user_id']);
@@ -37,9 +37,9 @@ class OtpController extends BaseController
 
             if (empty($destination)) {
                 return $this->sendError(
-                    $otpType === 'mobile_no'
-                        ? 'No mobile number registered for this user.'
-                        : 'No email address registered for this user.',
+                    $otpType === 'email'
+                        ? 'No email address registered for this user.'
+                        : 'No mobile number registered for this user.',
                     null,
                     400
                 );
@@ -60,9 +60,9 @@ class OtpController extends BaseController
                 'expires_at' => now()->addMinutes(self::OTP_TTL_MINUTES),
             ]);
 
-            $sent = $otpType === 'mobile_no'
-                ? $this->sendWhatsAppOtp($client, $destination, $otp)
-                : $this->sendEmailOtp($destination, $otp);
+            $sent = $otpType === 'email'
+                ? $this->sendEmailOtp($destination, $otp)
+                : $this->sendWhatsAppOtp($client, $destination, $otp);
 
             if (!$sent) {
                 $record->update(['verified_at' => now()]);
@@ -71,9 +71,9 @@ class OtpController extends BaseController
 
             return $this->sendResponse(
                 ['otp_type' => $otpType],
-                $otpType === 'mobile_no'
-                    ? 'OTP sent to your registered mobile number.'
-                    : 'OTP sent to your registered email address.'
+                $otpType === 'email'
+                    ? 'OTP sent to your registered email address.'
+                    : 'OTP sent to your registered mobile number.'
             );
 
         } catch (ValidationException $e) {
@@ -88,7 +88,7 @@ class OtpController extends BaseController
         try {
             $validated = $request->validate([
                 'user_id'  => 'required|string|max:255',
-                'otp_type' => 'required|in:mobile_no,email',
+                'otp_type' => 'required|in:mobile_no,email,username',
                 'otp'      => 'required|string|size:6',
             ]);
 
@@ -243,6 +243,10 @@ class OtpController extends BaseController
                 }
             }
             return null;
+        }
+
+        if ($otpType === 'username') {
+            return $client->phone ?: null;
         }
 
         $contactPhone = filter_var($contact, FILTER_VALIDATE_EMAIL)
