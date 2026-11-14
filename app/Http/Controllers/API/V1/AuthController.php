@@ -375,7 +375,7 @@ class AuthController extends BaseController
                 'server_flg' => $server_flg
             ]);
 
-            return $this->sendResponse([], 'Individual registered successfully.');
+            return $this->sendResponse(['server_flg' => $server_flg], 'Individual registered successfully.');
 
         } catch (ValidationException $e) {
             return $this->sendError('Validation failed.', $e->errors(), 400);
