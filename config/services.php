@@ -39,7 +39,7 @@ return [
     ],
 
     'elevenza' => [
-        'url'          => env('ELEVENZA_API_URL', 'https://app.11za.in/apis/template/sendTemplate'),
+        'url'          => env('ELEVENZA_API_URL', 'https://api.11za.in/apis/template/sendTemplate'),
         'auth_token'   => env('ELEVENZA_AUTH_TOKEN'),
         'otp_template' => env('ELEVENZA_OTP_TEMPLATE'),
     ],

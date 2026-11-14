@@ -163,10 +163,7 @@ class OtpController extends BaseController
                     'originWebsite' => 'https://qbitsenergy.com/',
                     'templateName'  => $templateName,
                     'language'      => 'en',
-                    'data'          => [
-                        $client->name ?? $client->username ?? 'User',
-                        $otp,
-                    ],
+                    'data'          => $otp,
                 ]);
 
             if (!$response->ok()) {
