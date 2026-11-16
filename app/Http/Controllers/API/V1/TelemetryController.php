@@ -152,10 +152,10 @@ class TelemetryController extends BaseController
                 $q->where('collector_id', $collectorId);
             })
             ->when($dateFrom, function ($q) use ($dateFrom) {
-                $q->whereDate('created_at', '>=', $dateFrom);
+                $q->where('created_at', '>=', Carbon::parse($dateFrom)->startOfDay());
             })
             ->when($dateTo, function ($q) use ($dateTo) {
-                $q->whereDate('created_at', '<=', $dateTo);
+                $q->where('created_at', '<=', Carbon::parse($dateTo)->endOfDay());
             })
             ->orderByDesc('created_at')
             ->get();
@@ -200,10 +200,10 @@ class TelemetryController extends BaseController
                 $q->where('collector_id', $collectorId);
             })
             ->when($dateFrom, function ($q) use ($dateFrom) {
-                $q->whereDate('created_at', '>=', $dateFrom);
+                $q->where('created_at', '>=', Carbon::parse($dateFrom)->startOfDay());
             })
             ->when($dateTo, function ($q) use ($dateTo) {
-                $q->whereDate('created_at', '<=', $dateTo);
+                $q->where('created_at', '<=', Carbon::parse($dateTo)->endOfDay());
             })
             ->orderByDesc('created_at')
             ->simplePaginate(50);
@@ -277,8 +277,8 @@ class TelemetryController extends BaseController
         $data = DB::table('telemetry_raw')
             ->select(['id', 'collector_id', 'payload', 'created_at'])
             ->where('collector_id', $collectorId)
-            ->whereDate('created_at', '>=', $dateFrom)
-            ->whereDate('created_at', '<=', $dateTo)
+            ->where('created_at', '>=', Carbon::parse($dateFrom)->startOfDay())
+            ->where('created_at', '<=', Carbon::parse($dateTo)->endOfDay())
             ->orderBy('created_at')
             ->get();
 
