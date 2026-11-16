@@ -162,6 +162,10 @@ class InverterDailyGeneration extends Command
             );
 
             if (!$waResponse->ok()) {
+                // Log::warning("WA Failed User {$user->id}", [
+                //     'status' => $waResponse->status(),
+                //     'body'   => $waResponse->body(),
+                // ]);
                 return false;
             }
 
