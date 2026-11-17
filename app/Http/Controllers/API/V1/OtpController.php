@@ -227,7 +227,9 @@ class OtpController extends BaseController
 
         $phone = preg_replace('/\D/', '', $contact);
 
-        if ($phone === '') {
+        // Require a realistic phone length — short digit strings
+        // (e.g. "78" from "chetan78") must not fuzzy-match users
+        if (strlen($phone) < 10) {
             return null;
         }
 
@@ -262,7 +264,10 @@ class OtpController extends BaseController
             : preg_replace('/\D/', '', $contact);
 
         foreach ([$contactPhone, $client->phone, $client->username] as $candidate) {
-            if ($candidate && preg_replace('/\D/', '', $candidate) !== '') {
+            if ($candidate
+                && !filter_var($candidate, FILTER_VALIDATE_EMAIL)
+                && preg_replace('/\D/', '', $candidate) !== ''
+            ) {
                 return $candidate;
             }
         }
