@@ -69,8 +69,16 @@ class OtpController extends BaseController
                 return $this->sendError('Failed to send OTP. Please try again.', null, 500);
             }
 
+            $responseData = ['otp_type' => $otpType];
+
+            if ($otpType === 'username') {
+                $responseData['user_id'] = $destination;
+            } else {
+                $responseData['user_id'] = $validated['user_id'];
+            }
+
             return $this->sendResponse(
-                ['otp_type' => $otpType],
+                $responseData,
                 $otpType === 'email'
                     ? 'OTP sent to your registered email address.'
                     : 'OTP sent to your registered mobile number.'
