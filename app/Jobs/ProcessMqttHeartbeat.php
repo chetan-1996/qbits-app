@@ -26,6 +26,8 @@ class ProcessMqttHeartbeat implements ShouldQueue
 
     public function handle(): void
     {
+        Log::info('[HB] job start', ['topic' => $this->topic, 'len' => strlen($this->message)]);
+
         $payload = json_decode($this->message, true);
         $payload = is_array($payload) ? $payload : [];
 
@@ -35,12 +37,22 @@ class ProcessMqttHeartbeat implements ShouldQueue
         $topicParts  = explode('/', (string) $this->topic);
         $collectorId = $topicParts[2] ?? ($payload['IMEI'] ?? null);
 
-        DB::table('telemetry_heartbeat')->insert([
-            'collector_id' => $collectorId,
-            'inverter_id'  => $payload['IMEI'] ?? null,
-            'payload'      => $this->message,
-            'created_at'   => now(),
-        ]);
+        try {
+            $id = DB::table('telemetry_heartbeat')->insertGetId([
+                'collector_id' => $collectorId,
+                'inverter_id'  => $payload['IMEI'] ?? null,
+                'payload'      => $this->message,
+                'created_at'   => now(),
+            ]);
+            Log::info('[HB] inserted', ['id' => $id, 'collector_id' => $collectorId]);
+        } catch (\Throwable $e) {
+            Log::error('[HB] insert failed', [
+                'topic'        => $this->topic,
+                'collector_id' => $collectorId,
+                'error'        => $e->getMessage(),
+            ]);
+            throw $e;
+        }
 
         // OTA support: keep per-unit last-seen and running firmware version.
         try {

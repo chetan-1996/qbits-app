@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use App\Services\MqttService;
 use App\Jobs\ProcessMqttHeartbeat;
+use Illuminate\Support\Facades\Log;
 
 class MqttHeartbeatListener extends Command
 {
@@ -20,7 +21,12 @@ class MqttHeartbeatListener extends Command
 
         $mqtt->subscribe('rtsg-1/Ongridrooftop/+/heartbeat/pub', function ($topic, $message) {
             // Fast dispatch - minimal processing in listener
-            ProcessMqttHeartbeat::dispatch($topic, $message)->onQueue('heartbeat');
+            try {
+                ProcessMqttHeartbeat::dispatch($topic, $message)->onQueue('heartbeat');
+                Log::info('[HB] dispatched', ['topic' => $topic, 'len' => strlen($message)]);
+            } catch (\Throwable $e) {
+                Log::error('[HB] dispatch failed', ['topic' => $topic, 'error' => $e->getMessage()]);
+            }
         });
 
         // Keep loop running
