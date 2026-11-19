@@ -20,7 +20,7 @@ class MqttHeartbeatListener extends Command
 
         $mqtt->subscribe('rtsg-1/Ongridrooftop/+/heartbeat/pub', function ($topic, $message) {
             // Fast dispatch - minimal processing in listener
-            ProcessMqttHeartbeat::dispatch($message)->onQueue('heartbeat');
+            ProcessMqttHeartbeat::dispatch($topic, $message)->onQueue('heartbeat');
         });
 
         // Keep loop running

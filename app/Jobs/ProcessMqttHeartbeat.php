@@ -27,9 +27,16 @@ class ProcessMqttHeartbeat implements ShouldQueue
     public function handle(): void
     {
         $payload = json_decode($this->message, true);
+        $payload = is_array($payload) ? $payload : [];
+
+        // New heartbeat format: collector id comes from the topic
+        // (rtsg-1/Ongridrooftop/{collector_id}/heartbeat/pub),
+        // inverter id stays the payload IMEI.
+        $topicParts  = explode('/', (string) $this->topic);
+        $collectorId = $topicParts[2] ?? ($payload['IMEI'] ?? null);
 
         DB::table('telemetry_heartbeat')->insert([
-            'collector_id' => $payload['IMEI'] ?? null,
+            'collector_id' => $collectorId,
             'inverter_id'  => $payload['IMEI'] ?? null,
             'payload'      => $this->message,
             'created_at'   => now(),
