@@ -15,7 +15,9 @@ class MqttHeartbeatListener extends Command
     public function handle()
     {
         $mqtt = new MqttService();
-        $mqtt->connect(config('mqtt.client_id_prefix') . '-heartbeat-sub');
+        // Unique client id per process — a duplicate (manual run / stale
+        // supervisor copy) with the same id would disconnect us forever.
+        $mqtt->connect(config('mqtt.client_id_prefix') . '-heartbeat-sub-' . getmypid());
 
         $this->info('MQTT Heartbeat Listener started - dispatching to queue');
 
@@ -28,8 +30,5 @@ class MqttHeartbeatListener extends Command
                 Log::error('[HB] dispatch failed', ['topic' => $topic, 'error' => $e->getMessage()]);
             }
         });
-
-        // Keep loop running
-        $mqtt->loop(true);
     }
 }
